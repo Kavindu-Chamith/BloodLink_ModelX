@@ -1,0 +1,13 @@
+{
+  "name": "bloodlink-modelx",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "setup": "node scripts/local.cjs setup",
+    "start": "node scripts/local.cjs start",
+    "stop": "node scripts/local.cjs stop"
+  },
+  "engines": {
+    "node": ">=24.14.0"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "node --watch -r ts-node/register src/index.ts",
+    "seed": "ts-node src/seed.ts",
+    "migrate": "ts-node src/migrate.ts",
+    "type-check": "tsc --noEmit",
+    "test": "ts-node src/test_auth_flows.ts && node --test tests/mobile-api.test.cjs tests/requests-api.test.cjs",
+    "test:auth": "ts-node src/test_auth_flows.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:init": "ts-node src/migrate.ts --init",
+    "test:client": "node --test tests/mobile-api.test.cjs tests/requests-api.test.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "argon2": "^0.45.1",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^10.1.0",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.2.0",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
