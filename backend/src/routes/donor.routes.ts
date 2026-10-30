@@ -7,10 +7,13 @@ import {
   getMyDonations,
 } from "../controllers/donor.controller";
 import { getRequestsPageData } from "../controllers/requests.controller";
+import { getBloodBanks } from "../controllers/banks.controller";
 import { optionalAuthenticate } from "../middleware/auth.middleware";
 import { validateRouteIds } from "../middleware/validation.middleware";
 
 const router = Router();
+
+router.get('/banks', optionalAuthenticate, getBloodBanks);
 
 // Donor verification routes (/submit, /admin/pending, /admin/:id/approve, etc.)
 router.use(donorVerificationRoutes);
