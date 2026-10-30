@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import {
   View,
@@ -9,7 +11,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -52,6 +53,7 @@ export const OnboardingCarouselScreen: React.FC<OnboardingCarouselScreenProps> =
   onComplete,
   onSignIn,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleNext = () => {
@@ -66,7 +68,7 @@ export const OnboardingCarouselScreen: React.FC<OnboardingCarouselScreenProps> =
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
 
       {/* Top Header Logo */}
       <View style={styles.header}>
@@ -145,10 +147,10 @@ export const OnboardingCarouselScreen: React.FC<OnboardingCarouselScreenProps> =
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   header: {
     paddingHorizontal: 24,
@@ -167,7 +169,7 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     letterSpacing: -0.3,
   },
   content: {
@@ -180,7 +182,7 @@ const styles = StyleSheet.create({
     height: width * 0.58,
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -196,7 +198,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   tagBadge: {
-    backgroundColor: colors.primaryBadgeBg,
+    backgroundColor: c.primaryBadgeBg,
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 20,
@@ -205,19 +207,19 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.primaryBadgeText,
+    color: c.primaryBadgeText,
   },
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     lineHeight: 32,
     letterSpacing: -0.4,
     marginBottom: 12,
   },
   description: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -232,11 +234,11 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     width: 20,
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
   },
   inactiveDot: {
     width: 6,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.surface,
   },
   bottomArea: {
     paddingHorizontal: 24,
@@ -244,7 +246,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
@@ -252,7 +254,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -262,10 +264,10 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   signInHighlight: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '700',
   },
 });

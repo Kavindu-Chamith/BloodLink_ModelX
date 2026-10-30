@@ -37,7 +37,7 @@ export default function DonationCard({ record, onViewCertificate }: Props) {
                 >
                     <Ionicons
                         name={verified ? 'checkmark-circle-outline' : 'time-outline'}
-                        size={16}
+                        size={12}
                         color={verified ? colors.success : colors.warning}
                     />
                     <Text style={[styles.badgeText, { color: verified ? colors.success : colors.warning }]}>
@@ -73,24 +73,24 @@ const createStyles = (c: ColorPalette) =>
             borderRadius: radius.lg,
             borderWidth: 1,
             borderColor: c.border,
-            padding: 18,
+            padding: 14,
         },
         topRow: { flexDirection: 'row', alignItems: 'flex-start' },
-        hospital: { fontSize: 18, fontWeight: '700', color: c.text },
-        meta: { fontSize: 14, color: c.textMuted, marginTop: 4 },
+        hospital: { fontSize: 15, lineHeight: 21, fontWeight: '600', color: c.text },
+        meta: { fontSize: 12, lineHeight: 18, color: c.textMuted, marginTop: 4 },
         badge: {
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 6,
+            gap: 4,
             borderWidth: 1,
             borderRadius: radius.pill,
-            paddingHorizontal: 12,
-            paddingVertical: 6,
+            paddingHorizontal: 7,
+            paddingVertical: 5,
         },
-        badgeText: { fontWeight: '700', fontSize: 14 },
-        divider: { height: 1, backgroundColor: c.border, marginVertical: 14 },
+        badgeText: { fontWeight: '500', fontSize: 10 },
+        divider: { height: 1, backgroundColor: c.border, marginVertical: 10 },
         bottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-        note: { flex: 1, fontSize: 14, color: c.textMuted, paddingRight: 10 },
-        certButton: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-        certText: { fontSize: 15, fontWeight: '700', color: c.text },
+        note: { flex: 1, fontSize: 12, color: c.textMuted, paddingRight: 10 },
+        certButton: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
+        certText: { fontSize: 12, fontWeight: '500', color: c.text },
     });

@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import {
   View,
@@ -18,7 +20,7 @@ import {
   FingerprintIcon,
 } from '../components/Icons';
 import { SecurityBadge } from '../components/SecurityBadge';
-import { colors } from '../theme/colors';
+
 import { normalizeSriLankanMobile, toLocalSriLankanMobile } from '../utils/phone';
 
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +38,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onForgotPassword,
   onRegister,
 }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   const { signInWithEmail, signInWithPhone } = useAuth();
   const [method, setMethod] = useState<'phone' | 'email'>('phone');
   const [phone, setPhone] = useState('');
@@ -82,7 +85,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.action} />
 
       {/* Crimson Header */}
       <SafeAreaView style={styles.header} edges={['top']}>
@@ -93,7 +96,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Back to welcome"
         >
-          <ArrowLeftIcon size={20} color="#FFFFFF" />
+          <ArrowLeftIcon size={20} color={colors.onPrimary} />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Welcome back,{'\n'}Donor</Text>
@@ -159,7 +162,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 <TextInput
                   style={styles.phoneInput}
                   placeholder="077 123 4567"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
@@ -179,7 +182,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <TextInput
                 style={[styles.input, focusedField === 'email' && styles.inputFocused]}
                 placeholder="you@email.com"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -199,7 +202,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Password"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
@@ -214,9 +217,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? (
-                  <EyeOffIcon size={20} color="#94A3B8" />
+                  <EyeOffIcon size={20} color={colors.textMuted} />
                 ) : (
-                  <EyeIcon size={20} color="#94A3B8" />
+                  <EyeIcon size={20} color={colors.textMuted} />
                 )}
               </TouchableOpacity>
             </View>
@@ -243,8 +246,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
           {/* Error Message */}
           {errorMessage && (
-            <View style={{ backgroundColor: '#FFF1F2', borderRadius: 10, padding: 12, marginVertical: 10 }}>
-              <Text style={{ color: '#E11D48', fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
+            <View style={{ backgroundColor: colors.primarySoft, borderRadius: 10, padding: 12, marginVertical: 10 }}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
                 {errorMessage}
               </Text>
             </View>
@@ -283,13 +286,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.background,
   },
   header: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     paddingTop: 12,
     paddingBottom: 28,
     paddingHorizontal: 24,
@@ -308,7 +311,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     letterSpacing: -0.4,
     lineHeight: 32,
     marginBottom: 6,
@@ -335,65 +338,65 @@ const styles = StyleSheet.create({
   methodLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
   },
   tabPill: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     borderRadius: 20,
     padding: 3,
   },
-  tabButton: {
+  tabButton: { minHeight: 40, justifyContent: 'center',
     paddingHorizontal: 14,
     paddingVertical: 5,
     borderRadius: 16,
   },
   tabButtonActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
   },
   tabButtonText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
+    color: c.textMuted,
   },
   tabButtonTextActive: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
   },
   inputContainer: {
     marginBottom: 16,
   },
   inputFocused: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryMuted,
+    borderColor: c.primary,
+    backgroundColor: c.primaryMuted,
   },
   label: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 6,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     fontSize: 14,
-    color: '#0F172A',
-    backgroundColor: '#FFFFFF',
+    color: c.text,
+    backgroundColor: c.card,
   },
   phoneInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   countryPill: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -402,37 +405,37 @@ const styles = StyleSheet.create({
   countryPillText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#475569',
+    color: c.textSecondary,
   },
   phoneInput: {
     flex: 1,
     minWidth: 0,
     fontSize: 14,
-    color: '#0F172A',
+    color: c.text,
   },
   phoneHint: {
     marginTop: 6,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.textSecondary,
+    color: c.textSecondary,
   },
   passwordRow: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingLeft: 14,
     paddingRight: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   passwordInput: {
     flex: 1,
     minWidth: 0,
     backgroundColor: 'transparent',
     fontSize: 14,
-    color: '#0F172A',
+    color: c.text,
   },
   passwordToggle: {
     width: 44,
@@ -450,7 +453,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.primary,
+    color: c.primary,
   },
   biometricButton: {
     flexDirection: 'row',
@@ -458,16 +461,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     height: 46,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     marginBottom: 12,
   },
   biometricText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
   },
   footer: {
     paddingHorizontal: 24,
@@ -475,7 +478,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
@@ -483,7 +486,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -493,10 +496,10 @@ const styles = StyleSheet.create({
   },
   registerPrompt: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   registerHighlight: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '700',
   },
 });

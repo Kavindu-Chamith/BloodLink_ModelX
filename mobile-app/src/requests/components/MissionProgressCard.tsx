@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { AppColors } from '../../theme/palette';
 // src/requests/components/MissionProgressCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
@@ -9,69 +11,41 @@ interface MissionProgressCardProps {
 }
 
 export const MissionProgressCard: React.FC<MissionProgressCardProps> = ({ steps }) => {
+  const { styles } = useThemedStyles(createStyles);
   return (
     <View style={styles.card}>
       <Text style={styles.sectionSubtitle}>MISSION PROGRESS</Text>
 
       <View style={styles.timelineContainer}>
-        {/* Step 1: Accepted Request */}
-        <View style={styles.stepRow}>
-          <View style={styles.iconColumn}>
-            <View style={styles.completedIconContainer}>
-              <Ionicons name="checkmark" size={14} color="#059669" />
+        {steps?.map((step, index) => {
+          const complete = step.status === 'completed';
+          const current = step.status === 'in_progress';
+          return <View key={step.id} style={styles.stepRow}>
+            <View style={styles.iconColumn}>
+              <View style={complete ? styles.completedIconContainer : current ? styles.inProgressTargetCircle : styles.upcomingIconContainer}>
+                {current ? <View style={styles.inProgressInnerDot} /> : <Ionicons name={complete ? 'checkmark' : 'add'} size={14} color={complete ? '#059669' : '#94A3B8'} />}
+              </View>
+              {index < steps.length - 1 && <View style={complete ? styles.activeLine : styles.upcomingLine} />}
             </View>
-            <View style={styles.activeLine} />
-          </View>
-
-          <View style={styles.contentRow}>
-            <Text style={styles.stepTitleCompleted}>Accepted Request</Text>
-            <Text style={styles.stepTime}>14:10</Text>
-          </View>
-        </View>
-
-        {/* Step 2: En Route to Hospital */}
-        <View style={styles.stepRow}>
-          <View style={styles.iconColumn}>
-            <View style={styles.inProgressTargetCircle}>
-              <View style={styles.inProgressInnerDot} />
+            <View style={styles.contentRow}>
+              <Text style={[complete ? styles.stepTitleCompleted : current ? styles.stepTitleInProgress : styles.stepTitleUpcoming, { flex: 1, marginRight: 8 }]}>{step.title}</Text>
+              {step.time ? <Text style={styles.stepTime}>{step.time}</Text> : current ? <View style={styles.inProgressBadge}><Text style={styles.inProgressBadgeText}>{step.badgeText || 'In Progress'}</Text></View> : <Text style={styles.stepUpcomingText}>{step.badgeText || 'Upcoming'}</Text>}
             </View>
-            <View style={styles.upcomingLine} />
-          </View>
-
-          <View style={styles.contentRow}>
-            <Text style={styles.stepTitleInProgress}>En Route to Hospital</Text>
-            <View style={styles.inProgressBadge}>
-              <Text style={styles.inProgressBadgeText}>In Progress</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Step 3: Arrive & Donate */}
-        <View style={styles.stepRowLast}>
-          <View style={styles.iconColumn}>
-            <View style={styles.upcomingIconContainer}>
-              <Ionicons name="add" size={14} color="#94A3B8" />
-            </View>
-          </View>
-
-          <View style={styles.contentRow}>
-            <Text style={styles.stepTitleUpcoming}>Arrive &amp; Donate</Text>
-            <Text style={styles.stepUpcomingText}>Upcoming</Text>
-          </View>
-        </View>
+          </View>;
+        })}
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 18,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#EBF0F5',
+    borderColor: c.border,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -81,7 +55,7 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#64748B',
+    color: c.textMuted,
     letterSpacing: 0.6,
     marginBottom: 16,
   },
@@ -104,21 +78,21 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: c.successSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   activeLine: {
     width: 2,
     height: 28,
-    backgroundColor: '#34D399',
+    backgroundColor: c.success,
     marginVertical: 2,
   },
   inProgressTargetCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#BA1328',
+    backgroundColor: c.action,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -126,12 +100,12 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   upcomingLine: {
     width: 2,
     height: 28,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.surface,
     marginVertical: 2,
   },
   upcomingIconContainer: {
@@ -139,10 +113,10 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: c.border,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
   },
   contentRow: {
     flex: 1,
@@ -150,24 +124,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 1,
+    alignSelf: 'flex-start',
+    minHeight: 24,
   },
   stepTitleCompleted: {
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '500',
+    color: c.text,
   },
   stepTime: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#64748B',
+    color: c.textMuted,
   },
   stepTitleInProgress: {
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: '#BA1328',
+    fontSize: 13,
+    fontWeight: '500',
+    color: c.primary,
   },
   inProgressBadge: {
-    backgroundColor: '#FEECEF',
+    backgroundColor: c.primarySoft,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -175,16 +151,16 @@ const styles = StyleSheet.create({
   inProgressBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#BA1328',
+    color: c.primary,
   },
   stepTitleUpcoming: {
-    fontSize: 14.5,
-    fontWeight: '600',
-    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '500',
+    color: c.textMuted,
   },
   stepUpcomingText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#94A3B8',
+    color: c.textMuted,
   },
 });

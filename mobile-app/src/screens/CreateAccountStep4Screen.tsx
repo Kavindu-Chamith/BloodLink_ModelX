@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import {
   View,
@@ -13,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { StepIndicator } from '../components/StepIndicator';
 import { UploadIcon } from '../components/Icons';
-import { colors } from '../theme/colors';
+
 import { useAuth } from '../context/AuthContext';
 import { RegistrationData } from '../types/navigation';
 import { normalizeSriLankanMobile } from '../utils/phone';
@@ -40,6 +42,7 @@ export const CreateAccountStep4Screen: React.FC<CreateAccountStep4ScreenProps> =
   bloodGroup = 'A+',
   registrationData,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const { register } = useAuth();
   const email = registrationData?.email || '';
   const [password, setPassword] = useState('');
@@ -90,7 +93,7 @@ export const CreateAccountStep4Screen: React.FC<CreateAccountStep4ScreenProps> =
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
       <Header title="Create Account" onBack={onBack} />
 
       <ScrollView
@@ -120,7 +123,7 @@ export const CreateAccountStep4Screen: React.FC<CreateAccountStep4ScreenProps> =
             <TextInput
               style={styles.input}
               placeholder="donor@example.com"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               value={email}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -133,7 +136,7 @@ export const CreateAccountStep4Screen: React.FC<CreateAccountStep4ScreenProps> =
             <TextInput
               style={styles.input}
               placeholder="Min. 8 chars (e.g. Donor@2026!)"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -189,7 +192,7 @@ export const CreateAccountStep4Screen: React.FC<CreateAccountStep4ScreenProps> =
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={colors.onPrimary} />
           ) : (
             <Text style={styles.primaryButtonText}>Create Account</Text>
           )}
@@ -209,10 +212,10 @@ export const CreateAccountStep4Screen: React.FC<CreateAccountStep4ScreenProps> =
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
@@ -225,24 +228,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     marginBottom: 6,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     lineHeight: 18,
     marginBottom: 10,
   },
   errorBox: {
-    backgroundColor: '#FFF1F2',
+    backgroundColor: c.primarySoft,
     borderRadius: 10,
     padding: 12,
     marginBottom: 14,
   },
   errorText: {
-    color: '#E11D48',
+    color: c.primary,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -253,7 +256,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: c.textMuted,
     letterSpacing: 0.8,
     marginBottom: 10,
   },
@@ -263,24 +266,24 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
+    color: c.textSecondary,
     marginBottom: 6,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     fontSize: 14,
-    color: '#0F172A',
+    color: c.text,
   },
   uploadBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderStyle: 'dashed',
     padding: 24,
     alignItems: 'center',
@@ -290,7 +293,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-    backgroundColor: '#FEECEF',
+    backgroundColor: c.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -298,26 +301,26 @@ const styles = StyleSheet.create({
   uploadPrompt: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 4,
   },
   uploadSpecs: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: c.textMuted,
     marginBottom: 14,
   },
   browseButton: {
     paddingHorizontal: 18,
     paddingVertical: 9,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: c.border,
   },
   browseButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#475569',
+    color: c.textSecondary,
   },
   fileSelectedWrap: {
     alignItems: 'center',
@@ -330,16 +333,16 @@ const styles = StyleSheet.create({
   fileNameText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
+    color: c.text,
     marginLeft: 6,
   },
   fileChangeText: {
     fontSize: 12,
-    color: '#10B981',
+    color: c.success,
     fontWeight: '600',
   },
   acceptedSection: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -353,18 +356,18 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     marginRight: 10,
   },
   docItemText: {
     fontSize: 13,
-    color: '#334155',
+    color: c.textSecondary,
     fontWeight: '500',
   },
   noticeBox: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: c.infoSoft,
     borderLeftWidth: 3,
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: c.border,
     borderRadius: 10,
     padding: 14,
     marginBottom: 12,
@@ -383,19 +386,19 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
+    shadowColor: c.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -405,10 +408,10 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   signInHighlight: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '700',
   },
 });

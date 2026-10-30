@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React from 'react';
 import {
   View,
@@ -8,7 +10,6 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
 
 interface WelcomeSelectionScreenProps {
   onGetStarted: () => void;
@@ -19,6 +20,7 @@ export const WelcomeSelectionScreen: React.FC<WelcomeSelectionScreenProps> = ({
   onGetStarted,
   onLogIn,
 }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
@@ -67,14 +69,14 @@ export const WelcomeSelectionScreen: React.FC<WelcomeSelectionScreenProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   topSection: {
     flex: 1.25,
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
@@ -102,20 +104,20 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     letterSpacing: -0.5,
     marginBottom: 6,
   },
   tagline: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     letterSpacing: 2,
     opacity: 0.9,
   },
   bottomSection: {
     flex: 0.95,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     justifyContent: 'center',
     paddingHorizontal: 28,
   },
@@ -125,7 +127,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 15,
-    color: '#475569',
+    color: c.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 36,
@@ -137,28 +139,28 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
   secondaryButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   secondaryButtonText: {
-    color: '#1E293B',
+    color: c.text,
     fontSize: 16,
     fontWeight: '700',
   },

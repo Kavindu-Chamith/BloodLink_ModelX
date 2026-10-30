@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -15,6 +17,7 @@ interface SplashScreenProps {
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
+  const { styles } = useThemedStyles(createStyles);
   const progressAnim = useRef(new Animated.Value(0.15)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -93,7 +96,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#C5162E',
@@ -130,14 +133,14 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 34,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     letterSpacing: -0.5,
     marginBottom: 6,
   },
   tagline: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     letterSpacing: 2.2,
     opacity: 0.9,
     marginBottom: 32,

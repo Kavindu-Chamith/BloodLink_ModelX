@@ -92,11 +92,14 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                 <Pressable
                     onPress={toggleTheme}
                     style={styles.themeButton}
-                    accessibilityRole="button"
-                    accessibilityLabel="Toggle light and dark theme"
-                    accessibilityState={{ selected: isDark }}
+                    accessibilityRole="switch"
+                    accessibilityLabel="Dark mode"
+                    accessibilityHint="Changes appearance across all screens and remembers your choice."
+                    accessibilityState={{ checked: isDark }}
+                    aria-checked={isDark}
                 >
                     <Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={20} color={colors.text} />
+                    <Text style={styles.themeLabel}>{isDark ? 'Dark mode' : 'Light mode'}</Text>
                 </Pressable>
             </View>
 
@@ -237,8 +240,10 @@ const createStyles = (c: ColorPalette) =>
         },
         title: { fontSize: 22, lineHeight: 30, fontWeight: '600', color: c.text },
         themeButton: {
-            width: 44,
-            height: 44,
+            minHeight: 44,
+            paddingHorizontal: 12,
+            flexDirection: 'row',
+            gap: 8,
             borderRadius: 22,
             backgroundColor: c.card,
             borderWidth: 1,
@@ -246,12 +251,13 @@ const createStyles = (c: ColorPalette) =>
             alignItems: 'center',
             justifyContent: 'center',
         },
+        themeLabel: { fontSize: 12, fontWeight: '600', color: c.text },
         content: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },
         grid: { flexDirection: 'row', gap: 14 },
         center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
         errorTitle: { fontSize: 18, fontWeight: '600', color: c.text, marginBottom: 6 },
         errorText: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginBottom: 16 },
-        retry: { backgroundColor: c.primary, borderRadius: radius.md, paddingHorizontal: 24, paddingVertical: 12 },
+        retry: { backgroundColor: c.action, borderRadius: radius.md, paddingHorizontal: 24, paddingVertical: 12 },
         retryText: { color: c.onPrimary, fontWeight: '700' },
         disclaimer: { fontSize: 12, lineHeight: 18, color: c.textMuted, textAlign: 'center', paddingHorizontal: 8 },
         signOut: {

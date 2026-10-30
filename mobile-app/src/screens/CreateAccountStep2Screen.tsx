@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import {
   View,
@@ -11,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { StepIndicator } from '../components/StepIndicator';
-import { colors } from '../theme/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_SIZE = Math.floor((SCREEN_WIDTH - 48 - 30) / 4);
@@ -31,11 +32,12 @@ export const CreateAccountStep2Screen: React.FC<CreateAccountStep2ScreenProps> =
   onSignIn,
   initialBloodGroup = '',
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const [selectedGroup, setSelectedGroup] = useState<string>(initialBloodGroup);
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
       <Header title="Create Account" onBack={onBack} />
 
       <ScrollView
@@ -119,10 +121,10 @@ export const CreateAccountStep2Screen: React.FC<CreateAccountStep2ScreenProps> =
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
@@ -135,13 +137,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     marginBottom: 6,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     lineHeight: 18,
     marginBottom: 10,
   },
@@ -166,12 +168,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   unselectedBloodCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
+    backgroundColor: c.card,
+    borderColor: c.border,
   },
   selectedBloodCard: {
-    backgroundColor: colors.primaryMuted,
-    borderColor: colors.primary,
+    backgroundColor: c.primaryMuted,
+    borderColor: c.primary,
   },
   bloodGroupText: {
     fontSize: 18,
@@ -179,28 +181,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   unselectedBloodGroupText: {
-    color: '#1E293B',
+    color: c.text,
   },
   selectedBloodGroupText: {
-    color: colors.primary,
+    color: c.primary,
   },
   selectedFeedbackCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: c.primarySoft,
     borderRadius: 16,
     padding: 16,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: '#FEE2E2',
+    borderColor: c.border,
   },
   selectedBadgeCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FDECEC',
+    backgroundColor: c.primarySoft,
     borderWidth: 1.5,
-    borderColor: '#FCA5A5',
+    borderColor: c.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
   selectedBadgeText: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.primary,
+    color: c.primary,
   },
   feedbackTextWrap: {
     flex: 1,
@@ -216,12 +218,12 @@ const styles = StyleSheet.create({
   feedbackTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 2,
   },
   feedbackSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: c.textMuted,
     lineHeight: 16,
   },
   footer: {
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
@@ -238,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -248,10 +250,10 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   signInHighlight: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '700',
   },
 });
