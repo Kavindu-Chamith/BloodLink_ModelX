@@ -15,6 +15,10 @@ export interface AlertRequestItem {
   address?: string;
   contactNumber?: string;
   patientCase?: string;
+  department?: string;
+  verifiedInstitution?: boolean;
+  acceptedDonors?: number;
+  priority?: string;
 }
 
 export type MissionStepStatus = 'completed' | 'in_progress' | 'upcoming';

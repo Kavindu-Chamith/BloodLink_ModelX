@@ -277,6 +277,9 @@ export async function getRequestsPageData(req: AuthRequest, res: Response, next:
          o.address,
          o.contact_phone,
          o.branch_name,
+         o.verification_status,
+         (SELECT COUNT(*)::integer FROM notifications accepted
+          WHERE accepted.request_id = r.id AND accepted.response_status = 'accepted') AS accepted_donors,
          o.latitude AS org_lat,
          o.longitude AS org_lng,
          EXISTS(
@@ -340,6 +343,10 @@ export async function getRequestsPageData(req: AuthRequest, res: Response, next:
           address: row.address || "Main Hospital Road, Ratnapura, Sri Lanka",
           contactNumber: row.contact_phone || "+94 45 222 2261",
           patientCase,
+          department: row.branch_name || null,
+          verifiedInstitution: row.verification_status === 'approved',
+          acceptedDonors: row.accepted_donors,
+          priority: row.priority,
         };
       });
 
