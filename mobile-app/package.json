@@ -28,11 +28,13 @@
     "web": "expo start --web",
     "type-check": "tsc --noEmit",
     "lint": "echo \"No linter specified yet\"",
-    "test": "node --test tests/phone.test.cjs tests/birth-date.test.cjs tests/registration.test.cjs tests/requests.test.cjs",
+    "test": "node --test tests/phone.test.cjs tests/birth-date.test.cjs tests/registration.test.cjs tests/requests.test.cjs tests/theme.test.cjs",
     "test:phone": "node --test tests/phone.test.cjs",
     "test:birth-date": "node --test tests/birth-date.test.cjs",
     "test:registration": "node --test tests/registration.test.cjs",
-    "test:requests": "node --test tests/requests.test.cjs"
+    "test:requests": "node --test tests/requests.test.cjs",
+    "test:browser": "node tests/donor-pages-browser.cjs",
+    "test:theme": "node --test tests/theme.test.cjs"
   },
   "private": true
 }
