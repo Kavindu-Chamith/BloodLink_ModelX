@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { AppColors } from '../../theme/palette';
 // src/requests/components/RequestsTabs.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
@@ -16,12 +18,13 @@ export const RequestsTabs: React.FC<RequestsTabsProps> = ({
   alertsCount = 3,
   activeCount = 1,
 }) => {
+  const { styles } = useThemedStyles(createStyles);
   const isAlertsActive = activeTab === 'alerts';
   const isActiveMissionActive = activeTab === 'active';
 
   return (
     <View style={styles.outerContainer}>
-      <View style={styles.pillContainer}>
+      <View style={styles.pillContainer} accessibilityRole="tablist" accessibilityLabel="Request status">
         {/* New Alerts Tab */}
         <TouchableOpacity
           style={[
@@ -32,6 +35,7 @@ export const RequestsTabs: React.FC<RequestsTabsProps> = ({
           activeOpacity={0.85}
           accessibilityRole="tab"
           accessibilityState={{ selected: isAlertsActive }}
+          aria-selected={isAlertsActive}
           accessibilityLabel={`New Alerts, ${alertsCount} available`}
         >
           <Text
@@ -69,6 +73,7 @@ export const RequestsTabs: React.FC<RequestsTabsProps> = ({
           activeOpacity={0.85}
           accessibilityRole="tab"
           accessibilityState={{ selected: isActiveMissionActive }}
+          aria-selected={isActiveMissionActive}
           accessibilityLabel={`Active requests, ${activeCount} active`}
         >
           <Text
@@ -100,33 +105,34 @@ export const RequestsTabs: React.FC<RequestsTabsProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   outerContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
+    paddingTop: 4,
+    paddingBottom: 14,
+    backgroundColor: c.card,
     alignItems: 'center',
   },
   pillContainer: {
     flexDirection: 'row',
-    backgroundColor: '#EEF2F6',
-    borderRadius: 24,
+    backgroundColor: c.surface,
+    borderRadius: 14,
     padding: 4,
     width: '100%',
-    maxWidth: 340,
+    maxWidth: 270,
   },
-  tabButton: {
+  tabButton: { minHeight: 44,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
+    paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 20,
+    borderRadius: 10,
     gap: 6,
   },
   activeTabButton: {
-    backgroundColor: '#BA1328', // Deep crimson red matching screenshot
+    backgroundColor: c.action, // Deep crimson red matching screenshot
     shadowColor: '#BA1328',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -137,14 +143,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '500',
   },
   activeTabText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
   },
   inactiveTabText: {
-    color: '#475569',
+    color: c.textSecondary,
   },
   countBadge: {
     minWidth: 20,
@@ -158,16 +164,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
   },
   inactiveCountBadge: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: c.surface,
   },
   countText: {
     fontSize: 11,
     fontWeight: '700',
   },
   activeCountText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
   },
   inactiveCountText: {
-    color: '#334155',
+    color: c.textSecondary,
   },
 });

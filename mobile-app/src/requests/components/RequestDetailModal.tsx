@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { AppColors } from '../../theme/palette';
 // src/requests/components/RequestDetailModal.tsx
 import React from 'react';
 import {
@@ -24,6 +26,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   onClose,
   onRespond,
 }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   if (!request) return null;
 
   const isUrgent = request.isUrgent || request.type === 'urgent';
@@ -52,7 +55,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Ionicons name="close" size={20} color="#64748B" />
+              <Ionicons name="close" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -66,7 +69,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryLabel}>BLOOD GROUP</Text>
                 <View style={styles.bloodRow}>
-                  <Ionicons name="water" size={16} color="#BA1328" />
+                  <Ionicons name="water" size={16} color={colors.primary} />
                   <Text style={styles.bloodValue}>{request.bloodGroup}</Text>
                 </View>
               </View>
@@ -91,18 +94,18 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
             {/* Location & Contact Info */}
             <View style={styles.infoRow}>
-              <Ionicons name="location-outline" size={18} color="#64748B" style={styles.infoIcon} />
+              <Ionicons name="location-outline" size={18} color={colors.textMuted} style={styles.infoIcon} />
               <Text style={styles.infoText}>{request.address || 'Central District Hospital, Sri Lanka'}</Text>
             </View>
 
             <View style={styles.infoRow}>
-              <Ionicons name="call-outline" size={18} color="#64748B" style={styles.infoIcon} />
+              <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.infoIcon} />
               <Text style={styles.infoText}>{request.contactNumber || '+94 45 222 2261'}</Text>
             </View>
 
             {/* Eligibility Note */}
             <View style={styles.eligibilityCard}>
-              <Feather name="check-circle" size={16} color="#059669" />
+              <Feather name="check-circle" size={16} color={colors.success} />
               <Text style={styles.eligibilityText}>
                 Your profile matches this request. You are eligible to donate.
               </Text>
@@ -118,7 +121,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               accessibilityRole="button"
             >
               <Text style={styles.respondButtonText}>Confirm &amp; Go En Route</Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={styles.arrowIcon} />
+              <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} style={styles.arrowIcon} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -136,14 +139,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: c.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -165,10 +168,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   urgentBadge: {
-    backgroundColor: '#FEECEF',
+    backgroundColor: c.primarySoft,
   },
   standardBadge: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
   },
   badgeIcon: {
     marginRight: 5,
@@ -178,39 +181,39 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   urgentBadgeText: {
-    color: '#BA1328',
+    color: c.primary,
   },
   standardBadgeText: {
-    color: '#475569',
+    color: c.textSecondary,
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   hospitalTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     letterSpacing: -0.3,
   },
   timePosted: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: c.textMuted,
     fontWeight: '500',
     marginTop: 2,
     marginBottom: 16,
   },
   summaryCard: {
     flexDirection: 'row',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     marginBottom: 16,
   },
   summaryItem: {
@@ -218,13 +221,13 @@ const styles = StyleSheet.create({
   },
   summaryDivider: {
     width: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.surface,
     marginHorizontal: 12,
   },
   summaryLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#64748B',
+    color: c.textMuted,
     letterSpacing: 0.5,
     marginBottom: 4,
   },
@@ -236,12 +239,12 @@ const styles = StyleSheet.create({
   bloodValue: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
   },
   unitsValue: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
   },
   infoSection: {
     marginBottom: 14,
@@ -249,14 +252,14 @@ const styles = StyleSheet.create({
   infoSectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#475569',
+    color: c.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
   },
   infoSectionBody: {
     fontSize: 13.5,
-    color: '#334155',
+    color: c.textSecondary,
     lineHeight: 20,
     fontWeight: '400',
   },
@@ -271,14 +274,14 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 13,
-    color: '#475569',
+    color: c.textSecondary,
     fontWeight: '500',
     flex: 1,
   },
   eligibilityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: c.successSoft,
     borderRadius: 12,
     padding: 12,
     gap: 8,
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
   },
   eligibilityText: {
     fontSize: 12.5,
-    color: '#065F46',
+    color: c.success,
     fontWeight: '600',
     flex: 1,
   },
@@ -298,7 +301,7 @@ const styles = StyleSheet.create({
   respondButton: {
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#BA1328',
+    backgroundColor: c.action,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -309,7 +312,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   respondButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -319,12 +322,12 @@ const styles = StyleSheet.create({
   cancelButton: {
     height: 42,
     borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButtonText: {
-    color: '#64748B',
+    color: c.textMuted,
     fontSize: 13.5,
     fontWeight: '700',
   },

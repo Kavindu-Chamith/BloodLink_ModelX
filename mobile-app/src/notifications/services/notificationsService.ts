@@ -36,7 +36,6 @@ function buildMock(): AppNotification[] {
                 'Sabaragamuwa GH has an active requirement (4 units needed for emergency trauma ICU). Tap to view and coordinate transfer.',
             createdAt: ago(12),
             isRead: false,
-            requestId: 'req-001',
             distanceKm: 2.4,
             location: 'Ratnapura',
         },

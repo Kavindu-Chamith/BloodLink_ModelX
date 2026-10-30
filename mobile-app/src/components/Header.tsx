@@ -1,7 +1,8 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ArrowLeftIcon } from './Icons';
-import { colors } from '../theme/colors';
 
 interface HeaderProps {
   title?: string;
@@ -10,6 +11,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ title, onBack, showBack = true }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   return (
     <View style={styles.header}>
       {showBack ? (
@@ -19,7 +21,7 @@ export const Header: React.FC<HeaderProps> = ({ title, onBack, showBack = true }
           activeOpacity={0.7}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          <ArrowLeftIcon size={20} color="#1E293B" />
+          <ArrowLeftIcon size={20} color={colors.text} />
         </TouchableOpacity>
       ) : (
         <View style={styles.placeholder} />
@@ -32,33 +34,33 @@ export const Header: React.FC<HeaderProps> = ({ title, onBack, showBack = true }
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   header: {
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   title: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0F172A',
+    color: c.text,
     textAlign: 'center',
     letterSpacing: -0.2,
   },
   placeholder: {
-    width: 38,
+    width: 44,
   },
 });

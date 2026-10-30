@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { AppColors } from '../../theme/palette';
 // src/requests/components/AlertRequestCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
@@ -10,6 +12,7 @@ interface AlertRequestCardProps {
 }
 
 export const AlertRequestCard: React.FC<AlertRequestCardProps> = ({ item, onPress }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   const isUrgent = item.isUrgent || item.type === 'urgent';
   const isScheduled = item.type === 'scheduled';
 
@@ -19,9 +22,9 @@ export const AlertRequestCard: React.FC<AlertRequestCardProps> = ({ item, onPres
       <View style={styles.topRow}>
         <View style={[styles.tagPill, isUrgent ? styles.urgentTagPill : styles.standardTagPill]}>
           {isUrgent ? (
-            <Ionicons name="alarm-outline" size={13} color="#C5162E" style={styles.tagIcon} />
+            <Ionicons name="alarm-outline" size={13} color={colors.primary} style={styles.tagIcon} />
           ) : (
-            <Feather name="navigation" size={12} color="#64748B" style={styles.tagIcon} />
+            <Feather name="navigation" size={12} color={colors.textMuted} style={styles.tagIcon} />
           )}
           <Text style={[styles.tagText, isUrgent ? styles.urgentTagText : styles.standardTagText]}>
             {isUrgent ? `Urgent · ${item.distance}` : item.distance}
@@ -32,16 +35,16 @@ export const AlertRequestCard: React.FC<AlertRequestCardProps> = ({ item, onPres
       </View>
 
       {/* Hospital Name */}
-      <Text style={styles.hospitalName} numberOfLines={1}>
+      <Text style={styles.hospitalName}>
         {item.hospitalName}
       </Text>
 
       {/* Requirement Details Row */}
       <View style={styles.requirementRow}>
         {isScheduled ? (
-          <Ionicons name="calendar-outline" size={15} color="#C5162E" style={styles.reqIcon} />
+          <Ionicons name="calendar-outline" size={15} color={colors.primary} style={styles.reqIcon} />
         ) : (
-          <Ionicons name="water-outline" size={15} color="#C5162E" style={styles.reqIcon} />
+          <Ionicons name="water-outline" size={15} color={colors.primary} style={styles.reqIcon} />
         )}
         <Text style={styles.requirementText}>
           {item.requirementLabel || `${item.bloodGroup} · ${item.unitsNeeded} ${item.unitsNeeded === 1 ? 'Unit' : 'Units'} needed`}
@@ -58,7 +61,7 @@ export const AlertRequestCard: React.FC<AlertRequestCardProps> = ({ item, onPres
           accessibilityLabel={`View details and respond to ${item.hospitalName}`}
         >
           <Text style={styles.urgentActionText}>View Details & Respond</Text>
-          <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={styles.actionArrow} />
+          <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} style={styles.actionArrow} />
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
@@ -69,21 +72,21 @@ export const AlertRequestCard: React.FC<AlertRequestCardProps> = ({ item, onPres
           accessibilityLabel={`View details for ${item.hospitalName}`}
         >
           <Text style={styles.standardActionText}>View Details</Text>
-          <Ionicons name="chevron-forward" size={15} color="#475569" style={styles.actionChevron} />
+          <Ionicons name="chevron-forward" size={15} color={colors.textSecondary} style={styles.actionChevron} />
         </TouchableOpacity>
       )}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 18,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#EBF0F5',
+    borderColor: c.border,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -104,10 +107,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   urgentTagPill: {
-    backgroundColor: '#FEECEF',
+    backgroundColor: c.primarySoft,
   },
   standardTagPill: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
   },
   tagIcon: {
     marginRight: 5,
@@ -117,22 +120,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   urgentTagText: {
-    color: '#BA1328',
+    color: c.primary,
   },
   standardTagText: {
-    color: '#475569',
+    color: c.textSecondary,
   },
   timeAgoText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#94A3B8',
+    color: c.textMuted,
   },
   hospitalName: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '600',
+    color: c.text,
     letterSpacing: -0.2,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   requirementRow: {
     flexDirection: 'row',
@@ -142,15 +146,16 @@ const styles = StyleSheet.create({
   reqIcon: {
     marginRight: 6,
   },
-  requirementText: {
-    fontSize: 13.5,
+  requirementText: { lineHeight: 19,
+    flexShrink: 1,
+    fontSize: 13,
     fontWeight: '500',
-    color: '#334155',
+    color: c.textSecondary,
   },
   urgentActionButton: {
-    backgroundColor: '#BA1328', // Crimson red
+    backgroundColor: c.action, // Crimson red
     height: 46,
-    borderRadius: 14,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -161,27 +166,27 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   urgentActionText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    color: c.onPrimary,
+    fontSize: 13,
+    fontWeight: '500',
   },
   actionArrow: {
     marginLeft: 6,
   },
   standardActionButton: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    height: 44,
-    borderRadius: 14,
+    borderColor: c.border,
+    height: 46,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   standardActionText: {
-    color: '#334155',
-    fontSize: 13.5,
-    fontWeight: '700',
+    color: c.textSecondary,
+    fontSize: 13,
+    fontWeight: '500',
   },
   actionChevron: {
     marginLeft: 4,

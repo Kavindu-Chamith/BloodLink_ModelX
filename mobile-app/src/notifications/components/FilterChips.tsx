@@ -21,6 +21,7 @@ export default function FilterChips({ filters, selected, onSelect }: Props) {
 
     return (
         <ScrollView
+            testID="notification-filters"
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.row}
@@ -35,6 +36,7 @@ export default function FilterChips({ filters, selected, onSelect }: Props) {
                         style={[styles.chip, active && styles.chipActive]}
                         accessibilityRole="button"
                         accessibilityState={{ selected: active }}
+                        aria-pressed={active}
                     >
                         <Text style={[styles.text, active && styles.textActive]}>
                             {f.label} ({f.count})
@@ -48,15 +50,15 @@ export default function FilterChips({ filters, selected, onSelect }: Props) {
 
 const createStyles = (c: ColorPalette) =>
     StyleSheet.create({
-        scroll: { flexGrow: 0 },
+        scroll: { flexGrow: 0, flexShrink: 0, height: 44, minHeight: 44 },
         row: { paddingHorizontal: 20, gap: 10 },
-        chip: {
-            paddingHorizontal: 18,
-            paddingVertical: 10,
+        chip: { minHeight: 44, justifyContent: 'center',
+            paddingHorizontal: 12,
+            paddingVertical: 8,
             borderRadius: radius.pill,
             backgroundColor: c.infoSoft,
         },
-        chipActive: { backgroundColor: c.primary },
-        text: { fontSize: 15, fontWeight: '700', color: c.text },
+        chipActive: { backgroundColor: c.action },
+        text: { fontSize: 12, fontWeight: '500', color: c.text },
         textActive: { color: c.onPrimary },
     });

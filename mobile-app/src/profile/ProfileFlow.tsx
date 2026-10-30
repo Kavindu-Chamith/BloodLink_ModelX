@@ -7,7 +7,7 @@ import { DonorTab } from '../components/DonorBottomNav';
 import { useProfile } from './hooks/useProfile';
 import EditProfileScreen from './screens/EditProfileScreen';
 import ProfileScreen from './screens/ProfileScreen';
-import { ThemeProvider, useTheme } from './theme';
+import { useTheme } from './theme';
 
 interface Props {
     onBack: () => void;
@@ -47,9 +47,5 @@ function Inner({ onBack, onNavigateTab, onSignOut }: Props) {
 }
 
 export default function ProfileFlow(props: Props) {
-    return (
-        <ThemeProvider>
-            <Inner {...props} />
-        </ThemeProvider>
-    );
+    return <Inner {...props} />;
 }

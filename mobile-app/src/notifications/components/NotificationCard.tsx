@@ -34,16 +34,11 @@ export default function NotificationCard({
     const iconColor = cfg.tone === 'primary' ? colors.primary : cfg.tone === 'info' ? colors.text : colors.textMuted;
 
     return (
-        <Pressable
-            onPress={() => onPress(n)}
-            style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]}
-            accessibilityRole="button"
-            accessibilityLabel={`${n.isRead ? '' : 'Unread. '}${n.title}`}
-        >
+        <View style={styles.card}>
             {/* Header: icon + label/time + title + subtitle */}
-            <View style={styles.headerRow}>
+            <Pressable onPress={() => onPress(n)} style={styles.headerRow} accessibilityRole="button" accessibilityLabel={`${n.isRead ? '' : 'Unread. '}${n.title}`}>
                 <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
-                    <MaterialCommunityIcons name={cfg.icon} size={24} color={iconColor} />
+                    <MaterialCommunityIcons name={cfg.icon} size={19} color={iconColor} />
                 </View>
 
                 <View style={styles.headerText}>
@@ -75,7 +70,7 @@ export default function NotificationCard({
                         </Text>
                     ) : null}
                 </View>
-            </View>
+            </Pressable>
 
             {/* Body */}
             {n.kind === 'community_impact' ? (
@@ -202,7 +197,7 @@ export default function NotificationCard({
                     </Pressable>
                 </View>
             )}
-        </Pressable>
+        </View>
     );
 }
 
@@ -213,15 +208,15 @@ const createStyles = (c: ColorPalette) =>
             borderRadius: radius.lg,
             borderWidth: 1,
             borderColor: c.border,
-            padding: 18,
+            padding: 14,
         },
-        headerRow: { flexDirection: 'row', marginBottom: 12 },
-        iconCircle: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-        headerText: { flex: 1, marginLeft: 14 },
+        headerRow: { flexDirection: 'row', marginBottom: 10 },
+        iconCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+        headerText: { flex: 1, marginLeft: 10 },
         labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
         dotLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-        dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary },
-        labelText: { fontSize: 14, fontWeight: '800', color: c.primary },
+        dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: c.action },
+        labelText: { fontSize: 11, fontWeight: '600', color: c.primary },
         pill: {
             flexDirection: 'row',
             alignItems: 'center',
@@ -231,34 +226,34 @@ const createStyles = (c: ColorPalette) =>
             paddingHorizontal: 10,
             paddingVertical: 4,
         },
-        pillText: { fontSize: 14, fontWeight: '700', color: c.primary },
-        time: { fontSize: 13, color: c.textMuted, fontWeight: '600' },
-        title: { fontSize: 19, fontWeight: '800', color: c.text },
-        subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2 },
-        body: { fontSize: 16, lineHeight: 24, color: c.textMuted },
-        bodyBold: { fontSize: 16, lineHeight: 24, color: c.text, fontWeight: '600' },
-        footerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 10 },
+        pillText: { fontSize: 10, fontWeight: '500', color: c.textMuted },
+        time: { fontSize: 11, color: c.textMuted, fontWeight: '500' },
+        title: { fontSize: 15, lineHeight: 21, fontWeight: '600', color: c.text },
+        subtitle: { lineHeight: 18, fontSize: 12, color: c.textMuted, marginTop: 2 },
+        body: { fontSize: 14, lineHeight: 22, color: c.textMuted },
+        bodyBold: { fontSize: 14, lineHeight: 22, color: c.text, fontWeight: '500' },
+        footerRow: { flexWrap: 'wrap', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 10 },
         distance: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-        distanceText: { fontSize: 14, color: c.textMuted, fontWeight: '600', flexShrink: 1 },
-        eligibleText: { fontSize: 14, color: c.primary, fontWeight: '700' },
-        primaryButton: {
+        distanceText: { fontSize: 12, color: c.textMuted, fontWeight: '500', flexShrink: 1 },
+        eligibleText: { fontSize: 12, color: c.primary, fontWeight: '500' },
+        primaryButton: { minHeight: 44, justifyContent: 'center',
             flexDirection: 'row',
             alignItems: 'center',
             gap: 6,
-            backgroundColor: c.primary,
+            backgroundColor: c.action,
             borderRadius: radius.md,
-            paddingHorizontal: 18,
-            paddingVertical: 12,
+            paddingHorizontal: 10,
+            paddingVertical: 9,
         },
-        primaryButtonText: { color: c.onPrimary, fontWeight: '700', fontSize: 15 },
-        linkButton: { flexDirection: 'row', alignItems: 'center' },
-        linkText: { color: c.primary, fontWeight: '700', fontSize: 14 },
-        infoBox: { backgroundColor: c.infoSoft, borderRadius: radius.md, padding: 14, marginTop: 4, marginBottom: 12 },
+        primaryButtonText: { color: c.onPrimary, fontWeight: '600', fontSize: 12 },
+        linkButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center' },
+        linkText: { color: c.primary, fontWeight: '500', fontSize: 12 },
+        infoBox: { backgroundColor: c.infoSoft, borderRadius: radius.md, padding: 10, marginTop: 4, marginBottom: 10 },
         infoTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-        infoTitle: { fontSize: 16, fontWeight: '800', color: c.text },
-        marker: { fontSize: 15, color: c.textMuted, marginTop: 4 },
+        infoTitle: { fontSize: 12, fontWeight: '600', color: c.text },
+        marker: { lineHeight: 19, fontSize: 13, color: c.textMuted, marginTop: 4 },
         markerValue: { color: c.text, fontWeight: '600' },
-        quote: { flex: 1, fontSize: 16, lineHeight: 24, color: c.text },
+        quote: { flex: 1, fontSize: 13, lineHeight: 21, color: c.text },
         buttonRow: { flexDirection: 'row', gap: 12 },
         secondaryButton: {
             flex: 1,
@@ -268,18 +263,18 @@ const createStyles = (c: ColorPalette) =>
             gap: 8,
             backgroundColor: c.infoSoft,
             borderRadius: radius.md,
-            height: 52,
+            height: 44,
         },
-        secondaryButtonText: { fontWeight: '700', fontSize: 15, color: c.text },
+        secondaryButtonText: { fontWeight: '500', fontSize: 12, color: c.text },
         primaryButtonWide: {
             flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
-            backgroundColor: c.primary,
+            backgroundColor: c.action,
             borderRadius: radius.md,
-            height: 52,
+            height: 44,
         },
         honorBox: {
             flexDirection: 'row',
@@ -290,9 +285,9 @@ const createStyles = (c: ColorPalette) =>
             padding: 12,
             marginTop: 14,
         },
-        honorIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
-        honorTitle: { fontSize: 15, fontWeight: '800', color: c.text },
-        honorSub: { fontSize: 13, color: c.textMuted, marginTop: 2 },
-        shareButton: { backgroundColor: c.card, borderRadius: radius.md, paddingHorizontal: 16, paddingVertical: 10 },
-        shareText: { fontWeight: '700', color: c.text, fontSize: 14 },
+        honorIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' },
+        honorTitle: { fontSize: 12, fontWeight: '600', color: c.text },
+        honorSub: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+        shareButton: { minHeight: 44, justifyContent: 'center', backgroundColor: c.card, borderRadius: radius.md, paddingHorizontal: 10, paddingVertical: 8 },
+        shareText: { fontWeight: '500', color: c.text, fontSize: 12 },
     });

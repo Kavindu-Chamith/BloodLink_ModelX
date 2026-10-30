@@ -186,7 +186,7 @@ const createStyles = (c: ColorPalette) =>
             borderWidth: 1,
             borderColor: c.border,
         },
-        chipSelected: { backgroundColor: c.primary, borderColor: c.primary },
+        chipSelected: { backgroundColor: c.action, borderColor: c.primary },
         chipText: { color: c.text, fontSize: 13, fontWeight: '600' },
         chipTextSelected: { color: c.onPrimary },
         readonly: {
@@ -206,7 +206,7 @@ const createStyles = (c: ColorPalette) =>
             marginTop: 28,
             height: 54,
             borderRadius: radius.md,
-            backgroundColor: c.primary,
+            backgroundColor: c.action,
             alignItems: 'center',
             justifyContent: 'center',
         },

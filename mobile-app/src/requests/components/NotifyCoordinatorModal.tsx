@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { AppColors } from '../../theme/palette';
 // src/requests/components/NotifyCoordinatorModal.tsx
 import React, { useState } from 'react';
 import {
@@ -7,10 +9,13 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  TouchableWithoutFeedback,
-  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface NotifyCoordinatorModalProps {
   visible: boolean;
@@ -36,6 +41,7 @@ export const NotifyCoordinatorModal: React.FC<NotifyCoordinatorModalProps> = ({
   onSubmit,
   onCall,
 }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   const [selectedReason, setSelectedReason] = useState<string>(PRESET_REASONS[0]);
   const [customNote, setCustomNote] = useState('');
 
@@ -47,12 +53,13 @@ export const NotifyCoordinatorModal: React.FC<NotifyCoordinatorModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="Dismiss coordinator dialog" />
+          <SafeAreaView style={styles.modalContent} edges={['bottom', 'left', 'right']} accessibilityViewIsModal>
+            <ScrollView style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             {/* Header */}
             <View style={styles.headerRow}>
-              <View>
+              <View style={{ flex: 1, paddingRight: 12 }}>
                 <Text style={styles.title}>Notify Coordinator</Text>
                 <Text style={styles.subtitle}>{coordinatorName} ({coordinatorPhone})</Text>
               </View>
@@ -62,13 +69,13 @@ export const NotifyCoordinatorModal: React.FC<NotifyCoordinatorModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Close"
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
             {/* Quick Reason Options */}
             <Text style={styles.sectionLabel}>Select Status / Reason:</Text>
-            <View style={styles.reasonsList}>
+            <View style={styles.reasonsList} accessibilityRole="radiogroup" accessibilityLabel="Coordinator update reason">
               {PRESET_REASONS.map((reason) => {
                 const isSelected = selectedReason === reason;
                 return (
@@ -77,6 +84,9 @@ export const NotifyCoordinatorModal: React.FC<NotifyCoordinatorModalProps> = ({
                     style={[styles.reasonItem, isSelected && styles.reasonItemSelected]}
                     onPress={() => setSelectedReason(reason)}
                     activeOpacity={0.7}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: isSelected }}
+                    aria-checked={isSelected}
                   >
                     <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
                       {isSelected && <View style={styles.radioInnerDot} />}
@@ -93,10 +103,11 @@ export const NotifyCoordinatorModal: React.FC<NotifyCoordinatorModalProps> = ({
             <TextInput
               style={styles.textInput}
               placeholder="Optional message to hospital team..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               value={customNote}
               onChangeText={setCustomNote}
               maxLength={150}
+              accessibilityLabel="Coordinator message"
             />
 
             {/* Actions */}
@@ -107,7 +118,7 @@ export const NotifyCoordinatorModal: React.FC<NotifyCoordinatorModalProps> = ({
                 activeOpacity={0.8}
                 accessibilityRole="button"
               >
-                <Ionicons name="call" size={16} color="#BA1328" />
+                <Ionicons name="call" size={16} color={colors.primary} />
                 <Text style={styles.callButtonText}>Call Direct</Text>
               </TouchableOpacity>
 
@@ -120,21 +131,22 @@ export const NotifyCoordinatorModal: React.FC<NotifyCoordinatorModalProps> = ({
                 <Text style={styles.sendButtonText}>Send Update</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </TouchableWithoutFeedback>
+            </ScrollView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
     </Modal>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: c.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    maxHeight: '90%',
+    backgroundColor: c.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -150,26 +162,26 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 19,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     marginTop: 2,
     fontWeight: '500',
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#475569',
+    color: c.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 10,
@@ -183,52 +195,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
   },
   reasonItemSelected: {
-    borderColor: '#BA1328',
-    backgroundColor: '#FFF1F2',
+    borderColor: c.primary,
+    backgroundColor: c.primarySoft,
   },
   radioCircle: {
     width: 18,
     height: 18,
     borderRadius: 9,
     borderWidth: 1.5,
-    borderColor: '#94A3B8',
+    borderColor: c.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   radioCircleSelected: {
-    borderColor: '#BA1328',
+    borderColor: c.primary,
   },
   radioInnerDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#BA1328',
+    backgroundColor: c.action,
   },
   reasonText: {
     fontSize: 13.5,
-    color: '#334155',
+    color: c.textSecondary,
     fontWeight: '500',
     flex: 1,
   },
   reasonTextSelected: {
-    color: '#BA1328',
+    color: c.primary,
     fontWeight: '700',
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: c.border,
+    backgroundColor: c.background,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 13.5,
-    color: '#0F172A',
+    color: c.text,
     marginBottom: 18,
   },
   actionsRow: {
@@ -239,7 +251,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FEECEF',
+    backgroundColor: c.primarySoft,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -248,13 +260,13 @@ const styles = StyleSheet.create({
   callButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#BA1328',
+    color: c.primary,
   },
   sendButton: {
     flex: 1.4,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#BA1328',
+    backgroundColor: c.action,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#BA1328',
@@ -264,7 +276,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   sendButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 14,
     fontWeight: '700',
   },

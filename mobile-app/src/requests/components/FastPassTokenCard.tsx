@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { AppColors } from '../../theme/palette';
 // src/requests/components/FastPassTokenCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
@@ -7,11 +9,13 @@ interface FastPassTokenCardProps {
   token?: string;
 }
 
-export const FastPassTokenCard: React.FC<FastPassTokenCardProps> = ({ token = '#BL - 8921' }) => {
+export const FastPassTokenCard: React.FC<FastPassTokenCardProps> = ({ token }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
+  if (!token) return null;
   const handlePress = () => {
     Alert.alert(
       'Fast-Pass Token',
-      `Your token ${token} is active. Hospital staff can scan your QR code for rapid expedited check-in at triage.`,
+      `Show your token ${token} to the hospital triage team when you arrive.`,
       [{ text: 'Close' }]
     );
   };
@@ -25,7 +29,7 @@ export const FastPassTokenCard: React.FC<FastPassTokenCardProps> = ({ token = '#
       accessibilityLabel={`Fast-pass token ${token}`}
     >
       <View style={styles.qrContainer}>
-        <Ionicons name="qr-code-outline" size={26} color="#334155" />
+        <Ionicons name="qr-code-outline" size={26} color={colors.textSecondary} />
       </View>
 
       <View style={styles.textContainer}>
@@ -37,14 +41,14 @@ export const FastPassTokenCard: React.FC<FastPassTokenCardProps> = ({ token = '#
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 18,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#EBF0F5',
+    borderColor: c.border,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#0F172A',
@@ -57,7 +61,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -68,19 +72,19 @@ const styles = StyleSheet.create({
   tokenLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#64748B',
+    color: c.textMuted,
     letterSpacing: 0.5,
   },
   tokenCode: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     letterSpacing: 0.4,
     marginVertical: 2,
   },
   tokenHint: {
     fontSize: 12.5,
-    color: '#64748B',
+    color: c.textMuted,
     fontWeight: '500',
   },
 });

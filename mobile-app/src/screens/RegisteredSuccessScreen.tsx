@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React from 'react';
 import {
   View,
@@ -10,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckIcon, WaterDropIcon, AlertBellIcon } from '../components/Icons';
-import { colors } from '../theme/colors';
+
 import { useAuth } from '../context/AuthContext';
 
 interface RegisteredSuccessScreenProps {
@@ -24,11 +26,12 @@ export const RegisteredSuccessScreen: React.FC<RegisteredSuccessScreenProps> = (
   bloodGroup = 'AB-',
   isNewAccount = true,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const { user } = useAuth();
   const hasDocument = user?.verificationStatus === 'pending';
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
 
       {/* Top Brand Header */}
       <View style={styles.header}>
@@ -50,7 +53,7 @@ export const RegisteredSuccessScreen: React.FC<RegisteredSuccessScreenProps> = (
         {/* Status Badge Visual with overlapping blood group */}
         <View style={styles.visualContainer}>
           <View style={styles.successSquircle}>
-            <CheckIcon size={32} color="#10B981" strokeWidth={3.4} />
+            <CheckIcon size={32} color={colors.success} strokeWidth={3.4} />
           </View>
 
           {/* Floating Blood Group Chip */}
@@ -81,7 +84,7 @@ export const RegisteredSuccessScreen: React.FC<RegisteredSuccessScreenProps> = (
             {/* Card 1: Stay Hydrated */}
             <View style={styles.tipCard}>
               <View style={styles.tipIconWrapBlue}>
-                <WaterDropIcon size={18} color="#2563EB" />
+                <WaterDropIcon size={18} color={colors.info} />
               </View>
               <Text style={styles.tipTitle}>Stay Hydrated</Text>
               <Text style={styles.tipDesc}>Drink +500ml water before match calls</Text>
@@ -90,7 +93,7 @@ export const RegisteredSuccessScreen: React.FC<RegisteredSuccessScreenProps> = (
             {/* Card 2: Alerts On */}
             <View style={styles.tipCard}>
               <View style={styles.tipIconWrapRed}>
-                <AlertBellIcon size={18} color="#EF4444" />
+                <AlertBellIcon size={18} color={colors.primary} />
               </View>
               <Text style={styles.tipTitle}>Alerts On</Text>
               <Text style={styles.tipDesc}>Receive urgent hospital SOS alerts</Text>
@@ -113,10 +116,10 @@ export const RegisteredSuccessScreen: React.FC<RegisteredSuccessScreenProps> = (
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   header: {
     paddingHorizontal: 24,
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
   brandName: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     letterSpacing: -0.3,
   },
   scroll: {
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 26,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: c.successSoft,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -169,9 +172,9 @@ const styles = StyleSheet.create({
     minWidth: 32,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderWidth: 1.5,
-    borderColor: '#F87171',
+    borderColor: c.border,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -183,19 +186,19 @@ const styles = StyleSheet.create({
   bloodChipText: {
     fontSize: 11,
     fontWeight: '800',
-    color: colors.primary,
+    color: c.primary,
   },
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     textAlign: 'center',
     marginBottom: 8,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 19,
     paddingHorizontal: 10,
@@ -203,9 +206,9 @@ const styles = StyleSheet.create({
   },
   pendingCard: {
     width: '100%',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: c.warningSoft,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: c.border,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -213,12 +216,12 @@ const styles = StyleSheet.create({
   pendingTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#B45309',
+    color: c.warning,
     marginBottom: 4,
   },
   pendingBody: {
     fontSize: 12,
-    color: '#92400E',
+    color: c.warning,
     lineHeight: 18,
   },
   whileYouWaitSection: {
@@ -227,7 +230,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#64748B',
+    color: c.textMuted,
     letterSpacing: 0.5,
     marginBottom: 12,
   },
@@ -237,9 +240,9 @@ const styles = StyleSheet.create({
   },
   tipCard: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: c.border,
     borderRadius: 14,
     padding: 14,
   },
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: c.infoSoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -256,7 +259,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: c.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -264,12 +267,12 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: c.text,
     marginBottom: 4,
   },
   tipDesc: {
     fontSize: 11,
-    color: '#64748B',
+    color: c.textMuted,
     lineHeight: 15,
   },
   footer: {
@@ -278,14 +281,14 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },

@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import {
   View,
@@ -19,7 +21,7 @@ import {
   CheckIcon,
 } from '../components/Icons';
 import { PasswordRecoverySteps } from '../components/PasswordRecoverySteps';
-import { colors } from '../theme/colors';
+
 import { resetPassword as apiResetPassword } from '../services/authService';
 
 interface ResetPasswordStep3ScreenProps {
@@ -37,6 +39,7 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
   email = '',
   resetToken,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -78,7 +81,7 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
       <Header title="New Password" onBack={onBack} />
 
       <KeyboardAvoidingView
@@ -107,12 +110,12 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
             <Text style={styles.label}>New Password</Text>
             <View style={styles.inputRow}>
               <View style={styles.inputLeftIcon}>
-                <LockIcon size={18} color="#94A3B8" />
+                <LockIcon size={18} color={colors.textMuted} />
               </View>
               <TextInput
                 style={styles.textInput}
                 placeholder="Enter new password"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
@@ -122,9 +125,9 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 {showPassword ? (
-                  <EyeOffIcon size={20} color="#94A3B8" />
+                  <EyeOffIcon size={20} color={colors.textMuted} />
                 ) : (
-                  <EyeIcon size={20} color="#94A3B8" />
+                  <EyeIcon size={20} color={colors.textMuted} />
                 )}
               </TouchableOpacity>
             </View>
@@ -157,15 +160,15 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
             >
               <View style={styles.inputLeftIcon}>
                 {isMatch ? (
-                  <CheckIcon size={18} color="#10B981" />
+                  <CheckIcon size={18} color={colors.success} />
                 ) : (
-                  <LockIcon size={18} color="#94A3B8" />
+                  <LockIcon size={18} color={colors.textMuted} />
                 )}
               </View>
               <TextInput
                 style={styles.textInput}
                 placeholder="Confirm password"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 secureTextEntry={!showConfirmPassword}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -175,9 +178,9 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 {showConfirmPassword ? (
-                  <EyeOffIcon size={20} color="#94A3B8" />
+                  <EyeOffIcon size={20} color={colors.textMuted} />
                 ) : (
-                  <EyeIcon size={20} color="#94A3B8" />
+                  <EyeIcon size={20} color={colors.textMuted} />
                 )}
               </TouchableOpacity>
             </View>
@@ -186,19 +189,19 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
           {/* Password Requirements Checklist */}
           <View style={styles.checklistCard}>
             <View style={styles.checkItem}>
-              <CheckIcon size={14} color="#10B981" />
+              <CheckIcon size={14} color={colors.success} />
               <Text style={[styles.checkText, hasMinLength && styles.checkTextDone]}>
                 At least 8 characters
               </Text>
             </View>
             <View style={styles.checkItem}>
-              <CheckIcon size={14} color="#10B981" />
+              <CheckIcon size={14} color={colors.success} />
               <Text style={[styles.checkText, hasUpperAndNumber && styles.checkTextDone]}>
                 Includes uppercase letter & number
               </Text>
             </View>
             <View style={styles.checkItem}>
-              <CheckIcon size={14} color="#10B981" />
+              <CheckIcon size={14} color={colors.success} />
               <Text style={[styles.checkText, hasSpecial && styles.checkTextDone]}>
                 Includes 1 special symbol (@, #, $, etc.)
               </Text>
@@ -206,8 +209,8 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
           </View>
 
           {errorMessage && (
-            <View style={{ backgroundColor: '#FFF1F2', borderRadius: 8, padding: 10, marginVertical: 12 }}>
-              <Text style={{ color: '#E11D48', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
+            <View style={{ backgroundColor: colors.primarySoft, borderRadius: 8, padding: 10, marginVertical: 12 }}>
+              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
                 {errorMessage}
               </Text>
             </View>
@@ -245,10 +248,10 @@ export const ResetPasswordStep3Screen: React.FC<ResetPasswordStep3ScreenProps> =
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
@@ -266,13 +269,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FEECEF',
+    backgroundColor: c.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
   },
   description: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -284,22 +287,22 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 6,
   },
   inputRow: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   inputRowMatched: {
-    borderColor: '#10B981',
-    backgroundColor: '#F0FDF4',
+    borderColor: c.border,
+    backgroundColor: c.successSoft,
   },
   inputLeftIcon: {
     marginRight: 10,
@@ -307,7 +310,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 14,
-    color: '#0F172A',
+    color: c.text,
   },
   strengthRow: {
     flexDirection: 'row',
@@ -327,24 +330,24 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   strengthActive: {
-    backgroundColor: '#10B981',
+    backgroundColor: c.success,
   },
   strengthInactive: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.surface,
   },
   strengthText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#10B981',
+    color: c.success,
   },
   checklistCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderRadius: 14,
     padding: 14,
     gap: 8,
     marginVertical: 6,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: c.border,
   },
   checkItem: {
     flexDirection: 'row',
@@ -353,10 +356,10 @@ const styles = StyleSheet.create({
   },
   checkText: {
     fontSize: 12,
-    color: '#64748B',
+    color: c.textMuted,
   },
   checkTextDone: {
-    color: '#0F172A',
+    color: c.text,
     fontWeight: '600',
   },
   footer: {
@@ -365,7 +368,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
@@ -373,7 +376,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -383,10 +386,10 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   signInHighlight: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '700',
   },
 });
