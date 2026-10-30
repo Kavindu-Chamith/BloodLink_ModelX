@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -62,6 +64,8 @@ interface HomeScreenProps {
   onNavigateToBanks?: () => void;
   onNavigateToHistory?: () => void;
   onNavigateToProfile?: () => void;
+  onNavigateToNotifications?: () => void;
+  onOpenRequest?: (requestId?: string) => void;
   onLogout?: () => void;
 }
 
@@ -73,7 +77,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToBanks,
   onNavigateToHistory,
   onNavigateToProfile,
+  onNavigateToNotifications,
+  onOpenRequest,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [showEmergencyCard, setShowEmergencyCard] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<BloodRequestItem | null>(null);
@@ -139,6 +146,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   const handleRespondToRequest = (item: BloodRequestItem) => {
+    if (onOpenRequest) { onOpenRequest(item.id); return; }
     setSelectedRequest(item);
     setResponseModalVisible(true);
   };
@@ -176,19 +184,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   if (isLoading && !donor && !refreshing) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#B91C1C" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Connecting to BloodLink network...</Text>
         </View>
-        <DonorBottomNav activeTab={activeTab} onSelect={handleTabPress} />
+        <DonorBottomNav activeTab={activeTab} onSelect={handleTabPress} requestsCount={currentDonor.urgentRequestsCount} />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
 
       {/* TOP HEADER */}
       <View style={styles.headerContainer}>
@@ -198,7 +206,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <Text style={styles.userNameText}>{currentDonor.name}</Text>
             {currentDonor.isVerified && (
               <View style={styles.verifiedBadgeContainer}>
-                <Ionicons name="checkmark-circle" size={20} color="#0284C7" />
+                <Ionicons name="checkmark-circle" size={20} color={colors.info} />
               </View>
             )}
           </View>
@@ -210,9 +218,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Notifications, ${currentDonor.unreadNotificationsCount || 0} unread`}
             activeOpacity={0.75}
-            onPress={() => Alert.alert('Notifications', `You have ${currentDonor.unreadNotificationsCount || 0} unread blood request notification(s).`)}
+            onPress={onNavigateToNotifications}
           >
-            <Ionicons name="notifications-outline" size={21} color="#334155" />
+            <Ionicons name="notifications-outline" size={21} color={colors.textSecondary} />
             {(currentDonor.unreadNotificationsCount || 0) > 0 && <View style={styles.notificationDot} />}
           </TouchableOpacity>
 
@@ -238,7 +246,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             refreshing={refreshing}
             onRefresh={() => loadDashboardData(true)}
             colors={['#B91C1C']}
-            tintColor="#B91C1C"
+            tintColor={colors.primary}
           />
         }
       >
@@ -254,7 +262,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <View style={styles.emergencyPillBadge}>
                 <View style={styles.pulsingWhiteDot} />
                 <Text style={styles.emergencyPillText}>EMERGENCY MATCH</Text>
-                <Ionicons name="location-sharp" size={11} color="#FFFFFF" style={styles.pinIcon} />
+                <Ionicons name="location-sharp" size={11} color={colors.onPrimary} style={styles.pinIcon} />
                 <Text style={styles.emergencyPillText}>{emergencyMatch.distance}</Text>
               </View>
 
@@ -281,12 +289,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 style={styles.respondNowButton}
                 accessibilityRole="button"
                 activeOpacity={0.9}
-                onPress={() => setEmergencyModalVisible(true)}
+                onPress={() => onOpenRequest ? onOpenRequest(emergencyMatch.requestId) : setEmergencyModalVisible(true)}
               >
                 <Text style={styles.respondNowButtonText}>
                   {emergencyMatch.status === 'en_route' ? 'En Route' : 'Respond Now'}
                 </Text>
-                <Ionicons name="arrow-forward" size={16} color="#BA1328" style={styles.arrowIcon} />
+                <Ionicons name="arrow-forward" size={16} color={colors.action} style={styles.arrowIcon} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -296,7 +304,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 activeOpacity={0.7}
                 onPress={() => setShowEmergencyCard(false)}
               >
-                <Ionicons name="close" size={20} color="#FFFFFF" />
+                <Ionicons name="close" size={20} color={colors.onPrimary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -307,7 +315,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           {/* Top Eligibility Status */}
           <View style={styles.eligibilityTopRow}>
             <View style={styles.eligibilityLabelRow}>
-              <Ionicons name="checkmark-circle-outline" size={16} color="#10B981" />
+              <Ionicons name="checkmark-circle-outline" size={16} color={colors.success} />
               <Text style={styles.eligibilityLabelText}>DONATION ELIGIBILITY</Text>
             </View>
 
@@ -333,7 +341,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
               {currentDonor.authorityVerified && (
                 <View style={styles.badgeCheckCircle}>
-                  <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                  <Ionicons name="checkmark" size={10} color={colors.onPrimary} />
                 </View>
               )}
             </View>
@@ -347,7 +355,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
 
               <View style={styles.authorityVerifiedRow}>
-                <Ionicons name="checkmark-circle" size={13} color="#10B981" />
+                <Ionicons name="checkmark-circle" size={13} color={colors.success} />
                 <Text style={styles.authorityVerifiedText}>
                   Verified by Health Authority
                 </Text>
@@ -385,7 +393,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.statCardPink}>
             <View style={styles.statCardTopRow}>
               <View style={styles.waterDropIconCircle}>
-                <Ionicons name="water" size={17} color="#E11D48" />
+                <Ionicons name="water" size={17} color={colors.primary} />
               </View>
               <View style={styles.lifesaverBadge}>
                 <Text style={styles.lifesaverBadgeText}>LIFESAVER</Text>
@@ -401,7 +409,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             <View style={styles.statCardBottomRow}>
               <View style={styles.trendRow}>
-                <Feather name="trending-up" size={13} color="#10B981" />
+                <Feather name="trending-up" size={13} color={colors.success} />
                 <Text style={styles.trendText}>+{currentDonor.monthlyGain} this mo</Text>
               </View>
 
@@ -418,7 +426,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.statCardAmber}>
             <View style={styles.statCardTopRow}>
               <View style={styles.warningIconCircle}>
-                <Ionicons name="warning-outline" size={17} color="#D97706" />
+                <Ionicons name="warning-outline" size={17} color={colors.warning} />
               </View>
               <View style={styles.activeLiveBadge}>
                 <View style={styles.amberLiveDot} />
@@ -439,7 +447,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             <View style={styles.statCardBottomRow}>
               <View style={styles.nearYouRow}>
-                <Ionicons name="location-outline" size={13} color="#D97706" />
+                <Ionicons name="location-outline" size={13} color={colors.warning} />
                 <Text style={styles.nearYouText}>Near you (&lt;10km)</Text>
               </View>
 
@@ -463,7 +471,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <View style={styles.requestsListContainer}>
           {requestsList.length === 0 ? (
             <View style={styles.emptyRequestsBox}>
-              <Ionicons name="checkmark-done-circle-outline" size={36} color="#10B981" />
+              <Ionicons name="checkmark-done-circle-outline" size={36} color={colors.success} />
               <Text style={styles.emptyRequestsTitle}>No Active Requests Nearby</Text>
               <Text style={styles.emptyRequestsSubtitle}>
                 All blood requirements in your area are currently fulfilled. Pull down to refresh anytime.
@@ -522,7 +530,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         onPress={() => handleRespondToRequest(item)}
                       >
                         <Text style={styles.respondLinkText}>Respond</Text>
-                        <Ionicons name="chevron-forward" size={14} color="#C5162E" />
+                        <Ionicons name="chevron-forward" size={14} color={colors.primary} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -534,7 +542,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       </ScrollView>
 
-      <DonorBottomNav activeTab={activeTab} onSelect={handleTabPress} />
+      <DonorBottomNav activeTab={activeTab} onSelect={handleTabPress} requestsCount={currentDonor.urgentRequestsCount} />
 
       {/* MODAL: EMERGENCY DONATION CONFIRMATION */}
       <Modal
@@ -555,7 +563,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Close request details"
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -568,15 +576,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             <View style={styles.modalInfoBox}>
               <View style={styles.modalInfoItem}>
-                <Ionicons name="location" size={16} color="#C5162E" />
+                <Ionicons name="location" size={16} color={colors.primary} />
                 <Text style={styles.modalInfoText}>Distance: {emergencyMatch?.distance || 'Nearby'}</Text>
               </View>
               <View style={styles.modalInfoItem}>
-                <Ionicons name="water" size={16} color="#C5162E" />
+                <Ionicons name="water" size={16} color={colors.primary} />
                 <Text style={styles.modalInfoText}>Target Group: {emergencyMatch?.bloodGroup} ({currentDonor.bloodGroup === 'O-' ? 'Universal Donor' : 'Matching Group'})</Text>
               </View>
               <View style={styles.modalInfoItem}>
-                <Ionicons name="shield-checkmark" size={16} color="#10B981" />
+                <Ionicons name="shield-checkmark" size={16} color={colors.success} />
                 <Text style={styles.modalInfoText}>Donor Eligibility: Qualified</Text>
               </View>
             </View>
@@ -639,7 +647,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Close request details"
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -652,11 +660,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             <View style={styles.modalInfoBox}>
               <View style={styles.modalInfoItem}>
-                <Ionicons name="location" size={16} color="#C5162E" />
+                <Ionicons name="location" size={16} color={colors.primary} />
                 <Text style={styles.modalInfoText}>Distance: {selectedRequest?.distance}</Text>
               </View>
               <View style={styles.modalInfoItem}>
-                <Ionicons name="water" size={16} color="#C5162E" />
+                <Ionicons name="water" size={16} color={colors.primary} />
                 <Text style={styles.modalInfoText}>Blood Type: {selectedRequest?.bloodGroup}</Text>
               </View>
             </View>
@@ -687,10 +695,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.background,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -699,14 +707,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   headerLeft: {
     flex: 1,
   },
   welcomeSubtext: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     fontWeight: '500',
   },
   userNameRow: {
@@ -718,7 +726,7 @@ const styles = StyleSheet.create({
   userNameText: {
     fontSize: 21,
     fontWeight: '600',
-    color: '#0F172A',
+    color: c.text,
     letterSpacing: -0.3,
     flexShrink: 1,
   },
@@ -738,8 +746,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1.2,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    borderColor: c.border,
+    backgroundColor: c.card,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -751,27 +759,27 @@ const styles = StyleSheet.create({
     width: 9,
     height: 9,
     borderRadius: 4.5,
-    backgroundColor: '#EF4444',
+    backgroundColor: c.action,
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: c.onPrimary,
   },
   userAvatarBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#B91C1C',
+    backgroundColor: c.action,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitialsText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.background,
   },
   scrollContent: {
     paddingBottom: 24,
@@ -827,7 +835,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.onPrimary,
     marginRight: 6,
   },
   pinIcon: {
@@ -835,7 +843,7 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   emergencyPillText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 10.5,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -850,7 +858,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   bloodTypeNeededText: {
-    color: '#B91C1C',
+    color: c.action,
     fontSize: 20,
     fontWeight: '700',
     letterSpacing: -0.5,
@@ -865,7 +873,7 @@ const styles = StyleSheet.create({
   emergencyHospitalName: {
     fontSize: 21,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     marginTop: 16,
     letterSpacing: -0.3,
     lineHeight: 28,
@@ -879,7 +887,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#FBBF24',
+    backgroundColor: '#FCD34D',
     marginRight: 6,
   },
   emergencyDetailsText: {
@@ -905,7 +913,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   respondNowButtonText: {
-    color: '#B91C1C',
+    color: c.action,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -926,10 +934,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 18,
     marginTop: 14,
     borderRadius: 24,
-    backgroundColor: '#09111E',
+    backgroundColor: c.heroDark,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: '#33445D',
   },
   eligibilityTopRow: {
     flexDirection: 'row',
@@ -944,7 +952,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eligibilityLabelText: {
-    color: '#94A3B8',
+    color: c.heroMuted,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -953,7 +961,7 @@ const styles = StyleSheet.create({
   qualifiedBadge: {
     backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.35)',
+    borderColor: '#275A4A',
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -964,16 +972,16 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10B981',
+    backgroundColor: c.success,
     marginRight: 6,
   },
   qualifiedBadgeText: {
-    color: '#34D399',
+    color: '#6EE7B7',
     fontSize: 10,
     fontWeight: '700',
   },
   eligibleHeading: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 19,
     fontWeight: '600',
     marginTop: 14,
@@ -981,7 +989,7 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   eligibleSubtitle: {
-    color: '#94A3B8',
+    color: c.heroMuted,
     fontSize: 13,
     marginTop: 4,
     lineHeight: 18,
@@ -989,7 +997,7 @@ const styles = StyleSheet.create({
   donorGroupBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: '#33445D',
     borderRadius: 16,
     padding: 12,
     marginTop: 14,
@@ -1003,12 +1011,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FFF1F2',
+    backgroundColor: c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   donorBloodBadgeText: {
-    color: '#E11D48',
+    color: c.primary,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -1019,9 +1027,9 @@ const styles = StyleSheet.create({
     width: 17,
     height: 17,
     borderRadius: 8.5,
-    backgroundColor: '#10B981',
+    backgroundColor: c.successFill,
     borderWidth: 1.5,
-    borderColor: '#09111E',
+    borderColor: c.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1036,19 +1044,19 @@ const styles = StyleSheet.create({
     rowGap: 5,
   },
   donorGroupNameText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 14,
     fontWeight: '600',
   },
   rhPillBadge: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     marginLeft: 8,
   },
   rhPillText: {
-    color: '#C5162E',
+    color: c.primary,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -1058,7 +1066,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   authorityVerifiedText: {
-    color: '#10B981',
+    color: '#6EE7B7',
     fontSize: 11.5,
     fontWeight: '600',
     marginLeft: 4,
@@ -1072,12 +1080,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: '#33445D',
     borderRadius: 12,
     padding: 12,
   },
   dateLabelMuted: {
-    color: '#94A3B8',
+    color: c.heroMuted,
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -1091,11 +1099,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#64748B',
+    backgroundColor: c.surface,
     marginRight: 6,
   },
   dateValueTextWhite: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 13,
     fontWeight: '700',
     flexShrink: 1,
@@ -1104,12 +1112,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(16, 185, 129, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
+    borderColor: '#275A4A',
     borderRadius: 12,
     padding: 12,
   },
   nextDateLabelGreen: {
-    color: '#34D399',
+    color: '#6EE7B7',
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -1118,11 +1126,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10B981',
+    backgroundColor: c.success,
     marginRight: 6,
   },
   nextDateValueGreen: {
-    color: '#34D399',
+    color: '#6EE7B7',
     fontSize: 13,
     fontWeight: '700',
     flexShrink: 1,
@@ -1137,18 +1145,18 @@ const styles = StyleSheet.create({
   },
   statCardPink: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderWidth: 1.2,
-    borderColor: '#FFE4E6',
+    borderColor: c.border,
     borderRadius: 20,
     padding: 12,
     minWidth: 0,
   },
   statCardAmber: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderWidth: 1.2,
-    borderColor: '#FEF08A',
+    borderColor: c.border,
     borderRadius: 20,
     padding: 12,
     minWidth: 0,
@@ -1164,18 +1172,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FFE4E6',
+    backgroundColor: c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   lifesaverBadge: {
-    backgroundColor: '#FFE4E6',
+    backgroundColor: c.primarySoft,
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 8,
   },
   lifesaverBadgeText: {
-    color: '#BE123C',
+    color: c.primary,
     fontSize: 9.5,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -1184,12 +1192,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: c.warningSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   activeLiveBadge: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: c.warningSoft,
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 8,
@@ -1200,11 +1208,11 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#D97706',
+    backgroundColor: c.warning,
     marginRight: 4,
   },
   activeLiveBadgeText: {
-    color: '#B45309',
+    color: c.warning,
     fontSize: 9.5,
     fontWeight: '700',
   },
@@ -1216,25 +1224,25 @@ const styles = StyleSheet.create({
   metricNumberLarge: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0F172A',
+    color: c.text,
     lineHeight: 32,
   },
   metricUnitsMuted: {
     fontSize: 12,
-    color: '#64748B',
+    color: c.textMuted,
     marginLeft: 4,
     marginBottom: 3,
     fontWeight: '500',
   },
   metricMatchedAmber: {
     fontSize: 12,
-    color: '#92400E',
+    color: c.warning,
     marginLeft: 4,
     marginBottom: 3,
     fontWeight: '700',
   },
   statCardTitle: {
-    color: '#0F172A',
+    color: c.text,
     fontSize: 13.5,
     fontWeight: '700',
     marginTop: 2,
@@ -1252,7 +1260,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   trendText: {
-    color: '#087B52',
+    color: c.success,
     fontSize: 11,
     fontWeight: '700',
     marginLeft: 3,
@@ -1268,17 +1276,17 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   carouselDotActive: {
-    backgroundColor: '#E11D48',
+    backgroundColor: c.action,
   },
   carouselDotInactive: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: c.surface,
   },
   nearYouRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   nearYouText: {
-    color: '#92400E',
+    color: c.warning,
     fontSize: 10.5,
     fontWeight: '700',
     marginLeft: 2,
@@ -1287,7 +1295,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#F59E0B',
+    backgroundColor: c.warning,
   },
 
   /* 4. ACTIVE BLOOD REQUESTS SECTION */
@@ -1303,7 +1311,7 @@ const styles = StyleSheet.create({
   sectionTitleText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0F172A',
+    color: c.text,
     letterSpacing: -0.2,
     lineHeight: 22,
     flex: 1,
@@ -1311,17 +1319,17 @@ const styles = StyleSheet.create({
   seeAllLinkText: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#C5162E',
+    color: c.primary,
   },
   requestsListContainer: {
     marginHorizontal: 18,
   },
   requestCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 18,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: c.border,
     marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1330,12 +1338,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#FFF1F2',
+    backgroundColor: c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   requestBloodText: {
-    color: '#E11D48',
+    color: c.primary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -1348,7 +1356,7 @@ const styles = StyleSheet.create({
   requestHospitalTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0F172A',
+    color: c.text,
     lineHeight: 20,
   },
   requestTagsRow: {
@@ -1364,23 +1372,23 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   priorityPillEmergency: {
-    backgroundColor: '#FFE4E6',
+    backgroundColor: c.primarySoft,
   },
   priorityPillCritical: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: c.warningSoft,
   },
   priorityText: {
     fontSize: 10.5,
     fontWeight: '700',
   },
   priorityTextEmergency: {
-    color: '#E11D48',
+    color: c.primary,
   },
   priorityTextCritical: {
-    color: '#92400E',
+    color: c.warning,
   },
   distanceMutedText: {
-    color: '#64748B',
+    color: c.textMuted,
     fontSize: 12,
     marginLeft: 8,
     fontWeight: '500',
@@ -1396,14 +1404,14 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   respondLinkText: {
-    color: '#C5162E',
+    color: c.primary,
     fontSize: 13.5,
     fontWeight: '700',
     marginRight: 2,
   },
   enRouteBadge: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    backgroundColor: c.successSoft,
+    borderColor: c.border,
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -1415,11 +1423,11 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#10B981',
+    backgroundColor: c.success,
     marginRight: 5,
   },
   enRouteText: {
-    color: '#059669',
+    color: c.success,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -1432,7 +1440,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContentCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
@@ -1444,13 +1452,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalEmergencyBadge: {
-    backgroundColor: '#FFE4E6',
+    backgroundColor: c.primarySoft,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   modalEmergencyBadgeText: {
-    color: '#E11D48',
+    color: c.primary,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -1459,24 +1467,24 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalHospitalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: c.text,
     marginTop: 14,
   },
   modalDescription: {
     fontSize: 13.5,
-    color: '#64748B',
+    color: c.textMuted,
     marginTop: 6,
     lineHeight: 20,
   },
   modalInfoBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderRadius: 16,
     padding: 14,
     marginTop: 16,
@@ -1489,7 +1497,7 @@ const styles = StyleSheet.create({
   },
   modalInfoText: {
     fontSize: 13,
-    color: '#334155',
+    color: c.textSecondary,
     fontWeight: '600',
   },
   modalActionButtons: {
@@ -1497,14 +1505,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   modalConfirmBtn: {
-    backgroundColor: '#C5162E',
+    backgroundColor: c.action,
     height: 50,
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalConfirmBtnText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1513,10 +1521,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
   },
   modalCancelBtnText: {
-    color: '#64748B',
+    color: c.textMuted,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -1525,19 +1533,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#64748B',
+    color: c.textMuted,
     fontWeight: '500',
   },
   emptyRequestsBox: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     padding: 24,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1547,12 +1555,12 @@ const styles = StyleSheet.create({
   emptyRequestsTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0F172A',
+    color: c.text,
     marginTop: 10,
   },
   emptyRequestsSubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     textAlign: 'center',
     marginTop: 6,
     lineHeight: 18,

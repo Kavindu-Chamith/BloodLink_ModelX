@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Linking,
     Pressable,
     RefreshControl,
@@ -19,49 +18,56 @@ import { DonationCard, ImpactCard } from '../components';
 import { HistoryState } from '../hooks/useDonationHistory';
 import { fetchDonorRecordUrl } from '../services/historyService';
 import { DonationRecord } from '../types/history';
+import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
+import DonorHeader from '../../components/DonorHeader';
 
 interface Props {
     state: HistoryState;
+    onNavigateTab: (tab: DonorTab) => void;
+    onNavigateToProfile: () => void;
 }
 
 async function openUrl(url: string) {
     try {
         await Linking.openURL(url);
     } catch {
-        Alert.alert('Could not open the link', 'Please try again later.');
+        throw new Error('Could not open the document. Please try again later.');
     }
 }
 
-export default function HistoryScreen({ state }: Props) {
+export default function HistoryScreen({ state, onNavigateTab, onNavigateToProfile }: Props) {
     const { colors } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { data, loading, refreshing, error } = state;
     const [downloading, setDownloading] = useState(false);
+    const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-    const handleViewCertificate = (record: DonationRecord) => {
+    const handleViewCertificate = async (record: DonationRecord) => {
+        setActionMessage(null);
         if (!record.certificateUrl) {
-            Alert.alert(
-                'Certificate not available',
+            setActionMessage(
                 record.status === 'pending'
                     ? 'This donation is still waiting for verification.'
                     : 'The certificate for this donation is not available yet.',
             );
             return;
         }
-        openUrl(record.certificateUrl);
+        try { await openUrl(record.certificateUrl); }
+        catch (e) { setActionMessage(e instanceof Error ? e.message : 'Could not open the certificate.'); }
     };
 
     const handleDownloadRecord = async () => {
         setDownloading(true);
+        setActionMessage(null);
         try {
             const url = await fetchDonorRecordUrl();
             if (!url) {
-                Alert.alert('Not available yet', 'Your official donor record will be available once it is generated.');
+                setActionMessage('Your official donor record will be available once it is generated.');
                 return;
             }
             await openUrl(url);
         } catch (e) {
-            Alert.alert('Download failed', e instanceof Error ? e.message : 'Please try again.');
+            setActionMessage(e instanceof Error ? e.message : 'Download failed. Please try again.');
         } finally {
             setDownloading(false);
         }
@@ -69,14 +75,7 @@ export default function HistoryScreen({ state }: Props) {
 
     return (
         <SafeAreaView style={styles.safe} edges={['top']}>
-            <View style={styles.titleRow}>
-                <Text style={styles.title}>History</Text>
-                {data && (
-                    <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{getInitials(data.donorName)}</Text>
-                    </View>
-                )}
-            </View>
+            <DonorHeader title="History" initials={data ? getInitials(data.donorName) : 'D'} onProfile={onNavigateToProfile} colors={colors} />
 
             {loading && !data ? (
                 <View style={styles.center}>
@@ -119,6 +118,7 @@ export default function HistoryScreen({ state }: Props) {
                         ))
                     )}
 
+                    {actionMessage && <Text accessibilityRole="alert" style={styles.actionMessage}>{actionMessage}</Text>}
                     <Pressable
                         onPress={handleDownloadRecord}
                         disabled={downloading}
@@ -137,6 +137,7 @@ export default function HistoryScreen({ state }: Props) {
                     </Pressable>
                 </ScrollView>
             ) : null}
+            <DonorBottomNav activeTab="History" onSelect={onNavigateTab} colors={colors} />
         </SafeAreaView>
     );
 }
@@ -144,6 +145,7 @@ export default function HistoryScreen({ state }: Props) {
 const createStyles = (c: ColorPalette) =>
     StyleSheet.create({
         safe: { flex: 1, backgroundColor: c.background },
+        actionMessage: { backgroundColor: c.warningSoft, color: c.text, borderRadius: 12, padding: 12, fontSize: 12, lineHeight: 18 },
         titleRow: {
             flexDirection: 'row',
             justifyContent: 'space-between',
@@ -157,16 +159,16 @@ const createStyles = (c: ColorPalette) =>
             width: 48,
             height: 48,
             borderRadius: 24,
-            backgroundColor: c.primary,
+            backgroundColor: c.action,
             alignItems: 'center',
             justifyContent: 'center',
         },
         avatarText: { color: c.onPrimary, fontWeight: '800', fontSize: 16 },
-        content: { paddingHorizontal: 20, paddingBottom: 90, gap: 14 },
+        content: { padding: 20, paddingTop: 14, paddingBottom: 24, gap: 12 },
         center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
         errorTitle: { fontSize: 18, fontWeight: '700', color: c.text, marginBottom: 6 },
         errorText: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginBottom: 16 },
-        retry: { backgroundColor: c.primary, borderRadius: radius.md, paddingHorizontal: 24, paddingVertical: 12 },
+        retry: { backgroundColor: c.action, borderRadius: radius.md, paddingHorizontal: 24, paddingVertical: 12 },
         retryText: { color: c.onPrimary, fontWeight: '700' },
         logHeader: {
             flexDirection: 'row',
@@ -175,8 +177,8 @@ const createStyles = (c: ColorPalette) =>
             marginTop: 10,
             paddingHorizontal: 4,
         },
-        logTitle: { fontSize: 16, fontWeight: '800', color: c.text, letterSpacing: 0.5 },
-        logCount: { fontSize: 14, color: c.textMuted },
+        logTitle: { fontSize: 12, fontWeight: '600', color: c.text, letterSpacing: 0.5 },
+        logCount: { fontSize: 11, color: c.textMuted },
         empty: {
             alignItems: 'center',
             backgroundColor: c.card,
@@ -197,8 +199,9 @@ const createStyles = (c: ColorPalette) =>
             borderRadius: radius.lg,
             borderWidth: 1,
             borderColor: c.border,
-            height: 56,
+            minHeight: 44,
+            paddingHorizontal: 10,
             marginTop: 6,
         },
-        downloadText: { fontSize: 15, fontWeight: '700', color: c.text },
+        downloadText: { fontSize: 12, fontWeight: '500', color: c.text, flexShrink: 1 },
     });
