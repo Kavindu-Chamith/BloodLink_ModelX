@@ -5,6 +5,7 @@ import {
     setMyAvailability,
     updateMyProfile,
     uploadVerificationDocument,
+    updateMatchingLocation,
 } from '../services/profileService';
 import { DonorProfile, EditableProfileFields, PickedFile } from '../types/profile';
 
@@ -61,6 +62,10 @@ export function useProfile() {
         }
     }, []);
 
+    const saveMatchingLocation = useCallback(async (latitude: number | null, longitude: number | null) => {
+        setProfile(await updateMatchingLocation(latitude, longitude));
+    }, []);
+
     return {
         profile,
         loading,
@@ -72,6 +77,7 @@ export function useProfile() {
         toggleAvailability,
         saveProfile,
         uploadDocument,
+        saveMatchingLocation,
     };
 }
 

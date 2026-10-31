@@ -1,8 +1,9 @@
+import { showAlert } from '../utils/showAlert';
 import { useThemedStyles } from '../theme/useThemedStyles';
 import type { AppColors } from '../theme/palette';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DonorBottomNav, { DonorTab } from '../components/DonorBottomNav';
 import DonorHeader from '../components/DonorHeader';
@@ -17,7 +18,7 @@ const stockTones = (c: AppColors) => ({
 });
 
 async function openLink(url: string) {
-  try { await Linking.openURL(url); } catch { Alert.alert('Unable to open', 'Please try again on a device with a maps or phone application.'); }
+  try { await Linking.openURL(url); } catch { showAlert('Unable to open', 'Please try again on a device with a maps or phone application.'); }
 }
 function openMap(bank: BloodBank) {
   const query = bank.latitude != null && bank.longitude != null ? `${bank.latitude},${bank.longitude}` : `${bank.name}, ${bank.district || ''}, Sri Lanka`;

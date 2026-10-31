@@ -1,8 +1,9 @@
+import { showAlert } from '../../utils/showAlert';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import type { AppColors } from '../../theme/palette';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
 import { AlertRequestItem } from '../types/requests';
@@ -25,11 +26,11 @@ export default function EmergencyRequestScreen({ request, responding, error, onB
   const progress = accepted == null ? null : Math.min(1, accepted / Math.max(1, request.unitsNeeded));
   const openMaps = async () => {
     try { await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${request.hospitalName}, ${request.address || 'Sri Lanka'}`)}`); }
-    catch { Alert.alert('Unable to open maps', 'Please try again.'); }
+    catch { showAlert('Unable to open maps', 'Please try again.'); }
   };
   const share = async () => {
     try { await Share.share({ message: `Blood donation request: ${request.bloodGroup}, ${request.unitsNeeded} units needed at ${request.hospitalName}. ${request.address || ''} Reference: ${request.id}.` }); }
-    catch { Alert.alert('Unable to share', 'Please try again.'); }
+    catch { showAlert('Unable to share', 'Please try again.'); }
   };
 
   return <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>

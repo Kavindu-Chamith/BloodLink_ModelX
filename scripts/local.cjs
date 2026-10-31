@@ -24,6 +24,20 @@ function loadConfig() {
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 
+function managedDatabaseConfig() {
+  if (!fs.existsSync(envPath)) throw new Error('Configure backend/.env first, or run npm.cmd run setup.');
+  const env = require('../backend/node_modules/dotenv').parse(fs.readFileSync(envPath));
+  if (!env.DATABASE_URL) throw new Error('DATABASE_URL is required in backend/.env.');
+  const connection = new URL(env.DATABASE_URL);
+  if (!fs.existsSync(configPath)) return null;
+  const config = loadConfig();
+  const isPrivateDatabase = ['127.0.0.1', 'localhost'].includes(connection.hostname)
+    && Number(connection.port || 5432) === config.port
+    && connection.username === 'modelx'
+    && connection.pathname === '/bloodlink_modelx';
+  return isPrivateDatabase ? config : null;
+}
+
 function databaseRunning(config) {
   return spawnSync(path.join(config.pgBin, 'pg_ctl.exe'), ['-D', dataDir, 'status'], { stdio: 'ignore', windowsHide: true }).status === 0;
 }
@@ -103,9 +117,9 @@ async function setup() {
 }
 
 async function start() {
-  const config = loadConfig();
+  const config = managedDatabaseConfig();
   for (const port of [4000, 5173, 8081]) await available(port);
-  startDatabase(config);
+  if (config) startDatabase(config);
   const children = [];
   let stopping = false;
   const control = net.createServer(socket => {
@@ -137,7 +151,9 @@ async function start() {
   process.once('SIGINT', () => shutdown());
   process.once('SIGTERM', () => shutdown());
   console.log('Dashboard: http://localhost:5173 | Mobile preview: http://localhost:8081 | API: http://localhost:4000/api/health');
-  console.log('Press Ctrl+C to stop the apps, or run npm.cmd stop to stop the apps and private database.');
+  console.log(config
+    ? 'Press Ctrl+C to stop the apps, or run npm.cmd stop to stop the apps and private database.'
+    : 'Press Ctrl+C or run npm.cmd stop to stop the apps. PostgreSQL is managed separately.');
 }
 
 async function main() {
@@ -145,7 +161,7 @@ async function main() {
     case 'setup': return setup();
     case 'start': return start();
     case 'stop': {
-      const config = loadConfig();
+      const config = managedDatabaseConfig();
       await new Promise(resolve => {
         const socket = net.createConnection(controlPipe);
         socket.setTimeout(3000);
@@ -154,7 +170,7 @@ async function main() {
         socket.once('timeout', () => { socket.destroy(); resolve(); });
         socket.once('connect', () => socket.end());
       });
-      if (databaseRunning(config)) run(path.join(config.pgBin, 'pg_ctl.exe'), ['-D', dataDir, '-m', 'fast', '-w', 'stop']);
+      if (config && databaseRunning(config)) run(path.join(config.pgBin, 'pg_ctl.exe'), ['-D', dataDir, '-m', 'fast', '-w', 'stop']);
       return;
     }
     default: throw new Error('Use setup, start, or stop.');

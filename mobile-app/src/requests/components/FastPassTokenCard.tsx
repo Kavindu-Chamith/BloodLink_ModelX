@@ -1,8 +1,9 @@
+import { showAlert } from '../../utils/showAlert';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import type { AppColors } from '../../theme/palette';
 // src/requests/components/FastPassTokenCard.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface FastPassTokenCardProps {
@@ -13,10 +14,9 @@ export const FastPassTokenCard: React.FC<FastPassTokenCardProps> = ({ token }) =
   const { styles, colors } = useThemedStyles(createStyles);
   if (!token) return null;
   const handlePress = () => {
-    Alert.alert(
+    showAlert(
       'Fast-Pass Token',
-      `Show your token ${token} to the hospital triage team when you arrive.`,
-      [{ text: 'Close' }]
+      `Show your token ${token} to the hospital triage team when you arrive.`
     );
   };
 

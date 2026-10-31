@@ -1,10 +1,13 @@
+import { showAlert } from '../../utils/showAlert';
 
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import * as Location from 'expo-location';
 import {
     ActivityIndicator,
-    Alert,
+
+    Modal,
     Pressable,
     RefreshControl,
     ScrollView,
@@ -35,12 +38,35 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
     const { colors, isDark, toggleTheme } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { profile, loading, refreshing, uploading, error } = state;
+    const [locationBusy, setLocationBusy] = useState(false);
+    const [locationMessage, setLocationMessage] = useState('');
+    const [signOutOpen, setSignOutOpen] = useState(false);
+    const [signingOut, setSigningOut] = useState(false);
+    const [signOutError, setSignOutError] = useState('');
+    const handleMatchingLocation = async (clear = false) => {
+        setLocationBusy(true); setLocationMessage('');
+        try {
+            if (clear) {
+                await state.saveMatchingLocation(null, null);
+                setLocationMessage('Your matching location has been removed.');
+            } else {
+                const permission = await Location.requestForegroundPermissionsAsync();
+                if (permission.status !== 'granted') throw new Error('Allow location access to find nearby donation requests.');
+                const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                // A roughly 100 m location is sufficient for request-radius matching.
+                await state.saveMatchingLocation(Math.round(position.coords.latitude * 1000) / 1000, Math.round(position.coords.longitude * 1000) / 1000);
+                setLocationMessage('Your matching location has been updated.');
+            }
+        } catch (failure) {
+            setLocationMessage(failure instanceof Error ? failure.message : 'Could not update your matching location.');
+        } finally { setLocationBusy(false); }
+    };
 
     const handleToggleAvailability = async (value: boolean) => {
         try {
             await state.toggleAvailability(value);
         } catch {
-            Alert.alert('Could not update availability', 'Please check your connection and try again.');
+            showAlert('Could not update availability', 'Please check your connection and try again.');
         }
     };
 
@@ -58,31 +84,26 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
             const mimeType = asset.mimeType ?? 'application/octet-stream';
 
             if (!ALLOWED_TYPES.includes(mimeType)) {
-                Alert.alert('Unsupported file', 'Please upload a PDF, JPG or PNG file.');
+                showAlert('Unsupported file', 'Please upload a PDF, JPG or PNG file.');
                 return;
             }
             if (size > MAX_FILE_BYTES) {
-                Alert.alert('File too large', 'The document must be 5 MB or smaller.');
+                showAlert('File too large', 'The document must be 5 MB or smaller.');
                 return;
             }
 
             await state.uploadDocument({ uri: asset.uri, name: asset.name, size, mimeType });
-            Alert.alert('Document submitted', 'An administrator will review it shortly.');
+            showAlert('Document submitted', 'An administrator will review it shortly.');
         } catch (e) {
-            Alert.alert('Upload failed', e instanceof Error ? e.message : 'Please try again.');
+            showAlert('Upload failed', e instanceof Error ? e.message : 'Please try again.');
         }
     };
 
-    const confirmSignOut = () => {
-        Alert.alert('Sign out', 'Do you want to sign out of BloodLink?', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-                text: 'Sign out', style: 'destructive',
-                onPress: () => {
-                    void onSignOut().catch(() => Alert.alert('Could not sign out', 'Please try again.'));
-                },
-            },
-        ]);
+    const confirmSignOut = async () => {
+        setSigningOut(true); setSignOutError('');
+        try { await onSignOut(); }
+        catch { setSignOutError('Could not sign out. Please try again.'); }
+        finally { setSigningOut(false); }
     };
 
     return (
@@ -129,6 +150,16 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                         onEdit={onEdit}
                     />
 
+                    <View style={{ padding: 16, borderRadius: 16, backgroundColor: colors.card, gap: 10 }}>
+                        <Text style={{ color: colors.text, fontWeight: '700' }}>Nearby request matching</Text>
+                        <Text style={{ color: colors.textMuted }}>{profile.hasMatchingLocation ? 'A private matching location is saved.' : 'Add your location to find matching requests nearby.'} Your location is not shown to other users.</Text>
+                        <Pressable disabled={locationBusy} onPress={() => { void handleMatchingLocation(); }} accessibilityRole="button" style={styles.retry}>
+                            <Text style={styles.retryText}>{locationBusy ? 'Updating…' : 'Update matching location'}</Text>
+                        </Pressable>
+                        {profile.hasMatchingLocation && <Pressable disabled={locationBusy} onPress={() => { void handleMatchingLocation(true); }} accessibilityRole="button"><Text style={{ color: colors.textMuted }}>Remove matching location</Text></Pressable>}
+                        {!!locationMessage && <Text accessibilityLiveRegion="polite" style={{ color: colors.textMuted }}>{locationMessage}</Text>}
+                    </View>
+
                     <View style={styles.grid}>
                         <StatCard
                             label="Donations"
@@ -148,7 +179,7 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
 
                     <View style={styles.grid}>
                         <LastDonationCard profile={profile} />
-                        <EligibilityCard lastDonationDate={profile.lastDonationDate} />
+                        <EligibilityCard lastDonationDate={profile.lastDonationDate} nextEligibleDate={profile.nextEligibleDate} />
                     </View>
 
                     <Text style={styles.disclaimer}>
@@ -157,7 +188,7 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
 
                     <VerificationSection profile={profile} uploading={uploading} onUpload={handleUpload} />
 
-                    <Pressable onPress={confirmSignOut} style={styles.signOut} accessibilityRole="button">
+                    <Pressable onPress={() => { setSignOutError(''); setSignOutOpen(true); }} style={styles.signOut} accessibilityRole="button">
                         <Ionicons name="log-out-outline" size={20} color={colors.text} />
                         <Text style={styles.signOutText}>Sign out</Text>
                     </Pressable>
@@ -167,6 +198,21 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                     </Text>
                 </ScrollView>
             ) : null}
+            <Modal visible={signOutOpen} transparent animationType="fade" onRequestClose={() => { if (!signingOut) setSignOutOpen(false); }}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+                    <View accessibilityViewIsModal style={{ width: '100%', maxWidth: 360, backgroundColor: colors.card, borderRadius: 20, padding: 24, gap: 16 }}>
+                        <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>Sign out of BloodLink?</Text>
+                        <Text style={{ color: colors.textMuted }}>You will need to sign in again to access your account.</Text>
+                        {!!signOutError && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{signOutError}</Text>}
+                        <Pressable disabled={signingOut} onPress={() => { void confirmSignOut(); }} style={styles.retry} accessibilityRole="button" accessibilityLabel="Confirm sign out">
+                            <Text style={styles.retryText}>{signingOut ? 'Signing out…' : 'Sign out'}</Text>
+                        </Pressable>
+                        <Pressable disabled={signingOut} onPress={() => setSignOutOpen(false)} accessibilityRole="button" accessibilityLabel="Cancel sign out" style={{ padding: 10, alignItems: 'center' }}>
+                            <Text style={{ color: colors.text }}>Cancel</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
             <DonorBottomNav
                 activeTab="Profile"
                 colors={colors}
@@ -194,9 +240,9 @@ function LastDonationCard({ profile }: { profile: NonNullable<ProfileState['prof
     );
 }
 
-function EligibilityCard({ lastDonationDate }: { lastDonationDate: string | null }) {
+function EligibilityCard({ lastDonationDate, nextEligibleDate }: { lastDonationDate: string | null; nextEligibleDate?: string | null }) {
     const { colors } = useTheme();
-    const result = getEligibility(lastDonationDate);
+    const result = getEligibility(lastDonationDate, new Date(), nextEligibleDate);
 
     const dot = (
         <View

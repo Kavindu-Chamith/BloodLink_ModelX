@@ -28,7 +28,7 @@ export default function NotificationCard({
 }: Props) {
     const { colors } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
-    const cfg = KIND_CONFIG[n.kind];
+    const cfg = KIND_CONFIG[n.kind] || KIND_CONFIG.profile_synced;
 
     const iconBg = cfg.tone === 'primary' ? colors.primarySoft : colors.infoSoft;
     const iconColor = cfg.tone === 'primary' ? colors.primary : cfg.tone === 'info' ? colors.text : colors.textMuted;

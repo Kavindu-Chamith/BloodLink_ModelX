@@ -123,6 +123,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <TouchableOpacity
                 style={[styles.tabButton, method === 'phone' && styles.tabButtonActive]}
                 onPress={() => setMethod('phone')}
+                accessibilityRole="tab"
+                accessibilityLabel="Sign in with phone"
+                accessibilityState={{ selected: method === 'phone' }}
                 activeOpacity={0.8}
               >
                 <Text
@@ -138,6 +141,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <TouchableOpacity
                 style={[styles.tabButton, method === 'email' && styles.tabButtonActive]}
                 onPress={() => setMethod('email')}
+                accessibilityRole="tab"
+                accessibilityLabel="Sign in with email"
+                accessibilityState={{ selected: method === 'email' }}
                 activeOpacity={0.8}
               >
                 <Text
@@ -237,11 +243,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           {/* Biometric Button */}
           <TouchableOpacity
             style={styles.biometricButton}
-            activeOpacity={0.8}
-            onPress={handleSubmit}
+            disabled
+            accessibilityState={{ disabled: true }}
           >
             <FingerprintIcon size={20} color={colors.primary} />
-            <Text style={styles.biometricText}>Sign in with Face ID / Fingerprint</Text>
+            <Text style={styles.biometricText}>Biometric sign-in is not available yet</Text>
           </TouchableOpacity>
 
           {/* Error Message */}
@@ -264,6 +270,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           style={[styles.primaryButton, isLoading && { opacity: 0.7 }]}
           activeOpacity={0.85}
           onPress={handleSubmit}
+          accessibilityRole="button"
+          accessibilityLabel="Sign in"
           disabled={isLoading}
         >
           <Text style={styles.primaryButtonText}>

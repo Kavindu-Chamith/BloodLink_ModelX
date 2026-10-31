@@ -288,7 +288,7 @@ function AppContent() {
           {renderScreen()}
 
           {/* Floating Screen Switcher for Testing and Review */}
-          {__DEV__ && process.env.EXPO_PUBLIC_SHOW_SCREEN_PICKER !== 'false' && <DevScreenPicker
+          {__DEV__ && process.env.EXPO_PUBLIC_SHOW_SCREEN_PICKER === 'true' && <DevScreenPicker
             currentScreen={currentScreen}
             onSelectScreen={(screen) => setCurrentScreen(screen)}
           />}
