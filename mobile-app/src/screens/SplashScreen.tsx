@@ -9,6 +9,7 @@ import {
   Animated,
   TouchableOpacity,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -23,34 +24,36 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
 
   useEffect(() => {
     // Progress bar fill animation
-    Animated.timing(progressAnim, {
+    const progress = Animated.timing(progressAnim, {
       toValue: 0.85,
       duration: 1800,
       useNativeDriver: false,
-    }).start();
+    });
+    progress.start();
 
     // Subtle gentle pulse
-    Animated.loop(
+    const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.03,
           duration: 1000,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 1000,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
-    ).start();
+    );
+    pulse.start();
 
     // Auto advance after 2.5s if not manually clicked
     const timer = setTimeout(() => {
       if (onFinish) onFinish();
     }, 2500);
 
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); progress.stop(); pulse.stop(); };
   }, [onFinish, progressAnim, pulseAnim]);
 
   const progressWidth = progressAnim.interpolate({

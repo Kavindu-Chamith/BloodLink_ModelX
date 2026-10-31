@@ -1,9 +1,9 @@
+import { showAlert } from '../../utils/showAlert';
 // src/notifications/screens/NotificationsScreen.tsx
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Linking,
     Pressable,
     RefreshControl,
@@ -68,14 +68,14 @@ export default function NotificationsScreen({ state, onBack, onViewRequest, onNa
         try {
             await state.markAllRead();
         } catch {
-            Alert.alert('Could not update', 'Please check your connection and try again.');
+            showAlert('Could not update', 'Please check your connection and try again.');
         }
     };
 
     const handleViewRequest = (n: AppNotification) => {
         state.markRead(n.id);
         if (onViewRequest) onViewRequest(n.requestId);
-        else Alert.alert('Requests', 'The Requests screen is not connected here yet.');
+        else showAlert('Requests', 'The Requests screen is not connected here yet.');
     };
 
     const handleShare = async (n: AppNotification) => {

@@ -35,6 +35,7 @@ const getBaseUrl = (): string => {
 };
 
 const BASE_URL = getBaseUrl();
+export const resolveApiUrl = (path: string): string => new URL(path, BASE_URL + '/').toString();
 
 // Token storage callbacks (set by AuthContext)
 let getAccessToken: (() => Promise<string | null>) | null = null;
@@ -91,11 +92,14 @@ class ApiClientError extends Error {
  * Attempt to refresh the access token using the refresh token.
  */
 let refreshInFlight: Promise<boolean> | null = null;
+let sessionGeneration = 0;
+export function invalidateApiSession(): void { sessionGeneration++; }
 function attemptTokenRefresh(): Promise<boolean> {
   if (!refreshInFlight) refreshInFlight = performTokenRefresh().finally(() => { refreshInFlight = null; });
   return refreshInFlight;
 }
 async function performTokenRefresh(): Promise<boolean> {
+  const generation = sessionGeneration;
   if (!getRefreshToken || !onTokenRefreshed) return false;
 
   try {
@@ -117,6 +121,7 @@ async function performTokenRefresh(): Promise<boolean> {
     if (typeof data.accessToken !== "string" || typeof data.refreshToken !== "string") {
       throw new ApiClientError("Invalid session response. Please retry.", 502);
     }
+    if (generation !== sessionGeneration) return false;
     await onTokenRefreshed(data.accessToken, data.refreshToken);
     return true;
   } catch (error) {
@@ -134,10 +139,11 @@ async function request<T = any>(
   requiresAuth: boolean = false,
   isRetry: boolean = false
 ): Promise<ApiResponse<T>> {
+  const generation = sessionGeneration;
   const url = `${BASE_URL}${endpoint}`;
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(typeof FormData !== 'undefined' && options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string>),
   };
 
@@ -158,6 +164,7 @@ async function request<T = any>(
     // Handle 401 — attempt token refresh and retry once
     if (response.status === 401 && requiresAuth && !isRetry) {
       const refreshed = await attemptTokenRefresh();
+      if (generation !== sessionGeneration) throw new ApiClientError('Session has ended. Please sign in again.', 401);
       if (refreshed) {
         return request<T>(endpoint, options, requiresAuth, true);
       } else {
@@ -203,8 +210,9 @@ export const api = {
    */
   get: <T = any>(endpoint: string) => request<T>(endpoint, { method: "GET" }),
 
-  post: <T = any>(endpoint: string, body: any) =>
+  post: <T = any>(endpoint: string, body: any, options: RequestInit = {}) =>
     request<T>(endpoint, {
+      ...options,
       method: "POST",
       body: JSON.stringify(body),
     }),
@@ -226,6 +234,12 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(body),
     }, true),
+
+  authPatch: <T = any>(endpoint: string, body: unknown) =>
+    request<T>(endpoint, { method: 'PATCH', body: JSON.stringify(body) }, true),
+
+  authUpload: <T = any>(endpoint: string, body: FormData) =>
+    request<T>(endpoint, { method: 'POST', body }, true),
 
   authDelete: <T = any>(endpoint: string) =>
     request<T>(endpoint, { method: "DELETE" }, true),

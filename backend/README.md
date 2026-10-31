@@ -1,8 +1,19 @@
 # Backend API (Node.js + Express + TypeScript)
 
-Use Node.js 20.13+ and PostgreSQL 15+. Copy `.env.example` to `.env`, configure the database,
+Use Node.js 24.14+ and PostgreSQL 15+. Copy `.env.example` to `.env`, configure the database,
 and generate two independent JWT secrets with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
 JWT secrets must be different, at least 32 characters long, and must not use example placeholders.
+
+The completed operational API, role boundaries, private document storage, matching,
+stock/donation workflow, notifications and deployment settings are documented in
+[the backend handoff](../docs/BACKEND_COMPLETION.md). Apply migration 007 before
+starting this version. `MIGRATION_DATABASE_URL` can supply the owner connection
+for CLI migrations while `DATABASE_URL` uses a limited runtime login.
+
+For a labeled local dataset, run `npm run seed:preview` in development. It creates
+DEMO institutions, stocks, requests and donor history without resetting the local
+test donor password. See [local testing status](../docs/LOCAL_TESTING_STATUS.md)
+for test steps and the features that still require implementation or providers.
 
 ```sh
 npm ci
@@ -30,7 +41,7 @@ The registration API flow is:
    Keep the returned opaque `registrationToken` in memory.
 3. `POST /api/auth/register` with `email`, `password`, `fullName`, `phone`, `nic`,
    `bloodGroup`, and `registrationToken`. Optional `dob` uses `YYYY-MM-DD`.
-   Optional `documentUrl` references an actual HTTPS document or managed upload path.
+   After registration, upload medical evidence using the protected profile upload endpoint.
    The proof expires in 15 minutes, is tied to the email, and is consumed once.
    Omitting a document leaves the blood group unverified and creates no review request.
 
@@ -60,8 +71,8 @@ checks current database roles, account status, organization approval/type, token
 and session state. Clients must coalesce simultaneous refresh requests.
 
 Set `CORS_ORIGINS` to the permitted web origins and `TRUST_PROXY` to actual proxy
-IPs/CIDRs only. IP limiters use memory and apply to one process; multi-instance
-deployments need a shared rate-limit store or an ingress limiter. Database lockout,
+IPs/CIDRs only. Production IP limiters share atomic PostgreSQL counters. Development
+uses memory unless `RATE_LIMIT_STORE=postgres`. Database lockout,
 OTP limits, cooldowns, and proof consumption apply across processes.
 
 ```sh

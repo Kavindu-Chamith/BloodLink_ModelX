@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
-import { configureApiClient } from "../services/api";
+import { configureApiClient, invalidateApiSession } from "../services/api";
 import {
   User,
   loginWithEmail,
@@ -28,34 +28,33 @@ import {
 // ─── Secure Storage Keys ────────────────────────────────────────────────────
 const ACCESS_TOKEN_KEY = "bloodlink_access_token";
 const REFRESH_TOKEN_KEY = "bloodlink_refresh_token";
+const webSession = new Map<string, string>();
 
 // ─── Platform-aware secure storage ──────────────────────────────────────────
 // SecureStore doesn't work on web, so we fall back to memory storage in dev
 const storage = {
   async get(key: string): Promise<string | null> {
     if (Platform.OS === "web") {
-      // Web fallback: use localStorage in dev
+      // Keep browser bearer tokens in memory; remove credentials from older builds.
       try {
-        return localStorage.getItem(key);
+        localStorage.removeItem(key);
       } catch {
-        return null;
+        // Storage may be unavailable in a restricted browser.
       }
+      return webSession.get(key) || null;
     }
     return await SecureStore.getItemAsync(key);
   },
   async set(key: string, value: string): Promise<void> {
     if (Platform.OS === "web") {
-      try {
-        localStorage.setItem(key, value);
-      } catch {
-        // Silently fail
-      }
+      webSession.set(key, value);
       return;
     }
     await SecureStore.setItemAsync(key, value);
   },
   async remove(key: string): Promise<void> {
     if (Platform.OS === "web") {
+      webSession.delete(key);
       try {
         localStorage.removeItem(key);
       } catch {
@@ -165,6 +164,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(userData);
     } catch (err) {
       if (err instanceof ApiClientError && [401, 403].includes(err.status)) {
+        const refreshToken = await storage.get(REFRESH_TOKEN_KEY);
+        if (refreshToken) await logoutApi(refreshToken).catch(() => {});
         await storage.remove(ACCESS_TOKEN_KEY);
         await storage.remove(REFRESH_TOKEN_KEY);
       } else {
@@ -246,6 +247,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // ─── Sign Out ───────────────────────────────────────────────────────────
   const handleSignOut = useCallback(async () => {
+    invalidateApiSession();
     try {
       const refreshToken = await storage.get(REFRESH_TOKEN_KEY);
       if (refreshToken) {

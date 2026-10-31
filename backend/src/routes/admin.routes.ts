@@ -4,6 +4,7 @@ import {
   updateUserStatus,
   getDashboardStats,
   listAuditLogs,
+  deliveryStatus,
 } from "../controllers/admin.controller";
 import { authenticate, requireRole } from "../middleware/auth.middleware";
 import { validateRouteIds, validateAdminQuery, validateNetworkOrganization, validateOrganizationAccess, validateStaffInput } from "../middleware/validation.middleware";
@@ -21,6 +22,7 @@ router.get("/users", listUsers);
 router.patch("/users/:id/status", updateUserStatus);
 router.get("/stats", getDashboardStats);
 router.get("/audit-logs", listAuditLogs);
+router.get('/delivery-status', deliveryStatus);
 router.get("/network-overview", networkOverview);
 router.post("/blood-banks", validateNetworkOrganization, validateBankOnboarding, validateBankAccountSelection, onboardBloodBank);
 router.post("/blood-banks/:id/account", validateRouteIds, validateBankAccountSelection, assignBankAccount);

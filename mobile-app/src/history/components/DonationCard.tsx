@@ -53,12 +53,14 @@ export default function DonationCard({ record, onViewCertificate }: Props) {
                     {record.note}
                 </Text>
                 <Pressable
+                    disabled={!record.certificateUrl}
+                    accessibilityState={{ disabled: !record.certificateUrl }}
                     onPress={() => onViewCertificate(record)}
                     style={styles.certButton}
                     accessibilityRole="button"
                     accessibilityLabel={`View certificate for donation at ${record.hospitalName}`}
                 >
-                    <Text style={styles.certText}>View Certificate</Text>
+                    <Text style={styles.certText}>{record.certificateUrl ? 'View Certificate' : 'Certificate unavailable'}</Text>
                     <Ionicons name="open-outline" size={16} color={colors.text} />
                 </Pressable>
             </View>

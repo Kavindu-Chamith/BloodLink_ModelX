@@ -35,6 +35,7 @@ async function main() {
   url.pathname = "/" + testName;
   process.env.DATABASE_URL = url.toString();
   process.env.NODE_ENV = "test"; process.env.EMAIL_TRANSPORT = "console";
+  process.env.RATE_LIMIT_STORE = 'memory';
   process.env.JWT_ACCESS_SECRET = crypto.randomBytes(48).toString("hex");
   process.env.JWT_REFRESH_SECRET = crypto.randomBytes(48).toString("hex");
   delete process.env.TRUST_PROXY; delete process.env.SMTP_HOST;
@@ -238,9 +239,13 @@ async function main() {
   check((await api("/api/admin/audit-logs?action=DELETED_ACTOR_TEST", undefined, adminToken)).data.logs.some((log: any) => log.id === oldAudit.id), "Deleted actors remain visible in audit history");
   check((await api("/api/admin/users/bad/status", { status: "active" }, adminToken, "PATCH")).status === 400, "Invalid IDs return 400");
   const donorToken = (await issueTokenPair({ id: String(id), role: "donor", orgId: null })).accessToken;
-  const submitted = await api("/api/donors/submit", { documentUrl: "https://example.com/proof.pdf", claimedBloodGroup: "O+" }, donorToken);
+  const privateDocumentId = crypto.randomUUID();
+  await db.query("INSERT INTO verification_documents(id, owner_id, file_name, mime_type, content) VALUES ($1, $2, 'proof.pdf', 'application/pdf', $3)", [privateDocumentId, id, Buffer.from('%PDF-1.4\n%%EOF')]);
+  const privateDocumentUrl = '/api/documents/' + privateDocumentId;
+  check((await api('/api/donors/submit', { documentUrl: 'https://example.com/proof.pdf', claimedBloodGroup: 'O+' }, donorToken)).status === 400, 'Medical evidence must use private owned storage');
+  const submitted = await api("/api/donors/submit", { documentUrl: privateDocumentUrl, claimedBloodGroup: "O+" }, donorToken);
   check(submitted.status === 201, "Donor document submission succeeds");
-  check((await api("/api/donors/submit", { documentUrl: "https://example.com/second.pdf", claimedBloodGroup: "O+" }, donorToken)).status === 409, "Duplicate pending verification rejected");
+  check((await api("/api/donors/submit", { documentUrl: privateDocumentUrl, claimedBloodGroup: "O+" }, donorToken)).status === 409, "Duplicate pending verification rejected");
   check((await api("/api/donors/admin/pending", undefined, adminToken)).status === 200, "Admin can list pending reviews");
   check((await api("/api/donors/admin/" + submitted.data.verification.id + "/approve", {}, adminToken, "PATCH")).status === 200, "Admin approval succeeds");
   const verifiedProfile = (await db.query("SELECT blood_group, blood_group_verified FROM donor_profiles WHERE user_id = $1", [id])).rows[0];

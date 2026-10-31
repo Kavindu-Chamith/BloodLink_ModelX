@@ -10,7 +10,7 @@ function client(fetch) {
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
   const context = {
-    exports, module: { exports }, fetch, __DEV__: true, process: { env: {} },
+    exports, module: { exports }, fetch, FormData, Blob, URL, __DEV__: true, process: { env: {} },
     require: name => name === 'react-native' ? { Platform: { OS: 'web' } } : { default: { expoConfig: { hostUri: 'localhost:8081' } } },
   };
   vm.runInNewContext(compiled, context);
@@ -62,6 +62,27 @@ test('invalid refresh token forces sign-out', async () => {
   await assert.rejects(api.authGet('/auth/me'), error => error.status === 401);
   assert.equal(failures, 1);
 });
+
+test('a refresh finishing after sign-out cannot restore tokens or end a newer session', async () => {
+  let release, started;
+  const ready = new Promise(resolve => { started = resolve; });
+  const delayed = new Promise(resolve => { release = resolve; });
+  let writes = 0, failures = 0;
+  const { api, configureApiClient, invalidateApiSession } = client(async url => {
+    if (url.endsWith('/auth/refresh')) { started(); await delayed; return response(200, { accessToken: 'old-session', refreshToken: 'old-refresh' }); }
+    return response(401, {});
+  });
+  configureApiClient({ getAccessToken: async () => 'expired', getRefreshToken: async () => 'refresh',
+    onTokenRefreshed: async () => { writes++; }, onAuthFailed: () => { failures++; } });
+  const pending = api.authGet('/auth/me');
+  const rejected = assert.rejects(pending, error => error.status === 401);
+  await ready;
+  invalidateApiSession();
+  release();
+  await rejected;
+  assert.equal(writes, 0);
+  assert.equal(failures, 0);
+});
 test('network outage during refresh does not force sign-out', async () => {
   let failures = 0;
   const { api, configureApiClient } = client(async url => {
@@ -85,4 +106,20 @@ test('malformed refresh response cannot overwrite stored tokens', async () => {
   });
   await assert.rejects(api.authGet('/auth/me'), error => error.status === 502);
   assert.equal(writes, 0);
+});
+
+test('multipart uploads preserve the browser boundary and retry with the refreshed bearer token', async () => {
+  let token = 'expired', uploads = 0;
+  const form = new FormData(); form.append('document', new Blob(['%PDF-1.4'], { type: 'application/pdf' }), 'report.pdf');
+  const { api, configureApiClient } = client(async (url, options) => {
+    if (url.endsWith('/auth/refresh')) return response(200, { accessToken: 'fresh', refreshToken: 'rotated' });
+    uploads++;
+    assert.equal(options.body, form);
+    assert.equal(options.headers['Content-Type'], undefined);
+    return options.headers.Authorization === 'Bearer expired' ? response(401, {}) : response(201, { document: { status: 'pending' } });
+  });
+  configureApiClient({ getAccessToken: async () => token, getRefreshToken: async () => 'refresh',
+    onTokenRefreshed: async access => { token = access; }, onAuthFailed: () => assert.fail('Unexpected signout') });
+  assert.equal((await api.authUpload('/donors/me/verification-documents', form)).status, 201);
+  assert.equal(uploads, 2);
 });

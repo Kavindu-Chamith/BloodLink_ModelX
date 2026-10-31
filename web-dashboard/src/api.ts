@@ -53,6 +53,14 @@ export class Api {
     await fetchJson('/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken: this.refreshToken }) });
     this.closed = true; this.accessToken = ''; this.refreshToken = '';
   }
+  async downloadDocument(path: string): Promise<Blob> {
+    if (!/^\/api\/documents\/[a-f0-9-]{36}$/i.test(path)) throw new Error('Invalid document reference');
+    // Refresh through the same coalesced session flow before fetching binary data.
+    await this.request('/auth/me');
+    const response = await fetch(BASE + path.slice('/api'.length), { headers: { Authorization: `Bearer ${this.accessToken}` } });
+    if (!response.ok) throw new Error('Could not download this document. Please try again.');
+    return response.blob();
+  }
 }
 class ApiError extends Error { readonly status: number; constructor(message: string, status: number) { super(message); this.status = status; } }
 async function fetchJson<T>(path: string, options: RequestInit): Promise<T> {

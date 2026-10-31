@@ -3,6 +3,19 @@
 -- Smart Blood Donation Coordination System
 -- Target DBMS: PostgreSQL 15+
 -- =============================================================================
+-- Fresh database setup in DataGrip:
+-- 1. Create an empty PostgreSQL database, for example bloodlink_modelx.
+-- 2. Select that database and its public schema as this file's execution target.
+-- 3. Execute this ENTIRE file. If using manual transactions, commit on success.
+-- 4. Set backend/.env DATABASE_URL to the same host, port, database and credentials.
+--
+-- This is plain PostgreSQL SQL: no psql commands or database creation is required.
+-- It creates the current application tables, constraints and indexes, without
+-- inserting users, institutions or blood requests. Run only on an empty schema;
+-- use backend's npm run migrate for existing installations and migration tracking.
+-- For an admin account, configure ADMIN_EMAIL / ADMIN_PASSWORD, then run
+-- npm run seed from backend. Do not run npm run db:init after this script.
+-- Transaction control is left to the caller so npm run db:init also works.
 
 -- -----------------------------------------------------------------------------
 -- 1. Organizations (Hospitals and Blood Banks)
@@ -208,17 +221,15 @@ CREATE INDEX idx_registration_otps_identifier ON registration_otps(identifier);
 CREATE INDEX idx_registration_otps_expires_at ON registration_otps(expires_at);
 
 -- Baseline hardening (also available as migration_002 for existing installs).
--- Apply transactionally; conflicting legacy records must be corrected first.
-ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE registration_otps ADD COLUMN IF NOT EXISTS verification_token_hash TEXT;
-ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
-ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS reset_token_hash TEXT;
-ALTER TABLE donor_profiles ADD COLUMN IF NOT EXISTS blood_group_verified BOOLEAN NOT NULL DEFAULT false;
+-- Fresh-install definitions only; legacy data changes belong in migrations.
+ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE registration_otps ADD COLUMN verification_token_hash TEXT;
+ALTER TABLE password_reset_tokens ADD COLUMN verified_at TIMESTAMPTZ;
+ALTER TABLE password_reset_tokens ADD COLUMN reset_token_hash TEXT;
+ALTER TABLE donor_profiles ADD COLUMN blood_group_verified BOOLEAN NOT NULL DEFAULT false;
 
--- Old registration challenges never issued secure proofs; invalidate them on upgrade.
-DELETE FROM registration_otps WHERE verification_token_hash IS NULL;
-
-CREATE TABLE IF NOT EXISTS password_reset_email_jobs (
+-- 13. Durable Password Reset Email Queue
+CREATE TABLE password_reset_email_jobs (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'cancelled')),
@@ -227,76 +238,123 @@ CREATE TABLE IF NOT EXISTS password_reset_email_jobs (
   next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   lease_until TIMESTAMPTZ
 );
-CREATE INDEX IF NOT EXISTS password_reset_email_jobs_pending ON password_reset_email_jobs (next_attempt_at) WHERE status IN ('pending', 'processing');
+CREATE INDEX password_reset_email_jobs_pending ON password_reset_email_jobs (next_attempt_at) WHERE status IN ('pending', 'processing');
 
-DO $$
-DECLARE column_record RECORD;
-BEGIN
-  FOR column_record IN SELECT table_name, column_name FROM information_schema.columns
-    WHERE table_schema = current_schema() AND data_type = 'timestamp without time zone'
-      AND table_name IN ('users', 'organizations', 'donor_profiles', 'donor_verifications',
-        'blood_stocks', 'blood_requests', 'notifications', 'donations', 'audit_logs',
-        'registration_otps', 'password_reset_tokens', 'refresh_tokens')
-  LOOP
-    EXECUTE format('ALTER TABLE %I ALTER COLUMN %I TYPE TIMESTAMPTZ USING %I AT TIME ZONE ''UTC''',
-      column_record.table_name, column_record.column_name, column_record.column_name);
-  END LOOP;
-END $$;
+CREATE UNIQUE INDEX users_email_normalized_unique ON users (LOWER(BTRIM(email)));
+CREATE UNIQUE INDEX donor_profiles_nic_unique ON donor_profiles (UPPER(BTRIM(nic))) WHERE nic IS NOT NULL;
+CREATE UNIQUE INDEX donor_profiles_phone_unique ON donor_profiles (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX donor_verifications_one_pending ON donor_verifications (donor_id) WHERE status = 'pending';
+CREATE UNIQUE INDEX registration_otps_identifier_type_unique ON registration_otps (identifier, identifier_type);
+CREATE UNIQUE INDEX registration_otps_proof_unique ON registration_otps (verification_token_hash) WHERE verification_token_hash IS NOT NULL;
+CREATE UNIQUE INDEX password_reset_proof_unique ON password_reset_tokens (reset_token_hash) WHERE reset_token_hash IS NOT NULL;
+CREATE INDEX refresh_tokens_active_session ON refresh_tokens (user_id, family_id, expires_at) WHERE NOT is_revoked;
+CREATE INDEX donor_verifications_status_created ON donor_verifications (status, created_at);
+CREATE INDEX organizations_status_created ON organizations (verification_status, created_at);
+CREATE INDEX organizations_type_district ON organizations (type, district);
+CREATE INDEX users_organization_id ON users (organization_id);
+CREATE INDEX audit_logs_actor_user_id ON audit_logs (actor_user_id);
+CREATE INDEX audit_logs_created_at ON audit_logs (created_at);
 
-UPDATE users SET email = LOWER(BTRIM(email)) WHERE email <> LOWER(BTRIM(email));
-UPDATE donor_profiles SET nic = UPPER(BTRIM(nic)) WHERE nic <> UPPER(BTRIM(nic));
-UPDATE donor_profiles SET phone = regexp_replace(phone, '[[:space:]()\-]', '', 'g') WHERE phone IS NOT NULL;
-UPDATE donor_profiles SET phone = '+94' || SUBSTRING(phone FROM 2) WHERE phone ~ '^0[0-9]{9}$';
-UPDATE donor_profiles SET phone = '+' || phone WHERE phone ~ '^94[0-9]{9}$';
-
-CREATE UNIQUE INDEX IF NOT EXISTS users_email_normalized_unique ON users (LOWER(BTRIM(email)));
-CREATE UNIQUE INDEX IF NOT EXISTS donor_profiles_nic_unique ON donor_profiles (UPPER(BTRIM(nic))) WHERE nic IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS donor_profiles_phone_unique ON donor_profiles (phone) WHERE phone IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS donor_verifications_one_pending ON donor_verifications (donor_id) WHERE status = 'pending';
-CREATE UNIQUE INDEX IF NOT EXISTS registration_otps_identifier_type_unique ON registration_otps (identifier, identifier_type);
-CREATE UNIQUE INDEX IF NOT EXISTS registration_otps_proof_unique ON registration_otps (verification_token_hash) WHERE verification_token_hash IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS password_reset_proof_unique ON password_reset_tokens (reset_token_hash) WHERE reset_token_hash IS NOT NULL;
-CREATE INDEX IF NOT EXISTS refresh_tokens_active_session ON refresh_tokens (user_id, family_id, expires_at) WHERE NOT is_revoked;
-CREATE INDEX IF NOT EXISTS donor_verifications_status_created ON donor_verifications (status, created_at);
-CREATE INDEX IF NOT EXISTS organizations_status_created ON organizations (verification_status, created_at);
-CREATE INDEX IF NOT EXISTS users_organization_id ON users (organization_id);
-CREATE INDEX IF NOT EXISTS audit_logs_actor_user_id ON audit_logs (actor_user_id);
-CREATE INDEX IF NOT EXISTS audit_logs_created_at ON audit_logs (created_at);
-
-DO $$
-DECLARE item RECORD;
-BEGIN
-  FOR item IN SELECT * FROM (VALUES
-    ('users', 'users_auth_counters_check', 'failed_login_attempts >= 0 AND token_version >= 0'),
-    ('users', 'users_email_canonical_check', 'email = LOWER(BTRIM(email)) AND LENGTH(email) > 3'),
-    ('donor_profiles', 'donor_profiles_latitude_check', 'latitude BETWEEN -90 AND 90'),
-    ('donor_profiles', 'donor_profiles_longitude_check', 'longitude BETWEEN -180 AND 180'),
-    ('donor_profiles', 'donor_profiles_eligibility_check', 'next_eligible_date IS NULL OR last_donation_date IS NULL OR next_eligible_date >= last_donation_date'),
-    ('organizations', 'organizations_name_check', 'LENGTH(BTRIM(name)) > 0'),
-    ('organizations', 'organizations_latitude_check', 'latitude BETWEEN -90 AND 90'),
-    ('organizations', 'organizations_longitude_check', 'longitude BETWEEN -180 AND 180'),
-    ('blood_requests', 'blood_requests_radius_check', 'radius_km > 0'),
-    ('registration_otps', 'registration_otps_attempts_check', 'attempts >= 0 AND max_attempts > 0'),
-    ('password_reset_tokens', 'password_reset_attempts_check', 'attempts >= 0 AND max_attempts > 0'),
-    ('password_reset_tokens', 'password_reset_proof_check', 'reset_token_hash IS NULL OR verified_at IS NOT NULL')
-  ) AS checks(table_name, constraint_name, expression)
-  LOOP
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = item.constraint_name AND conrelid = to_regclass(item.table_name)) THEN
-      EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I CHECK (%s)', item.table_name, item.constraint_name, item.expression);
-    END IF;
-  END LOOP;
-END $$;
-
-UPDATE donor_profiles dp SET blood_group_verified = true, blood_group = latest.claimed_blood_group
-FROM (SELECT DISTINCT ON (donor_id) donor_id, claimed_blood_group, status
-      FROM donor_verifications ORDER BY donor_id, id DESC) latest
-WHERE dp.user_id = latest.donor_id AND latest.status = 'approved';
-
--- Invalidate insecure grants and sessions from the previous implementation.
-UPDATE password_reset_tokens SET used_at = NOW() WHERE used_at IS NULL AND reset_token_hash IS NULL;
-UPDATE refresh_tokens SET is_revoked = true;
+ALTER TABLE users
+  ADD CONSTRAINT users_auth_counters_check CHECK (failed_login_attempts >= 0 AND token_version >= 0),
+  ADD CONSTRAINT users_email_canonical_check CHECK (email = LOWER(BTRIM(email)) AND LENGTH(email) > 3);
+ALTER TABLE donor_profiles
+  ADD CONSTRAINT donor_profiles_latitude_check CHECK (latitude BETWEEN -90 AND 90),
+  ADD CONSTRAINT donor_profiles_longitude_check CHECK (longitude BETWEEN -180 AND 180),
+  ADD CONSTRAINT donor_profiles_eligibility_check CHECK (next_eligible_date IS NULL OR last_donation_date IS NULL OR next_eligible_date >= last_donation_date);
+ALTER TABLE organizations
+  ADD CONSTRAINT organizations_name_check CHECK (LENGTH(BTRIM(name)) > 0),
+  ADD CONSTRAINT organizations_latitude_check CHECK (latitude BETWEEN -90 AND 90),
+  ADD CONSTRAINT organizations_longitude_check CHECK (longitude BETWEEN -180 AND 180);
+ALTER TABLE blood_requests ADD CONSTRAINT blood_requests_radius_check CHECK (radius_km > 0);
+ALTER TABLE registration_otps ADD CONSTRAINT registration_otps_attempts_check CHECK (attempts >= 0 AND max_attempts > 0);
+ALTER TABLE password_reset_tokens
+  ADD CONSTRAINT password_reset_attempts_check CHECK (attempts >= 0 AND max_attempts > 0),
+  ADD CONSTRAINT password_reset_proof_check CHECK (reset_token_hash IS NULL OR verified_at IS NOT NULL);
 
 ALTER TABLE organizations ADD CONSTRAINT organizations_not_own_parent CHECK (parent_organization_id IS NULL OR parent_organization_id <> id);
 ALTER TABLE users ADD CONSTRAINT users_bank_account_role CHECK (NOT is_bank_account OR role = 'bloodbank_staff');
 CREATE UNIQUE INDEX users_one_bank_account ON users(organization_id) WHERE is_bank_account;
 CREATE INDEX organizations_parent ON organizations(parent_organization_id);
+
+-- Operational workflows. Run transactionally through the migration runner.
+ALTER TABLE donor_profiles ADD COLUMN IF NOT EXISTS district VARCHAR(50);
+ALTER TABLE notifications ALTER COLUMN request_id DROP NOT NULL;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'critical_need';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'urgent';
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ;
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS dedupe_key TEXT;
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS request_id INTEGER REFERENCES blood_requests(id) ON DELETE SET NULL;
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS confirmed_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
+
+-- Closed requests cannot retain a live dispatch mission.
+UPDATE notifications n SET closed_at = NOW()
+FROM blood_requests r WHERE r.id = n.request_id AND r.status <> 'Active' AND n.closed_at IS NULL;
+-- Unique indexes intentionally reject conflicting legacy records instead of deleting them.
+CREATE UNIQUE INDEX IF NOT EXISTS notifications_request_donor_unique ON notifications(request_id, donor_id);
+CREATE UNIQUE INDEX IF NOT EXISTS notifications_one_active_mission ON notifications(donor_id)
+  WHERE response_status = 'accepted' AND closed_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS notifications_dedupe_unique ON notifications(dedupe_key);
+CREATE INDEX IF NOT EXISTS notifications_donor_sent ON notifications(donor_id, sent_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS blood_requests_organization_status ON blood_requests(organization_id, status, id DESC);
+CREATE INDEX IF NOT EXISTS donations_donor_date ON donations(donor_id, donation_date DESC, id DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS donations_request_donor_unique ON donations(request_id, donor_id) WHERE request_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS donors_matching ON donor_profiles(blood_group, next_eligible_date) WHERE blood_group_verified AND is_available;
+
+CREATE TABLE IF NOT EXISTS verification_documents (
+  id UUID PRIMARY KEY,
+  owner_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  file_name VARCHAR(255) NOT NULL,
+  mime_type TEXT NOT NULL CHECK (mime_type IN ('application/pdf', 'image/jpeg', 'image/png')),
+  content BYTEA NOT NULL CHECK (octet_length(content) BETWEEN 1 AND 5242880),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS verification_documents_owner ON verification_documents(owner_id);
+
+CREATE TABLE IF NOT EXISTS coordinator_messages (
+  id SERIAL PRIMARY KEY,
+  request_id INTEGER NOT NULL REFERENCES blood_requests(id) ON DELETE CASCADE,
+  donor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message TEXT NOT NULL CHECK (length(message) BETWEEN 1 AND 2000),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS coordinator_messages_request ON coordinator_messages(request_id, id DESC);
+
+CREATE TABLE IF NOT EXISTS push_devices (
+  id UUID PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE CHECK (length(token) BETWEEN 20 AND 4096),
+  family_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS push_devices_user ON push_devices(user_id);
+CREATE TABLE IF NOT EXISTS push_delivery_jobs (
+  id SERIAL PRIMARY KEY,
+  notification_id INTEGER NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+  device_id UUID NOT NULL REFERENCES push_devices(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'sent', 'failed', 'cancelled')),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  lease_until TIMESTAMPTZ,
+  UNIQUE(notification_id, device_id)
+);
+CREATE INDEX IF NOT EXISTS push_delivery_jobs_pending ON push_delivery_jobs(next_attempt_at) WHERE status IN ('pending', 'processing');
+
+CREATE TABLE IF NOT EXISTS download_tickets (
+  token_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_version INTEGER NOT NULL,
+  family_id TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS download_tickets_expiry ON download_tickets(expires_at);
+
+CREATE TABLE IF NOT EXISTS rate_limit_counters (
+  key_hash TEXT PRIMARY KEY,
+  total_hits INTEGER NOT NULL CHECK (total_hits >= 0),
+  reset_time TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS rate_limit_counters_expiry ON rate_limit_counters(reset_time);

@@ -1,3 +1,4 @@
+import { showAlert } from '../utils/showAlert';
 import { useThemedStyles } from '../theme/useThemedStyles';
 import type { AppColors } from '../theme/palette';
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,7 +10,6 @@ import {
   StatusBar,
   ScrollView,
   Modal,
-  Alert,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
@@ -20,6 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DonorBottomNav, { DonorTab } from '../components/DonorBottomNav';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export interface EmergencyMatchData {
   requestId?: string;
@@ -79,8 +80,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToProfile,
   onNavigateToNotifications,
   onOpenRequest,
+  onLogout,
 }) => {
   const { styles, colors, isDark } = useThemedStyles(createStyles);
+  const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [showEmergencyCard, setShowEmergencyCard] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<BloodRequestItem | null>(null);
@@ -93,9 +96,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [requestsList, setRequestsList] = useState<BloodRequestItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Fetch real data from backend
   const loadDashboardData = useCallback(async (isRefresh = false) => {
+    setLoadError(null);
     if (isRefresh) {
       setRefreshing(true);
     } else {
@@ -117,7 +122,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         setRequestsList(res.data.requests || []);
       }
     } catch (err: any) {
-      console.warn('Backend loadDashboardData error:', err?.message || err);
+      setDonor(null);
+      setEmergencyMatch(null);
+      setRequestsList([]);
+      setLoadError(err?.status === 403
+        ? 'Your account cannot access the donor dashboard. Sign in with a donor account. Admin and staff accounts use their own portal.'
+        : err?.status === 401
+          ? 'Sign in with a donor account to view your dashboard.'
+          : 'Unable to load your dashboard. Check your connection and try again.');
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -132,12 +144,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     name: 'Valued Donor',
     initials: 'VD',
     isVerified: false,
-    bloodGroup: 'O-',
-    rhGroup: 'O Rh-',
+    bloodGroup: 'Unknown',
+    rhGroup: 'Not verified',
     authorityVerified: false,
     lastDonationDate: 'None',
-    nextEligibleStatus: 'Available Now',
-    qualificationInterval: 'Qualified',
+    nextEligibleStatus: 'Not available',
+    qualificationInterval: 'Not available',
     totalDonations: 0,
     monthlyGain: 0,
     urgentRequestsCount: 0,
@@ -155,7 +167,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     try {
       await api.authPost(`/donors/requests/${requestId}/respond`, { status: 'en_route' });
     } catch (err) {
-      console.warn('Failed to register response on server:', err);
+      showAlert('Could not accept request', err instanceof Error ? err.message : 'Please try again.');
+      return;
     }
 
     setRequestsList((prev) =>
@@ -166,10 +179,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
     setResponseModalVisible(false);
     setEmergencyModalVisible(false);
-    Alert.alert(
+    showAlert(
       'En Route Confirmed',
-      'The hospital staff has been alerted that you are on your way. Thank you for saving lives!',
-      [{ text: 'OK' }]
+      'The hospital staff has been alerted that you are on your way. Thank you for saving lives!'
     );
   };
 
@@ -190,6 +202,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Text style={styles.loadingText}>Connecting to BloodLink network...</Text>
         </View>
         <DonorBottomNav activeTab={activeTab} onSelect={handleTabPress} requestsCount={currentDonor.urgentRequestsCount} />
+      </SafeAreaView>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.loadingContainer}>
+          <Text accessibilityRole="alert" style={styles.loadingText}>{loadError}</Text>
+          <TouchableOpacity accessibilityRole="button" onPress={() => loadDashboardData()}>
+            <Text style={[styles.loadingText, { color: colors.primary }]}>Try again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity accessibilityRole="button" onPress={async () => { await signOut(); onLogout?.(); }}>
+            <Text style={[styles.loadingText, { color: colors.primary }]}>Back to sign in</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
@@ -461,7 +489,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Text style={styles.sectionTitleText}>Active Blood Requests Nearby</Text>
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={() => onNavigateToRequests ? onNavigateToRequests() : Alert.alert('Nearby Requests', `Showing ${requestsList.length} active verified blood requests.`)}
+            onPress={() => onNavigateToRequests ? onNavigateToRequests() : showAlert('Nearby Requests', `Showing ${requestsList.length} active verified blood requests.`)}
           >
             <Text style={styles.seeAllLinkText}>See all ({requestsList.length})</Text>
           </TouchableOpacity>

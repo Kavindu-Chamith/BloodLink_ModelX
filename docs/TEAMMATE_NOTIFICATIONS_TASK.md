@@ -1,5 +1,9 @@
 # Teammate task: notification search and unread filtering
 
+This task was written for an earlier mock-backed baseline. Notification services
+now call the authenticated backend; preserve that integration when implementing
+the independent filtering UI. See [the backend handoff](BACKEND_COMPLETION.md).
+
 Status: ready to develop; the new features are not implemented in this baseline.
 
 ## Goal and scope
