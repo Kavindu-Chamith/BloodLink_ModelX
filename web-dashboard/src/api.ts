@@ -1,7 +1,9 @@
 const BASE = (import.meta.env.VITE_API_URL || 'http://localhost:4000/api').replace(/\/$/, '');
-interface LoginResult { accessToken: string; refreshToken: string; user: { id: number; email: string; role: string } }
+interface LoginResult { accessToken: string; refreshToken: string; user: { id: number; email: string; role: string; mustChangePassword?: boolean } }
 export class Api {
   readonly email: string;
+  readonly role: string;
+  readonly mustChangePassword: boolean;
   private expired: () => void;
   private accessToken = '';
   private refreshToken = '';
@@ -9,13 +11,14 @@ export class Api {
   private closed = false;
   private constructor(email: string, expired: () => void, tokens: LoginResult) {
     this.email = email; this.expired = expired;
+    this.role = tokens.user.role; this.mustChangePassword = !!tokens.user.mustChangePassword;
     this.accessToken = tokens.accessToken; this.refreshToken = tokens.refreshToken;
   }
   static async login(email: string, password: string, expired: () => void) {
     const result = await fetchJson<LoginResult>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-    if (result.user.role !== 'admin') {
+    if (!['admin', 'bloodbank_staff', 'hospital_staff'].includes(result.user.role)) {
       await fetchJson('/auth/logout', { method: 'POST', body: JSON.stringify({ refreshToken: result.refreshToken }) }).catch(() => {});
-      throw new Error('This portal is for platform administrators. Use your institution dashboard to sign in as staff.');
+      throw new Error('This portal is for blood bank, hospital and platform administrators. Donors should sign in using the mobile app.');
     }
     return new Api(result.user.email, expired, result);
   }

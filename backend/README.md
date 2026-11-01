@@ -6,7 +6,7 @@ JWT secrets must be different, at least 32 characters long, and must not use exa
 
 The completed operational API, role boundaries, private document storage, matching,
 stock/donation workflow, notifications and deployment settings are documented in
-[the backend handoff](../docs/BACKEND_COMPLETION.md). Apply migration 007 before
+[the backend handoff](../docs/BACKEND_COMPLETION.md). Apply migration 008 before
 starting this version. `MIGRATION_DATABASE_URL` can supply the owner connection
 for CLI migrations while `DATABASE_URL` uses a limited runtime login.
 
@@ -82,6 +82,10 @@ npm run build
 npm start
 ```
 
+For reusable Postman checks of all declared API routes, run `npm run test:postman`.
+It starts a disposable local database/API and executes the collection with the installed
+Postman CLI. See [Postman setup, results and app instructions](postman/README.md).
+
 Tests use `TEST_DATABASE_URL` (or a localhost `DATABASE_URL`) with CREATEDB permission.
 They create randomly named disposable databases and remove them in `finally`; they do
 not run test cases against existing application tables. HTTP, PostgreSQL, transactions,
@@ -128,4 +132,4 @@ Apply migrations through 005 before running the updated portal. Existing bank li
 - Login/current-user responses include `user.mustChangePassword`. `POST /api/auth/change-password` requires authentication, `currentPassword`, a strong `password`, and `confirmPassword`. It clears the first-use requirement and revokes sessions. Email/OTP recovery does the same.
 - Public `/api/organizations/register` rejects blood-bank registration and `/api/staff/register` rejects blood-bank staff. Hospital behavior remains.
 
-The admin UI supports copying credentials for manual handover to the bank contact. It keeps newly created credentials in memory between the two steps and clears them after final handover or session exit. No credentials are returned from database reads. The bank dashboard and teammate management will be developed separately. Audit persistence remains enabled despite removing activity-log UI.
+The admin UI supports copying credentials for manual handover to the bank contact. It keeps newly created credentials in memory between the two steps and clears them after final handover or session exit. No credentials are returned from database reads. The same portal now provides institution dashboards and teammate management, routing by the authenticated role. Super admins review requests before donor publication. See [institution dashboard handoff](../docs/INSTITUTION_DASHBOARD.md). Audit persistence remains enabled despite removing activity-log UI.

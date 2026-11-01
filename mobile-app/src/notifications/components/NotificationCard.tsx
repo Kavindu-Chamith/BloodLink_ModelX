@@ -15,6 +15,7 @@ interface Props {
     onOpenDoctorNote: (n: AppNotification) => void;
     onViewGuidelines: (n: AppNotification) => void;
     onShareHonor: (n: AppNotification) => void;
+    onViewPrivateMessage: (n: AppNotification) => void;
 }
 
 export default function NotificationCard({
@@ -25,6 +26,7 @@ export default function NotificationCard({
     onOpenDoctorNote,
     onViewGuidelines,
     onShareHonor,
+    onViewPrivateMessage,
 }: Props) {
     const { colors } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
@@ -157,7 +159,8 @@ export default function NotificationCard({
             )}
 
             {/* Health advisory footer */}
-            {n.kind === 'health_advisory' && (
+            {n.hasPrivateMessage && <View style={styles.footerRow}><Pressable onPress={() => onViewPrivateMessage(n)} style={styles.primaryButton} accessibilityRole="button" accessibilityLabel="View private health message"><MaterialCommunityIcons name="shield-lock-outline" size={17} color={colors.onPrimary} /><Text style={styles.primaryButtonText}>View private message</Text></Pressable></View>}
+            {n.kind === 'health_advisory' && !n.hasPrivateMessage && (
                 <View style={styles.footerRow}>
                     <View style={styles.distance}>
                         <MaterialCommunityIcons name="calendar-month-outline" size={18} color={colors.primary} />

@@ -40,6 +40,7 @@ export interface AppNotification {
     // health_advisory
     eligibleInDays?: number;
     guidelinesUrl?: string;
+    hasPrivateMessage?: boolean;
 
     // community_impact
     honor?: { title: string; verifiedBy: string };

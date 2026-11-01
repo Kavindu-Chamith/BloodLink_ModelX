@@ -21,6 +21,7 @@ import { AppNotification } from '../types/notifications';
 import { FILTERS } from '../utils/kindConfig';
 import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
 import DonorHeader from '../../components/DonorHeader';
+import { fetchPrivateHealthMessage } from '../services/notificationsService';
 
 interface Props {
     state: NotificationsState;
@@ -162,6 +163,13 @@ export default function NotificationsScreen({ state, onBack, onViewRequest, onNa
                                         setActionMessage(await openUrl(item.guidelinesUrl, 'Donation guidelines have not been attached to this notification.'));
                                     }}
                                     onShareHonor={handleShare}
+                                    onViewPrivateMessage={async item => {
+                                        try {
+                                            const message = await fetchPrivateHealthMessage(item.id);
+                                            showAlert(message.subject, `${message.institution}\n\n${message.message}`);
+                                            await state.markRead(item.id);
+                                        } catch { setActionMessage('Could not open the private message. Please try again.'); }
+                                    }}
                                 />
                             ))
                         )}

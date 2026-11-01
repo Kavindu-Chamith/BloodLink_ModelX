@@ -31,7 +31,7 @@ export async function matchedRequests(donorId: string, limit = 100) {
     FROM blood_requests r JOIN organizations o ON o.id = r.organization_id
     JOIN donor_profiles dp ON dp.user_id = $1 JOIN users u ON u.id = dp.user_id
     LEFT JOIN notifications n ON n.request_id = r.id AND n.donor_id = dp.user_id
-    WHERE r.status = 'Active' AND o.is_active AND o.verification_status = 'approved'
+    WHERE r.status = 'Active' AND r.approval_status = 'Approved' AND o.is_active AND o.verification_status = 'approved'
       AND u.status = 'active' AND u.role = 'donor' AND ${donorEligibilitySQL}
       AND dp.blood_group = r.blood_group
       AND o.latitude IS NOT NULL AND o.longitude IS NOT NULL
@@ -59,7 +59,9 @@ export async function lockDonor(client: PoolClient, donorId: string | number) {
 export async function assertRequestMatch(client: PoolClient, donorId: string, requestId: number) {
   const result = await client.query(`SELECT dp.user_id FROM donor_profiles dp
     JOIN blood_requests r ON r.id = $1 JOIN organizations o ON o.id = r.organization_id
-    WHERE dp.user_id = $3 AND ${donorEligibilitySQL} AND dp.blood_group = r.blood_group
+    WHERE dp.user_id = $3 AND r.status = 'Active' AND r.approval_status = 'Approved'
+      AND o.is_active AND o.verification_status = 'approved'
+      AND ${donorEligibilitySQL} AND dp.blood_group = r.blood_group
       AND o.latitude IS NOT NULL AND o.longitude IS NOT NULL
       AND ${distanceSQL('dp', 'o')} <= r.radius_km`, [requestId, donationIntervalDays(), donorId]);
   if (!result.rowCount) throw new HttpError(409, 'A verified, available donor with a matching blood group, location and donation interval is required');
@@ -82,11 +84,12 @@ export async function dispatchMatches(client: PoolClient, requestId: number) {
     SELECT r.id, dp.user_id, 'Blood donation request', 'A verified institution has requested your blood group nearby. Open BloodLink for details.'
     FROM blood_requests r JOIN organizations o ON o.id = r.organization_id
     JOIN donor_profiles dp ON dp.blood_group = r.blood_group JOIN users u ON u.id = dp.user_id
-    WHERE r.id = $1 AND r.status = 'Active' AND o.is_active AND o.verification_status = 'approved'
+    WHERE r.id = $1 AND r.status = 'Active' AND r.approval_status = 'Approved' AND o.is_active AND o.verification_status = 'approved'
       AND u.role = 'donor' AND u.status = 'active' AND ${donorEligibilitySQL}
       AND o.latitude IS NOT NULL AND o.longitude IS NOT NULL
       AND ${distanceSQL('dp', 'o')} <= r.radius_km
-    ON CONFLICT (request_id, donor_id) DO NOTHING RETURNING id`, [requestId, donationIntervalDays()]);
+    ON CONFLICT (request_id, donor_id) DO UPDATE SET closed_at = NULL, sent_at = NOW(), read_at = NULL
+      WHERE notifications.closed_at IS NOT NULL AND notifications.response_status = 'pending' RETURNING id`, [requestId, donationIntervalDays()]);
   await queueNotificationPush(client, matches.rows.map(row => row.id));
   return matches.rowCount || 0;
 }

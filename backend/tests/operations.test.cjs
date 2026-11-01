@@ -69,6 +69,38 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
     }
     let requestId, secondRequestId;
 
+    await t.test('optional request details accept blank forms and reject invalid values', async () => {
+      for (const value of ['', '   ', null]) {
+        const result = await api('/requests', staffA, { bloodGroup: 'AB+', requiredUnits: 1, reason: value, department: value });
+        assert.equal(result.status, 201);
+        assert.equal(result.data.request.reason, '');
+        assert.equal(result.data.request.department, '');
+      }
+      for (const value of [false, 123, {}, '<script>', 'x'.repeat(1001)]) {
+        assert.equal((await api('/requests', staffA, { bloodGroup: 'AB+', requiredUnits: 1, reason: value })).status, 400);
+      }
+    });
+
+    await t.test('a hidden mission at a suspended institution does not block the next acceptance', async () => {
+      const identity = await user('mission-recovery', 'donor', null, { blood_group: 'AB+' });
+      const suspendedOrg = await org('Mission recovery institution');
+      const suspendedStaff = await user('mission-recovery-staff', 'bloodbank_staff', suspendedOrg);
+      const createApproved = async staff => {
+        const result = await api('/requests', staff, { bloodGroup: 'AB+', requiredUnits: 1 });
+        assert.equal(result.status, 201);
+        const id = result.data.request.id;
+        assert.equal((await api(`/admin/blood-requests/${id}/review`, platformAdmin, { decision: 'Approved' }, 'PATCH')).status, 200);
+        return id;
+      };
+      const oldId = await createApproved(suspendedStaff), nextId = await createApproved(staffA);
+      assert.equal((await api(`/requests/${oldId}/respond`, identity, { status: 'accepted' })).status, 200);
+      assert.equal((await api(`/admin/organizations/${suspendedOrg}/access`, platformAdmin, { isActive: false }, 'PATCH')).status, 200);
+      assert.equal((await api('/requests/me', identity)).data.activeMission, null);
+      assert.equal((await api(`/requests/${nextId}/respond`, identity, { status: 'accepted' })).status, 200);
+      assert.ok((await pool.query('SELECT closed_at FROM notifications WHERE request_id = $1 AND donor_id = $2', [oldId, identity.id])).rows[0].closed_at);
+      assert.equal((await api(`/requests/mission/${nextId}/cancel`, identity, {})).status, 200);
+    });
+
     await t.test('anonymous and wrong-role users cannot access donor records or mutate responses', async () => {
       for (const route of ['/donors/home', '/donors/me', '/donors/me/donations', '/requests/me', '/notifications']) assert.equal((await api(route)).status, 401, route);
       assert.equal((await api('/requests/1/respond', null, { status: 'accepted' })).status, 401);
@@ -82,7 +114,19 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
       assert.equal((await api('/requests', donor, { bloodGroup: 'O-', requiredUnits: 1 })).status, 403);
       assert.equal((await api('/requests', staffA, { bloodGroup: 'O-', requiredUnits: '1' })).status, 400);
       const result = await api('/requests', staffA, { bloodGroup: 'O-', requiredUnits: 1, priority: 'Emergency', radiusKm: 10 });
-      assert.equal(result.status, 201); assert.equal(result.data.matchedDonors, 2); requestId = result.data.request.id;
+      assert.equal(result.status, 201); assert.equal(result.data.matchedDonors, 0); requestId = result.data.request.id;
+      assert.equal(result.data.request.approval_status, 'Pending');
+      assert.equal((await api('/requests/me', donor)).data.alerts.length, 0);
+      assert.equal((await api('/donors/home', donor)).data.donor.matchedRequestsCount, 0);
+      assert.equal((await api('/notifications', donor)).data.length, 0);
+      for (const status of ['accepted', 'declined']) assert.equal((await api(`/requests/${requestId}/respond`, donor, { status })).status, 409);
+      assert.equal((await api(`/requests/${requestId}/dispatch`, staffA, {})).status, 409);
+      assert.equal((await api(`/admin/blood-requests/${requestId}/review`, staffA, { decision: 'Approved' }, 'PATCH')).status, 403);
+      assert.equal((await api('/admin/blood-requests', donor)).status, 403);
+      assert.ok((await api('/admin/blood-requests', platformAdmin)).data.requests.some(row => row.id === requestId));
+      const approvals = await Promise.all([1, 2].map(() => api(`/admin/blood-requests/${requestId}/review`, platformAdmin, { decision: 'Approved' }, 'PATCH')));
+      assert.deepEqual(approvals.map(result => result.status).sort(), [200, 409]);
+      assert.equal(approvals.find(result => result.status === 200).data.matchedDonors, 2);
       const notified = (await pool.query('SELECT donor_id FROM notifications WHERE request_id = $1 ORDER BY donor_id', [requestId])).rows.map(row => row.donor_id);
       assert.deepEqual(notified, [donor.id, other.id]);
       const feed = await api('/requests/me', donor);
@@ -95,6 +139,23 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
       assert.equal((await api(`/requests/${requestId}/dispatch`, staffB, {})).status, 404);
       assert.equal((await api(`/requests/${requestId}/dispatch`, staffA, {})).data.matchedDonors, 0);
       secondRequestId = (await api('/requests', staffA, { bloodGroup: 'O-', requiredUnits: 2, radiusKm: 10 })).data.request.id;
+      assert.equal((await api(`/admin/blood-requests/${secondRequestId}/review`, platformAdmin, { decision: 'Approved' }, 'PATCH')).status, 200);
+    });
+    await t.test('rejected and cancelled pending requests never reach donors or permit dispatch', async () => {
+      const rejected = (await api('/requests', staffA, { bloodGroup: 'O-', requiredUnits: 1, approval_status: 'Approved', organizationId: orgB })).data.request;
+      assert.equal(rejected.organization_id, orgA); assert.equal(rejected.approval_status, 'Pending');
+      assert.equal((await api(`/admin/blood-requests/${rejected.id}/review`, platformAdmin, { decision: 'Rejected' }, 'PATCH')).status, 400);
+      assert.equal((await api(`/admin/blood-requests/${rejected.id}/review`, platformAdmin, { decision: 'Rejected', reason: 'Please clarify the clinical requirement' }, 'PATCH')).status, 200);
+      assert.equal((await api(`/admin/blood-requests/${rejected.id}/review`, platformAdmin, { decision: 'Approved' }, 'PATCH')).status, 409);
+      assert.equal((await api(`/requests/${rejected.id}/dispatch`, staffA, {})).status, 409);
+      assert.equal((await api(`/requests/${rejected.id}/respond`, donor, { status: 'accepted' })).status, 409);
+      assert.equal((await api(`/requests/${rejected.id}`, staffB)).status, 404);
+      assert.equal((await api(`/requests/${rejected.id}`, staffA)).data.request.review_reason, 'Please clarify the clinical requirement');
+      assert.equal((await pool.query('SELECT COUNT(*)::integer AS count FROM notifications WHERE request_id=$1', [rejected.id])).rows[0].count, 0);
+      assert.ok(!(await api('/requests/me', donor)).data.alerts.some(row => row.id === String(rejected.id)));
+      const cancelled = (await api('/requests', staffA, { bloodGroup: 'O-', requiredUnits: 1 })).data.request;
+      assert.equal((await api(`/requests/${cancelled.id}/status`, staffA, { status: 'Cancelled' }, 'PATCH')).status, 200);
+      assert.equal((await api(`/admin/blood-requests/${cancelled.id}/review`, platformAdmin, { decision: 'Approved' }, 'PATCH')).status, 409);
     });
     await t.test('response validation, mission ownership and concurrent acceptance are enforced', async () => {
       assert.equal((await api(`/requests/req-${requestId}/respond`, donor, { status: 'accepted' })).status, 400);
@@ -163,7 +224,7 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
       const malformed = await fetch(base + '/donors/me/verification-documents', { method: 'POST', headers: { Authorization: `Bearer ${other.token}`, 'Content-Type': 'multipart/form-data; boundary=broken' }, body: '--broken\r\nInvalid header' });
       assert.equal(malformed.status, 400);
       assert.equal((await api('/donors/me/verification-documents', other, form(Buffer.alloc(5242881)))).status, 413);
-      const uploaded = await api('/donors/me/verification-documents', other, form('%PDF-1.4\n%%EOF'));
+      const uploaded = await api('/donors/me/verification-documents/', other, form('%PDF-1.4\n%%EOF'));
       assert.equal(uploaded.status, 201); assert.equal(uploaded.data.document.status, 'pending'); documentPath = uploaded.data.document.downloadPath.replace(/^\/api/, '');
       assert.equal((await api('/donors/me/verification-documents', other, form('%PDF-1.4\n%%EOF'))).status, 409);
       assert.equal((await api(documentPath, donor)).status, 404); assert.equal((await api(documentPath)).status, 401);
@@ -190,6 +251,24 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
       await pool.query("UPDATE download_tickets SET expires_at = NOW() - INTERVAL '1 second'");
       assert.equal((await api(expiring.data.url.replace(/^\/api/, ''))).status, 404);
     });
+    await t.test('health messages require a donation relationship and stay private to the sending bank and recipient', async () => {
+      const body = { donorId: donor.id, subject: 'Follow-up appointment', message: 'Please contact our donation team\nto arrange your follow-up.' };
+      assert.equal((await api('/institution/health-alerts', donor, body)).status, 403);
+      assert.equal((await api('/institution/health-alerts', platformAdmin, body)).status, 403);
+      assert.equal((await api('/institution/health-alerts', staffB, body)).status, 404);
+      assert.equal((await api('/institution/health-alerts', staffA, { ...body, donorId: other.id })).status, 404);
+      assert.ok((await api('/institution/health-alerts/recipients', staffA)).data.donors.some(d => d.id === donor.id));
+      assert.equal((await api('/institution/health-alerts/recipients', staffB)).data.donors.length, 0);
+      const sent = await api('/institution/health-alerts', staffA, body); assert.equal(sent.status, 201);
+      assert.equal((await api('/institution/health-alerts', staffB)).data.alerts.length, 0);
+      assert.equal((await api('/institution/health-alerts', staffA)).data.alerts[0].message, body.message);
+      const inbox = (await api('/notifications', donor)).data;
+      const notice = inbox.find(n => n.hasPrivateMessage); assert.ok(notice);
+      assert.doesNotMatch(JSON.stringify(inbox), /Follow-up appointment|arrange your follow-up/);
+      assert.equal((await api(`/notifications/${notice.id}/health-message`, other)).status, 404);
+      assert.equal((await api(`/notifications/${notice.id}/health-message`, staffB)).status, 403);
+      assert.equal((await api(`/notifications/${notice.id}/health-message`, donor)).data.alert.message, body.message);
+    });
     await t.test('reminders are deduplicated and push workers recover, retry, and suppress logged-out devices', async () => {
       await pool.query("UPDATE donor_profiles SET last_donation_date = CURRENT_DATE - 100, next_eligible_date = CURRENT_DATE - 10 WHERE user_id = $1", [donor.id]);
       await pool.query('UPDATE donations SET donation_date = CURRENT_DATE - 100 WHERE donor_id = $1', [donor.id]);
@@ -208,6 +287,12 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
       assert.equal((await pool.query('SELECT status FROM push_delivery_jobs')).rows[0].status, 'pending');
       await pool.query("UPDATE push_delivery_jobs SET next_attempt_at = NOW()");
       await processPushJobs(async () => { sent++; }); assert.equal(sent, 2);
+      const closedNotice = (await pool.query(`UPDATE notifications SET closed_at = NOW()
+        WHERE request_id = $1 AND donor_id = $2 RETURNING id`, [secondRequestId, donor.id])).rows[0].id;
+      await pool.query('INSERT INTO push_delivery_jobs(notification_id, device_id) VALUES ($1, $2)', [closedNotice, device.data.device.id]);
+      await processPushJobs(async () => assert.fail('Closed notification must not receive push'));
+      assert.equal((await pool.query('SELECT status FROM push_delivery_jobs WHERE notification_id = $1', [closedNotice])).rows[0].status, 'cancelled');
+      await pool.query('DELETE FROM push_delivery_jobs WHERE notification_id = $1', [closedNotice]);
       await pool.query("UPDATE push_delivery_jobs SET status = 'pending', next_attempt_at = NOW()");
       await pool.query('UPDATE refresh_tokens SET is_revoked = true WHERE user_id = $1', [donor.id]);
       await processPushJobs(async () => assert.fail('Logged-out device must not receive push'));
@@ -234,9 +319,10 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
     });
     await t.test('migrations rerun without changing application records', async () => {
       const before = (await pool.query('SELECT COUNT(*)::integer AS count FROM donations')).rows[0].count;
+      const migrations = (await pool.query('SELECT COUNT(*)::integer AS count FROM schema_migrations')).rows[0].count;
       await require('../src/migrate').runMigrations();
       assert.equal((await pool.query('SELECT COUNT(*)::integer AS count FROM donations')).rows[0].count, before);
-      assert.equal((await pool.query('SELECT COUNT(*)::integer AS count FROM schema_migrations')).rows[0].count, 7);
+      assert.equal((await pool.query('SELECT COUNT(*)::integer AS count FROM schema_migrations')).rows[0].count, migrations);
     });
     await t.test('shared rate-limit counters remain atomic across API instances and windows', async () => {
       const { PostgresRateLimitStore } = require('../src/services/rateLimit.store');
