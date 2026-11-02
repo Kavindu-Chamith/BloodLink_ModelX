@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { PoolClient } from 'pg';
 import { AuthRequest } from '../middleware/auth.middleware';
-import { BLOOD_GROUPS, positiveId, emailValue, validatePasswordStrength } from '../middleware/validation.middleware';
+import { BLOOD_GROUPS, positiveId, emailValue, optionalText, validatePasswordStrength } from '../middleware/validation.middleware';
 import { pool } from '../db';
 import { transaction, HttpError } from '../transaction';
 import { audit, dispatchMatches, donationIntervalDays, lockRequest, lockDonor, queueNotificationPush } from '../services/coordination.service';
@@ -44,16 +44,17 @@ export async function updateStock(req: AuthRequest, res: Response) {
 
 export async function createBloodRequest(req: AuthRequest, res: Response) {
   const { bloodGroup, requiredUnits } = req.body, priority = req.body.priority ?? 'Normal', radius = req.body.radiusKm ?? 20;
+  const reason = optionalText(req.body.reason, 'reason', 1000);
+  const department = optionalText(req.body.department, 'department', 150);
   if (!BLOOD_GROUPS.includes(bloodGroup) || !Number.isInteger(requiredUnits) || requiredUnits < 1 || requiredUnits > 1000 ||
     !['Normal', 'Urgent', 'Emergency'].includes(priority) || typeof radius !== 'number' || !Number.isFinite(radius) || radius <= 0 || radius > 500) throw new HttpError(400, 'Invalid blood group, requiredUnits, priority or radiusKm');
   const result = await transaction(async client => {
     const org = await activeInstitution(client, req);
     if (org.latitude == null || org.longitude == null) throw new HttpError(409, 'Set the institution location before creating requests');
-    const request = (await client.query(`INSERT INTO blood_requests(organization_id, blood_group, required_units, priority, radius_km, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`, [org.id, bloodGroup, requiredUnits, priority, radius, req.user!.id])).rows[0];
-    const matchedDonors = await dispatchMatches(client, request.id);
-    await audit(client, req, 'BLOOD_REQUEST_CREATED', 'blood_request', request.id, { matchedDonors });
-    return { request, matchedDonors };
+    const request = (await client.query(`INSERT INTO blood_requests(organization_id, blood_group, required_units, priority, radius_km, created_by, reason, department)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`, [org.id, bloodGroup, requiredUnits, priority, radius, req.user!.id, reason, department])).rows[0];
+    await audit(client, req, 'BLOOD_REQUEST_SUBMITTED', 'blood_request', request.id);
+    return { request, matchedDonors: 0 };
   });
   res.status(201).json(result);
 }
@@ -86,6 +87,7 @@ export async function dispatchBloodRequest(req: AuthRequest, res: Response) {
   const matchedDonors = await transaction(async client => {
     const request = await lockRequest(client, id); ownRequest(req, request);
     if (request.status !== 'Active') throw new HttpError(409, 'Blood request is closed');
+    if (request.approval_status !== 'Approved') throw new HttpError(409, 'Super admin approval is required before dispatch');
     const count = await dispatchMatches(client, id);
     await audit(client, req, 'BLOOD_REQUEST_DISPATCHED', 'blood_request', id, { matchedDonors: count });
     return count;
@@ -101,6 +103,7 @@ export async function closeBloodRequest(req: AuthRequest, res: Response) {
     if (existing.status === status) return existing;
     if (existing.status !== 'Active') throw new HttpError(409, 'Blood request is already closed');
     if (status === 'Fulfilled') {
+      if (existing.approval_status !== 'Approved') throw new HttpError(409, 'Request has not been approved');
       const units = (await client.query('SELECT COALESCE(SUM(units_donated), 0)::integer AS units FROM donations WHERE request_id = $1', [id])).rows[0].units;
       if (units < existing.required_units) throw new HttpError(409, 'Confirm the required donations before fulfillment');
     }
@@ -122,6 +125,7 @@ export async function confirmDonation(req: AuthRequest, res: Response) {
     const prior = (await client.query('SELECT * FROM donations WHERE request_id = $1 AND donor_id = $2', [id, donorId])).rows[0];
     if (prior) return prior;
     if (request.status !== 'Active') throw new HttpError(409, 'Blood request is closed');
+    if (request.approval_status !== 'Approved') throw new HttpError(409, 'Request has not been approved');
     const donor = await lockDonor(client, donorId);
     // A clinical staff member confirms collection. The server enforces the interval
     // and verified identity/group; staff remains responsible for clinical screening.
@@ -159,8 +163,9 @@ export async function confirmDonation(req: AuthRequest, res: Response) {
 }
 
 export async function institutionOverview(req: AuthRequest, res: Response) {
-  const overview = (await pool.query(`SELECT o.id, o.name, o.type, o.district,
-    (SELECT COUNT(*)::integer FROM blood_requests WHERE organization_id = o.id AND status = 'Active') AS active_requests,
+  const overview = (await pool.query(`SELECT o.id, o.name, o.type, o.district, o.branch_name, o.address, o.contact_phone,
+    (SELECT COUNT(*)::integer FROM blood_requests WHERE organization_id = o.id AND status = 'Active' AND approval_status = 'Approved') AS active_requests,
+    (SELECT COUNT(*)::integer FROM blood_requests WHERE organization_id = o.id AND status = 'Active' AND approval_status = 'Pending') AS pending_requests,
     (SELECT COALESCE(SUM(available_units), 0)::integer FROM blood_stocks WHERE organization_id = o.id) AS total_units,
     (SELECT COUNT(*)::integer FROM donations WHERE organization_id = o.id) AS donations
     FROM organizations o WHERE o.id = $1`, [req.user!.orgId])).rows[0];

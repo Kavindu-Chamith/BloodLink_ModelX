@@ -100,7 +100,9 @@ export async function getDonorHomeDashboard(req: AuthRequest, res: Response) {
   const stats = (await pool.query(`SELECT COALESCE(SUM(units_donated), 0)::integer AS units,
     COALESCE(SUM(units_donated) FILTER (WHERE donation_date >= date_trunc('month', CURRENT_DATE)), 0)::integer AS monthly
     FROM donations WHERE donor_id = $1`, [req.user!.id])).rows[0];
-  const unread = (await pool.query('SELECT COUNT(*)::integer AS count FROM notifications WHERE donor_id = $1 AND read_at IS NULL', [req.user!.id])).rows[0].count;
+  const unread = (await pool.query(`SELECT COUNT(*)::integer AS count FROM notifications n
+    LEFT JOIN blood_requests r ON r.id = n.request_id WHERE n.donor_id = $1 AND n.read_at IS NULL
+    AND (n.request_id IS NULL OR r.approval_status = 'Approved')`, [req.user!.id])).rows[0].count;
   const intervalPassed = String(profile.nextEligibleDate).slice(0, 10) <= new Date().toISOString().slice(0, 10);
   res.json({ donor: {
     name: profile.fullName || 'Donor', initials: initials(profile.fullName), bloodGroup: profile.bloodGroup,

@@ -9,9 +9,9 @@ export const DonationRecommendationCard: React.FC = () => {
   const { styles, colors } = useThemedStyles(createStyles);
   return (
     <View style={styles.container}>
-      <Ionicons name="heart-outline" size={22} color={colors.textMuted} style={styles.icon} />
+      <Ionicons name="information-circle-outline" size={18} color={colors.textMuted} style={styles.icon} />
       <Text style={styles.text}>
-        Donations are recommended every 3–4 months. Only respond if you are feeling healthy and well.
+        Accept only if you can attend. The donation team will confirm eligibility when you arrive.
       </Text>
     </View>
   );
@@ -22,10 +22,10 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: c.background,
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: c.border,
-    borderRadius: 16,
-    paddingHorizontal: 16,
+    borderRadius: 0,
+    paddingHorizontal: 2,
     paddingVertical: 14,
     marginTop: 4,
     marginBottom: 20,

@@ -16,6 +16,8 @@
     "test": "ts-node src/test_auth_flows.ts && npm run test:operations && npm run test:client",
     "test:operations": "node -r ts-node/register --test tests/operations.test.cjs",
     "test:auth": "ts-node src/test_auth_flows.ts",
+    "test:postman": "node postman/run.cjs",
+    "test:postman:serve": "node postman/run.cjs --serve",
     "build": "tsc",
     "start": "node dist/index.js",
     "db:init": "ts-node src/migrate.ts --init",

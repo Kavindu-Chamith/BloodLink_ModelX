@@ -10,3 +10,6 @@ export async function markNotificationRead(id: string): Promise<void> {
 export async function markAllNotificationsRead(): Promise<void> {
   await api.authPatch('/notifications/read-all', {});
 }
+export async function fetchPrivateHealthMessage(id: string): Promise<{ subject: string; message: string; institution: string }> {
+  return (await api.authGet<{ alert: { subject: string; message: string; institution: string } }>(`/notifications/${encodeURIComponent(id)}/health-message`)).data.alert;
+}

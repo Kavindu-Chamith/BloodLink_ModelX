@@ -19,6 +19,7 @@ import { HistoryState } from '../hooks/useDonationHistory';
 import { fetchDonorRecordUrl } from '../services/historyService';
 import { DonationRecord } from '../types/history';
 import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
+import { CardEntrance, TactilePressable } from '../../components/Motion';
 import DonorHeader from '../../components/DonorHeader';
 
 interface Props {
@@ -100,7 +101,7 @@ export default function HistoryScreen({ state, onNavigateTab, onNavigateToProfil
                     <ImpactCard summary={data.summary} />
 
                     <View style={styles.logHeader}>
-                        <Text style={styles.logTitle}>DONATION LOG</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}><Ionicons name="time-outline" size={18} color={colors.primary} /><Text style={styles.logTitle}>Donation history</Text></View>
                         <Text style={styles.logCount}>{data.records.length} recorded</Text>
                     </View>
 
@@ -113,28 +114,28 @@ export default function HistoryScreen({ state, onNavigateTab, onNavigateToProfil
                             </Text>
                         </View>
                     ) : (
-                        data.records.map((record) => (
-                            <DonationCard key={record.id} record={record} onViewCertificate={handleViewCertificate} />
+                        data.records.map((record, index) => (
+                            index < 2 ? <CardEntrance key={record.id} delay={60 + index * 60}><DonationCard record={record} onViewCertificate={handleViewCertificate} /></CardEntrance> : <DonationCard key={record.id} record={record} onViewCertificate={handleViewCertificate} />
                         ))
                     )}
 
                     {actionMessage && <Text accessibilityRole="alert" style={styles.actionMessage}>{actionMessage}</Text>}
-                    <Pressable
+                    <TactilePressable
                         onPress={handleDownloadRecord}
                         disabled={downloading}
                         style={[styles.downloadButton, downloading && { opacity: 0.6 }]}
                         accessibilityRole="button"
-                        accessibilityLabel="Download official donor record as PDF"
+                        accessibilityLabel="Download donor record as PDF"
                     >
                         {downloading ? (
                             <ActivityIndicator color={colors.text} />
                         ) : (
                             <>
                                 <Ionicons name="document-text-outline" size={20} color={colors.text} />
-                                <Text style={styles.downloadText}>Download Official Donor Record (PDF)</Text>
+                                <Text style={styles.downloadText}>Download donor record (PDF)</Text>
                             </>
                         )}
-                    </Pressable>
+                    </TactilePressable>
                 </ScrollView>
             ) : null}
             <DonorBottomNav activeTab="History" onSelect={onNavigateTab} colors={colors} />

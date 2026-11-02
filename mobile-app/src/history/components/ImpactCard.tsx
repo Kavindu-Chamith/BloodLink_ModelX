@@ -1,8 +1,10 @@
 // src/history/components/ImpactCard.tsx
+import IconBadge from '../../components/IconBadge';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { CardEntrance } from '../../components/Motion';
+import CardArtwork from '../../components/CardArtwork';
 import { ColorPalette, radius, useTheme } from '../../profile/theme';
-import { estimateLivesSaved } from '../../profile/utils/eligibility';
 import { HistorySummary } from '../types/history';
 import { formatVolume } from '../utils/historyFormat';
 
@@ -15,36 +17,37 @@ export default function ImpactCard({ summary }: Props) {
     const styles = useMemo(() => createStyles(colors), [colors]);
 
     return (
-        <View style={styles.card}>
+        <CardEntrance style={styles.card}><CardArtwork />
             <View style={styles.headerRow}>
-                <Text style={styles.title}>LIFETIME IMPACT</Text>
+                <View style={styles.heading}><IconBadge name="heart-circle-outline" small /><Text style={styles.title}>Your donation record</Text></View>
                 <View style={styles.pill}>
-                    <Text style={styles.pillText}>{summary.bloodGroup} Donor</Text>
+                    <Text style={styles.pillText}>{summary.bloodGroup}</Text>
                 </View>
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.statsRow}>
-                <Stat styles={styles} value={String(summary.totalDonations)} label="DONATIONS" />
-                <Stat styles={styles} value={`${estimateLivesSaved(summary.totalDonations)}+`} label="LIVES HELPED" />
-                <Stat styles={styles} value={formatVolume(summary.totalVolumeMl)} label="VOLUME DONATED" />
+                <Stat styles={styles} value={String(summary.totalDonations)} label="Recorded donations" icon="water-outline" />
+                <Stat styles={styles} value={formatVolume(summary.totalVolumeMl)} label="Recorded volume" icon="flask-outline" />
             </View>
-        </View>
+        </CardEntrance>
     );
 }
 
 function Stat({
     value,
     label,
+    icon,
     styles,
 }: {
     value: string;
     label: string;
+    icon: 'water-outline' | 'flask-outline';
     styles: ReturnType<typeof createStyles>;
 }) {
     return (
-        <View style={styles.stat}>
+        <View style={styles.stat}><IconBadge name={icon} small tone={icon === 'water-outline' ? 'primary' : 'info'} />
             <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
                 {value}
             </Text>
@@ -59,13 +62,16 @@ const createStyles = (c: ColorPalette) =>
     StyleSheet.create({
         card: {
             backgroundColor: c.card,
-            borderRadius: radius.lg,
+            borderRadius: 18,
+            overflow: 'hidden',
+            boxShadow: '0 5px 18px rgba(20, 25, 21, 0.04)',
             borderWidth: 1,
             borderColor: c.border,
             padding: 16,
         },
+        heading: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
         headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-        title: { fontSize: 11, fontWeight: '500', color: c.textMuted, letterSpacing: 0.5 },
+        title: { fontSize: 15, fontWeight: '500', color: c.text, letterSpacing: -0.2, flexShrink: 1 },
         pill: {
             backgroundColor: c.primarySoft,
             borderRadius: radius.pill,
@@ -75,7 +81,7 @@ const createStyles = (c: ColorPalette) =>
         pillText: { color: c.text, fontWeight: '500', fontSize: 10 },
         divider: { height: 1, backgroundColor: c.border, marginVertical: 14 },
         statsRow: { flexDirection: 'row' },
-        stat: { flex: 1, alignItems: 'center' },
-        statValue: { fontSize: 30, fontWeight: '700', color: c.primary },
-        statLabel: { fontSize: 10, fontWeight: '500', color: c.textMuted, letterSpacing: 0.5, marginTop: 6 },
+        stat: { flex: 1, alignItems: 'flex-start', paddingVertical: 5, gap: 7 },
+        statValue: { fontSize: 35, fontWeight: '500', letterSpacing: -1.2, color: c.primary },
+        statLabel: { fontSize: 12, fontWeight: '400', color: c.textMuted, marginTop: 5 },
     });

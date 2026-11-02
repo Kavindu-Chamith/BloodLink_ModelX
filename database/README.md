@@ -76,3 +76,7 @@ migration owner and a separate CREATEDB-capable test account. Production backups
 TLS, document access control, retention policies, and monitoring require deployment setup.
 
 `migration_005_account_first_onboarding.sql` allows primary bank accounts to exist before a bank record is created. Unassigned accounts remain unable to authenticate. Registering a bank assigns one pre-created account atomically; the unique primary-account index continues to prevent duplicate bank links. Existing assignments and credentials are preserved.
+
+## Request approval and private institution messages
+
+Migration `008_request_review_and_health_alerts.sql` adds super admin review to blood requests and stores institution-scoped health messages. Run it through `npm run migrate` before starting the updated API. Existing open requests enter Pending review; prior donor missions and outstanding push jobs are closed until review. Accounts, inventory and donation history remain intact. See [institution dashboard handoff](../docs/INSTITUTION_DASHBOARD.md).

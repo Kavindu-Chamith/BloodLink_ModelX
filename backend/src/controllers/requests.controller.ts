@@ -25,17 +25,19 @@ export async function getRequestsPageData(req: AuthRequest, res: Response) {
     o.name, o.branch_name, o.contact_phone FROM notifications n
     JOIN blood_requests r ON r.id = n.request_id JOIN organizations o ON o.id = r.organization_id
     WHERE n.donor_id = $1 AND n.response_status = 'accepted' AND n.closed_at IS NULL
-      AND r.status = 'Active' AND o.is_active AND o.verification_status = 'approved' LIMIT 1`, [donorId])).rows[0];
+      AND r.status = 'Active' AND r.approval_status = 'Approved' AND o.is_active AND o.verification_status = 'approved' LIMIT 1`, [donorId])).rows[0];
   const alerts = candidates.filter(row => !['accepted', 'declined'].includes(row.response_status)).map(row => ({
     id: String(row.id), hospitalName: row.hospital_name, distance: distanceLabel(row.distance_km),
     timeAgo: timeAgo(row.created_at), bloodGroup: groupLabel(row.blood_group), unitsNeeded: row.required_units,
     isUrgent: row.priority !== 'Normal', type: row.priority === 'Normal' ? 'standard' : 'urgent',
     requirementLabel: `${groupLabel(row.blood_group)} · ${row.required_units} units needed`,
     address: row.address || 'Address unavailable', contactNumber: row.contact_phone || '',
-    patientCase: 'Institution blood donation request', department: row.branch_name,
+    patientCase: 'Institution blood donation request', department: row.department || row.branch_name,
     verifiedInstitution: true, acceptedDonors: row.accepted_donors, priority: row.priority,
   }));
-  const unread = (await pool.query('SELECT COUNT(*)::integer AS count FROM notifications WHERE donor_id = $1 AND read_at IS NULL', [donorId])).rows[0].count;
+  const unread = (await pool.query(`SELECT COUNT(*)::integer AS count FROM notifications n
+    LEFT JOIN blood_requests r ON r.id = n.request_id WHERE n.donor_id = $1 AND n.read_at IS NULL
+    AND (n.request_id IS NULL OR r.approval_status = 'Approved')`, [donorId])).rows[0].count;
   res.json({ donorInitials: initials(donor.full_name || ''), donorName: donor.full_name || 'Donor',
     unreadAlertsCount: unread, activeCount: mission ? 1 : 0, alerts,
     activeMission: mission ? {
@@ -62,11 +64,20 @@ export async function respondToAlert(req: AuthRequest, res: Response) {
   await transaction(async client => {
     const request = await lockRequest(client, requestId);
     if (request.status !== 'Active') throw new HttpError(409, 'Blood request is closed');
+    if (request.approval_status !== 'Approved') throw new HttpError(409, 'Blood request is awaiting approval or has been rejected');
     await lockDonor(client, donorId);
     const existing = (await client.query('SELECT * FROM notifications WHERE request_id = $1 AND donor_id = $2', [requestId, donorId])).rows[0];
     if (existing?.closed_at) throw new HttpError(409, 'This mission is already closed');
     if (status === 'accepted') {
       await assertRequestMatch(client, donorId, requestId);
+      // Hidden missions must not strand a donor after their institution loses access.
+      // The donor lock also serializes concurrent acceptance of different requests.
+      await client.query(`UPDATE notifications n SET closed_at = NOW()
+        FROM blood_requests r JOIN organizations o ON o.id = r.organization_id
+        WHERE n.request_id = r.id AND n.donor_id = $1 AND n.request_id <> $2
+          AND n.response_status = 'accepted' AND n.closed_at IS NULL
+          AND (r.status <> 'Active' OR r.approval_status <> 'Approved'
+            OR NOT o.is_active OR o.verification_status <> 'approved')`, [donorId, requestId]);
       if ((await client.query(`SELECT id FROM notifications WHERE donor_id = $1 AND request_id <> $2
         AND response_status = 'accepted' AND closed_at IS NULL`, [donorId, requestId])).rowCount) throw new HttpError(409, 'You already have an active mission');
     } else if (!existing) await assertRequestMatch(client, donorId, requestId);

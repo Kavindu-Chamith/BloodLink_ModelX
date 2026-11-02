@@ -6,7 +6,7 @@ import type { Organization } from './types';
 import { bankCode, bankStatus } from './types';
 import { useDashboard } from './context';
 
-export function Brand() { return <div className="brand"><img className="brand-icon" src="/logo.png" alt="BloodLink logo" width={36} height={45} /><div><strong>Blood<span>Link</span></strong><small>NETWORK ADMINISTRATION</small></div></div>; }
+export function Brand({ subtitle = 'NETWORK ADMINISTRATION' }: { subtitle?: string }) { return <div className="brand"><img className="brand-icon" src="/logo.png" alt="BloodLink logo" width={36} height={45} /><div><strong>Blood<span>Link</span></strong><small>{subtitle}</small></div></div>; }
 export function Badge({ status, children }: { status: string; children?: ReactNode }) { return <span className={`badge badge-${status.toLowerCase()}`}><i />{children || status.charAt(0).toUpperCase() + status.slice(1)}</span>; }
 export function PageHeading({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children?: ReactNode }) { return <div className="page-heading"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{description}</p></div><div className="heading-actions">{children}</div></div>; }
 export function SearchBox({ value, onChange, placeholder = 'Search…' }: { value: string; onChange: (value: string) => void; placeholder?: string }) { return <label className="search-box"><Search size={16} /><input aria-label={placeholder} placeholder={placeholder} value={value} onChange={event => onChange(event.target.value)} />{value && <button type="button" aria-label="Clear search" onClick={() => onChange('')}><X size={14} /></button>}</label>; }

@@ -44,8 +44,8 @@ export async function processPushJobs(send: (token: string, notificationId: numb
   const target = (await pool.query(`SELECT d.token, d.user_id, n.request_id FROM push_devices d
     JOIN notifications n ON n.id = $2 JOIN users u ON u.id = d.user_id
     LEFT JOIN blood_requests r ON r.id = n.request_id LEFT JOIN organizations o ON o.id = r.organization_id
-    WHERE d.id = $1 AND n.donor_id = d.user_id AND u.status = 'active'
-      AND (n.request_id IS NULL OR (r.status = 'Active' AND o.is_active AND o.verification_status = 'approved' AND n.response_status = 'pending'))
+    WHERE d.id = $1 AND n.donor_id = d.user_id AND u.status = 'active' AND n.closed_at IS NULL
+      AND (n.request_id IS NULL OR (r.status = 'Active' AND r.approval_status = 'Approved' AND o.is_active AND o.verification_status = 'approved' AND n.response_status = 'pending'))
       AND EXISTS(SELECT 1 FROM refresh_tokens t WHERE t.user_id = d.user_id AND t.family_id = d.family_id AND NOT t.is_revoked AND t.expires_at > NOW())`, [job.device_id, job.notification_id])).rows[0];
   if (!target) {
     await pool.query("UPDATE push_delivery_jobs SET status = 'cancelled', lease_until = NULL WHERE id = $1 AND status = 'processing' AND attempts = $2", [job.id, job.attempts]);

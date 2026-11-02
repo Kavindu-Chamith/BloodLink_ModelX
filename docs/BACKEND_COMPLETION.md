@@ -1,5 +1,7 @@
 # Backend implementation and security handoff
 
+**1 November 2026 update:** institution dashboards, super admin request approval and private donor health messages are implemented. Request creation now submits for review and dispatches only on approval. See [institution dashboard handoff](INSTITUTION_DASHBOARD.md) for current contracts and migration 008 upgrade behavior; it supersedes the immediate-dispatch behavior described below.
+
 Updated 31 October 2026. This describes the implemented API; the original project
 proposal also describes features and architecture that preceded this implementation.
 

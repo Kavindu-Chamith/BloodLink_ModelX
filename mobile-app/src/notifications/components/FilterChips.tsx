@@ -1,7 +1,7 @@
 // src/notifications/components/FilterChips.tsx
 import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
-import { ColorPalette, radius, useTheme } from '../../profile/theme';
+import { ColorPalette, useTheme } from '../../profile/theme';
 
 export interface FilterChip {
     key: string;
@@ -52,13 +52,8 @@ const createStyles = (c: ColorPalette) =>
     StyleSheet.create({
         scroll: { flexGrow: 0, flexShrink: 0, height: 44, minHeight: 44 },
         row: { paddingHorizontal: 20, gap: 10 },
-        chip: { minHeight: 44, justifyContent: 'center',
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            borderRadius: radius.pill,
-            backgroundColor: c.infoSoft,
-        },
-        chipActive: { backgroundColor: c.action },
+        chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 7, backgroundColor: c.surface },
+        chipActive: { backgroundColor: c.primarySoft },
         text: { fontSize: 12, fontWeight: '500', color: c.text },
-        textActive: { color: c.onPrimary },
+        textActive: { color: c.primary },
     });

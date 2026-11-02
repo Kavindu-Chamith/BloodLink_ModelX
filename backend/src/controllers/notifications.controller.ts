@@ -10,12 +10,14 @@ export async function listNotifications(req: AuthRequest, res: Response) {
   const before = req.query.before === undefined ? null : positiveId(req.query.before);
   if (limit > 100) throw new HttpError(400, 'Limit cannot exceed 100');
   const rows = (await pool.query(`SELECT n.id, n.kind, n.category, n.title, n.message, n.request_id, n.read_at, n.sent_at,
-    o.district FROM notifications n LEFT JOIN blood_requests r ON r.id = n.request_id
+    o.district, EXISTS(SELECT 1 FROM health_alerts a WHERE a.notification_id = n.id AND a.donor_id = n.donor_id) AS private_health_message
+    FROM notifications n LEFT JOIN blood_requests r ON r.id = n.request_id
     LEFT JOIN organizations o ON o.id = r.organization_id
-    WHERE n.donor_id = $1 AND ($2::integer IS NULL OR n.id < $2) ORDER BY n.id DESC LIMIT $3`, [req.user!.id, before, limit])).rows;
+    WHERE n.donor_id = $1 AND (n.request_id IS NULL OR r.approval_status = 'Approved')
+      AND ($2::integer IS NULL OR n.id < $2) ORDER BY n.id DESC LIMIT $3`, [req.user!.id, before, limit])).rows;
   res.json(rows.map(row => ({ id: String(row.id), kind: row.kind, category: row.category, title: row.title,
     body: row.message, requestId: row.request_id == null ? undefined : String(row.request_id),
-    createdAt: row.sent_at, isRead: !!row.read_at, location: row.district || undefined })));
+    createdAt: row.sent_at, isRead: !!row.read_at, location: row.district || undefined, hasPrivateMessage: row.private_health_message })));
 }
 export async function readNotification(req: AuthRequest, res: Response) {
   const updated = await pool.query('UPDATE notifications SET read_at = COALESCE(read_at, NOW()) WHERE id = $1 AND donor_id = $2 RETURNING id', [positiveId(req.params.id), req.user!.id]);
