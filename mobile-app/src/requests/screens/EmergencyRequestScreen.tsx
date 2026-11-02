@@ -23,7 +23,6 @@ export default function EmergencyRequestScreen({ request, responding, error, onB
   const urgent = request.isUrgent || request.type === 'urgent';
   const group = request.bloodGroup.split(' ')[0];
   const accepted = request.acceptedDonors;
-  const progress = accepted == null ? null : Math.min(1, accepted / Math.max(1, request.unitsNeeded));
   const openMaps = async () => {
     try { await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${request.hospitalName}, ${request.address || 'Sri Lanka'}`)}`); }
     catch { showAlert('Unable to open maps', 'Please try again.'); }
@@ -36,26 +35,25 @@ export default function EmergencyRequestScreen({ request, responding, error, onB
   return <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
     <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
       <View style={s.hero}>
-        <View style={s.heroDecor} />
-        <View style={s.heroTop}><Pressable onPress={onBack} disabled={responding} style={s.circle} accessibilityRole="button" accessibilityLabel="Back to requests"><Ionicons name="chevron-back" size={22} color={colors.onPrimary} /></Pressable><View style={s.emergencyPill}><View style={s.amberDot} /><Text style={s.emergencyText}>{urgent ? 'EMERGENCY REQUEST' : 'BLOOD DONATION REQUEST'}</Text></View><Pressable onPress={share} style={s.circle} accessibilityRole="button" accessibilityLabel="Share blood request"><Ionicons name="share-social-outline" size={20} color={colors.onPrimary} /></Pressable></View>
-        <View style={s.heroBody}><View style={s.bloodBadge}><Text style={s.bloodGroup}>{group}</Text><Text style={s.bloodCaption}>{group === 'O-' ? 'UNIVERSAL' : 'BLOOD GROUP'}</Text></View><View style={{ flex: 1 }}><View style={s.row}><View style={s.greenDot} /><Text style={s.heroSub}>{urgent ? 'Immediate donation requested' : 'Your donation can help'}</Text></View><Text style={s.heroTitle}>{group} {urgent ? 'Urgently Needed' : 'Donation Needed'}</Text><Text style={s.reference}>Ref: #{request.id} · {request.timeAgo}</Text></View></View>
+        <View style={s.heroTop}><Pressable onPress={onBack} disabled={responding} style={s.circle} accessibilityRole="button" accessibilityLabel="Back to requests"><Ionicons name="chevron-back" size={22} color={colors.text} /></Pressable><View style={s.emergencyPill}><View style={s.amberDot} /><Text style={s.emergencyText}>{urgent ? 'Urgent request' : 'Donation request'}</Text></View><Pressable onPress={share} style={s.circle} accessibilityRole="button" accessibilityLabel="Share blood request"><Ionicons name="share-social-outline" size={20} color={colors.text} /></Pressable></View>
+        <View style={s.heroBody}><View style={s.bloodBadge}><Text style={s.bloodGroup}>{group}</Text><Text style={s.bloodCaption}>Blood group</Text></View><View style={{ flex: 1 }}><View style={s.row}><View style={s.greenDot} /><Text style={s.heroSub}>{urgent ? 'Priority blood request' : 'Donation request'}</Text></View><Text style={s.heroTitle}>{group} {urgent ? 'Urgently Needed' : 'Donation Needed'}</Text><Text style={s.reference}>Ref: #{request.id} · {request.timeAgo}</Text></View></View>
       </View>
       <View style={s.body}>
         <View style={s.card}><View style={s.hospitalRow}><View style={s.hospitalIcon}><Ionicons name="business-outline" size={23} color={colors.primary} /></View><View style={{ flex: 1 }}><Text style={s.hospital}>{request.hospitalName}</Text>{request.verifiedInstitution && <View style={[s.row, { marginTop: 4 }]}><Ionicons name="shield-checkmark" size={12} color={colors.success} /><Text style={s.verified}>Verified Medical Institution</Text></View>}</View>{request.department && <View style={s.department}><Text style={s.departmentText}>{request.department}</Text></View>}</View><View style={s.divider} /><View style={s.locationRow}><Ionicons name="location-outline" size={15} color={colors.primary} /><Text style={s.locationText}>{request.distance}{request.address ? ` · ${request.address}` : ''}</Text><Pressable onPress={openMaps} accessibilityRole="button" style={s.mapsButton}><Text style={s.mapText}>Open Maps</Text></Pressable></View></View>
-        <View style={s.card}><Text style={s.eyebrow}>CLINICAL REQUIREMENTS</Text>
+        <View style={s.card}><Text style={s.eyebrow}>Request details</Text>
           <View style={s.requirement}><View style={[s.detailIcon, { backgroundColor: colors.primarySoft }]}><Ionicons name="water" size={16} color={colors.primary} /></View><Text style={s.detailLabel}>Blood Group</Text><Text style={s.detailValue}>{request.bloodGroup}</Text></View>
           <View style={s.divider} />
-          <View style={s.requirement}><View style={[s.detailIcon, { backgroundColor: colors.warningSoft }]}><Ionicons name="water-outline" size={16} color={colors.warning} /></View><Text style={s.detailLabel}>Units Needed</Text><View style={{ alignItems: 'flex-end' }}><Text style={[s.detailValue, { maxWidth: '100%' }]}>{request.unitsNeeded} Units Total</Text>{accepted != null && <Text style={s.hint}>{Math.max(0, request.unitsNeeded - accepted)} still required</Text>}</View></View>
-          {progress != null && <View style={s.progressSection}><View style={s.track}><View style={[s.progress, { width: `${progress * 100}%` }]} /></View><View style={s.between}><Text style={s.hint}>{accepted} Donor{accepted === 1 ? '' : 's'} Accepted</Text><Text style={s.hint}>Goal: {request.unitsNeeded} Units</Text></View></View>}
+          <View style={s.requirement}><View style={[s.detailIcon, { backgroundColor: colors.warningSoft }]}><Ionicons name="water-outline" size={16} color={colors.warning} /></View><Text style={s.detailLabel}>Units Needed</Text><View style={{ alignItems: 'flex-end' }}><Text style={[s.detailValue, { maxWidth: '100%' }]}>{request.unitsNeeded} Units Total</Text></View></View>
+          {accepted != null && <View style={s.progressSection}><Text style={s.hint}>{accepted} donor{accepted === 1 ? '' : 's'} accepted. Collections are confirmed by the institution.</Text></View>}
           <View style={s.divider} />
           <View style={s.requirement}><View style={[s.detailIcon, { backgroundColor: colors.infoSoft }]}><Ionicons name="time-outline" size={16} color={colors.info} /></View><Text style={s.detailLabel}>Respond By</Text><Text style={s.detailValue}>{urgent ? 'As soon as possible' : 'Contact the coordinator'}</Text></View>
           <View style={s.divider} />
-          <View style={s.requirement}><View style={[s.detailIcon, { backgroundColor: colors.infoSoft }]}><Ionicons name="document-text-outline" size={16} color={colors.info} /></View><Text style={s.detailLabel}>Case Severity</Text><View style={s.severity}><Text style={s.severityText}>{request.priority || (urgent ? 'Emergency' : 'Routine')}</Text></View></View>
+          <View style={s.requirement}><View style={[s.detailIcon, { backgroundColor: colors.infoSoft }]}><Ionicons name="document-text-outline" size={16} color={colors.info} /></View><Text style={s.detailLabel}>Request priority</Text><View style={s.severity}><Text style={s.severityText}>{request.priority || (urgent ? 'Emergency' : 'Routine')}</Text></View></View>
           {request.patientCase && <Text style={s.caseNote}>{request.patientCase}</Text>}
         </View>
         {error && <Text style={s.error} accessibilityRole="alert">{error}</Text>}
-        <Pressable disabled={responding} onPress={() => onRespond(request, 'accepted')} style={[s.accept, responding && { opacity: 0.6 }]} accessibilityRole="button">{responding ? <ActivityIndicator color={colors.onPrimary} /> : <><Ionicons name="checkmark" size={19} color={colors.onPrimary} /><Text style={s.acceptText}>Accept Request & Coordinate</Text></>}</Pressable>
-        <Pressable disabled={responding} onPress={() => onRespond(request, 'declined')} style={s.decline} accessibilityRole="button"><Ionicons name="close" size={17} color={colors.textMuted} /><Text style={s.declineText}>Unable to Donate Right Now</Text></Pressable>
+        <Pressable disabled={responding} onPress={() => onRespond(request, 'accepted')} style={[s.accept, responding && { opacity: 0.6 }]} accessibilityRole="button">{responding ? <ActivityIndicator color={colors.onPrimary} /> : <><Ionicons name="checkmark" size={19} color={colors.onPrimary} /><Text style={s.acceptText}>Accept request</Text></>}</Pressable>
+        <Pressable disabled={responding} onPress={() => onRespond(request, 'declined')} style={s.decline} accessibilityRole="button"><Ionicons name="close" size={17} color={colors.textMuted} /><Text style={s.declineText}>Decline request</Text></Pressable>
         <Text style={s.guidance}>Only donate if you are feeling well and meet eligibility criteria.</Text>
       </View>
     </ScrollView>
@@ -72,9 +70,9 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     paddingBottom: 20,
   },
   hero: {
-    backgroundColor: '#BD1230',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    backgroundColor: c.card,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: 20,
     paddingBottom: 30,
     overflow: 'hidden',
@@ -99,8 +97,8 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.32)',
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderColor: c.border,
+    backgroundColor: c.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -108,7 +106,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: c.primarySoft,
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -117,12 +115,12 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#FCD34D',
+    backgroundColor: c.primary,
   },
   emergencyText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: c.onPrimary,
+    fontSize: 11,
+    fontWeight: '500',
+    color: c.primary,
   },
   heroBody: {
     flexDirection: 'row',
@@ -133,8 +131,8 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   bloodBadge: {
     width: 76,
     height: 80,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    backgroundColor: c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
@@ -157,14 +155,14 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#6EE7B7',
+    backgroundColor: c.primary,
   },
   heroSub: {
     fontSize: 12,
-    color: '#FFDFE5',
+    color: c.textSecondary,
   },
   heroTitle: {
-    color: c.onPrimary,
+    color: c.text,
     fontSize: 21,
     lineHeight: 27,
     fontWeight: '700',
@@ -172,7 +170,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   },
   reference: {
     fontSize: 12,
-    color: '#FFD3DC',
+    color: c.textMuted,
   },
   body: {
     padding: 16,
@@ -180,7 +178,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   },
   card: {
     backgroundColor: c.card,
-    borderRadius: 18,
+    borderRadius: 10,
     padding: 16,
     borderWidth: 1,
     borderColor: c.border,

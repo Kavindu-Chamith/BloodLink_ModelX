@@ -92,7 +92,7 @@ export default function NotificationsScreen({ state, onBack, onViewRequest, onNa
 
     return (
         <SafeAreaView style={styles.safe} edges={['top']}>
-            <DonorHeader title="Home" onBack={onBack} onProfile={onNavigateToProfile} colors={colors} />
+            <DonorHeader title="Updates" onBack={onBack} onProfile={onNavigateToProfile} colors={colors} />
             <View style={styles.topRow}>
                 <View style={styles.titleWrap}>
                     <Text style={styles.title}>Notifications</Text>

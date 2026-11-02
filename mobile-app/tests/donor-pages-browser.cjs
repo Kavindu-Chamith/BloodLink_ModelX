@@ -5,9 +5,10 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 const { spawn } = require('node:child_process');
+const { existsSync } = require('node:fs');
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-const clientOrigin = process.env.MOBILE_WEB_URL || 'http://127.0.0.1:8081';
+const clientOrigin = process.env.MOBILE_WEB_URL || (process.argv.includes('--review') ? 'http://localhost:8082' : 'http://127.0.0.1:8081');
 const requests = [
   { id: '41', hospitalName: 'Sabaragamuwa General Hospital', distance: '3.2 km away', timeAgo: '10m ago', bloodGroup: 'O- Negative', unitsNeeded: 5, isUrgent: true, type: 'urgent', address: 'Hospital Road, Ratnapura', department: 'Trauma ICU', verifiedInstitution: true, acceptedDonors: 2, priority: 'Emergency', patientCase: 'Emergency trauma unit blood requirement.' },
   { id: '42', hospitalName: 'Teaching Hospital Ratnapura', distance: '4.5 km away', timeAgo: '45m ago', bloodGroup: 'O- Negative', unitsNeeded: 1, type: 'standard' },
@@ -24,7 +25,7 @@ const banks = [
 function installFixtures(requests, banks) {
   const original = window.fetch.bind(window);
   window.qa = { requests, banks, mission: null, failRespond: false, calls: [] };
-  window.qa.profile = { id: '1', fullName: 'Kavindu Perera', phone: '+94771234567', district: 'Ratnapura', donorSince: '2022-12-01', bloodGroup: 'O-', isAvailable: true, hasMatchingLocation: false, totalDonations: 4, lastDonationDate: '2024-02-15', nextEligibleDate: '2024-05-15', lastDonationPlace: 'Test center', bloodGroupVerification: 'approved', nicNumber: '199812345678', nicVerified: false, document: null };
+  window.qa.profile = { id: '1', fullName: 'Kavindu Perera', phone: '+94771234567', district: 'Ratnapura', donorSince: '2022-12-01', bloodGroup: 'O-', isAvailable: true, hasMatchingLocation: false, totalDonations: 4, lastDonationDate: '2026-05-15', nextEligibleDate: '2026-08-13', lastDonationPlace: 'Test center', bloodGroupVerification: 'approved', nicNumber: '199812345678', nicVerified: false, document: null };
   window.qa.notifications = [
     { id: '1', kind: 'critical_need', category: 'urgent', title: 'Critical O- Blood Alert Nearby', body: 'Synthetic browser test alert.', createdAt: new Date().toISOString(), isRead: false },
     { id: '2', kind: 'lab_result', category: 'doctor', title: 'Post-Donation Screening Report', createdAt: new Date().toISOString(), isRead: false, labReport: { hemoglobin: '14.2 g/dL', infectiousDiseases: 'Negative', volumeMl: 450, allClear: true, doctorMessage: 'Synthetic browser fixture only.' } },
@@ -43,7 +44,7 @@ function installFixtures(requests, banks) {
       window.qa.profile = { ...window.qa.profile, ...body };
       if ('latitude' in body) window.qa.profile.hasMatchingLocation = body.latitude !== null;
       data = window.qa.profile;
-    } else if (route === '/donors/me/donations') data = { donorName: 'Kavindu Perera', summary: { bloodGroup: 'O-', totalDonations: 4, totalVolumeMl: 1800 }, records: [] };
+    } else if (route === '/donors/me/donations') data = { donorName: 'Kavindu Perera', summary: { bloodGroup: 'O-', totalDonations: 4, totalVolumeMl: 1800 }, records: [0, 1, 2, 3].map((i) => ({ id: 'history-' + i, hospitalName: i % 2 ? 'Ratnapura Blood Bank' : 'Sabaragamuwa General Hospital', donatedAt: ['2026-05-15', '2026-01-12', '2025-09-08', '2025-05-02'][i], donationType: 'Whole blood', volumeMl: 450, status: 'verified' })) };
     else if (route === '/donors/me/donation-record') data = { url: null };
     else if (route === '/notifications') data = window.qa.notifications;
     else if (route === '/notifications/read-all') { window.qa.notifications.forEach(item => { item.isRead = true; }); data = { success: true }; }
@@ -60,7 +61,7 @@ function installFixtures(requests, banks) {
       }
     } else if (route === '/donors/home') {
       if (window.qa.failDashboard) { status = 403; data = { error: 'Insufficient permissions' }; }
-      else data = { donor: { name: 'Kavindu Perera', initials: 'KP', isVerified: true, bloodGroup: 'O-', rhGroup: 'O Rh-', authorityVerified: true, lastDonationDate: '15 May 2026', nextEligibleStatus: 'Available Now', qualificationInterval: 'Qualified', totalDonations: 4, monthlyGain: 1, urgentRequestsCount: 3, matchedRequestsCount: 3, unreadNotificationsCount: 3 }, emergencyMatch: null, requests: [] };
+      else data = { donor: { name: 'Kavindu Perera', initials: 'KP', isVerified: true, bloodGroup: 'O-', rhGroup: 'O Rh-', authorityVerified: true, lastDonationDate: '15 May 2026', nextEligibleStatus: 'Donation interval passed', qualificationInterval: '90-day donation interval', totalDonations: 4, monthlyGain: 1, urgentRequestsCount: window.qa.requests.filter(r => r.isUrgent).length, matchedRequestsCount: window.qa.requests.length, unreadNotificationsCount: window.qa.notifications.filter(n => !n.isRead).length }, emergencyMatch: null, requests: window.qa.requests.map(r => ({ id: r.id, hospitalName: r.hospitalName, bloodGroup: 'O-', priority: r.isUrgent ? 'Emergency' : 'Urgent', distance: r.distance, requiredUnits: r.unitsNeeded, status: 'available' })) };
     }
     else if (route.includes('/notify')) data = { success: true, message: 'Sent' };
     return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
@@ -68,7 +69,7 @@ function installFixtures(requests, banks) {
 }
 
 (async () => {
-  const chromium = process.env.CHROMIUM_PATH;
+  const chromium = process.env.CHROMIUM_PATH || ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/google-chrome', '/usr/bin/chromium', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(existsSync);
   if (!chromium) throw new Error('Set CHROMIUM_PATH to an installed Chrome or Edge executable.');
   const output = path.resolve(__dirname, '../../.qa-private/donor-pages');
   await fs.mkdir(output, { recursive: true });
@@ -106,7 +107,10 @@ function installFixtures(requests, banks) {
     };
     const shot = async name => { await evaluate('document.fonts.ready.then(() => true)'); await evaluate(`document.querySelector('[aria-label="Open development screen navigator"]').style.opacity = '0'`); await delay(150); const result = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }); await fs.writeFile(path.join(output, name + '.png'), Buffer.from(result.data, 'base64')); await evaluate(`document.querySelector('[aria-label="Open development screen navigator"]').style.opacity = '1'`); };
     const size = async (width, height = 844) => { await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false }); await delay(150); };
-    const fits = async label => assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), `${label} fits the viewport`);
+    const fits = async label => {
+      assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), `${label} fits the viewport`);
+      assert.ok(await evaluate(`(() => { const nav = document.querySelector('[data-testid="donor-bottom-nav"]'); return !nav || [...nav.querySelectorAll('[role="tab"]')].every(tab => tab.getBoundingClientRect().width >= nav.getBoundingClientRect().width / 6); })()`), `${label} keeps evenly sized navigation targets`);
+    };
     const screen = async label => { await click('Open development screen navigator'); await click(label); };
     await send('Runtime.enable'); await send('Page.enable');
     await send('Emulation.setFocusEmulationEnabled', { enabled: true });
@@ -115,6 +119,38 @@ function installFixtures(requests, banks) {
     await size(390);
     await send('Page.navigate', { url: clientOrigin });
     await wait(`document.querySelector('[aria-label="Open development screen navigator"]')`);
+    for (const [label, expected, screenshot] of [
+      ['2. Welcome', 'SMART BLOOD DONATION', 'welcome-original'],
+      ['3. Onboarding Carousel', 'Smart Matching', 'onboarding-original'],
+      ['4. Register: Step 1', 'Step 1 of 4', 'registration-personal'],
+      ['5. Register: Step 2', 'Step 2 of 4', 'registration-blood-group'],
+      ['6. Register: Step 3', 'Step 3 of 4', 'registration-verification'],
+      ['7. Register: Step 4', 'Step 4 of 4', 'registration-document'],
+      ['8. Registered Successfully', 'Continue', 'registration-success'],
+      ['9. Login Screen', 'Sign in method', 'login-original'],
+      ['10. Reset Password: Step 1', 'Reset', 'reset-email'],
+      ['11. Reset Password: Step 2', 'code', 'reset-verification'],
+      ['12. Reset Password: Step 3', 'password', 'reset-password'],
+    ]) {
+      await screen(label);
+      await wait(`document.body.innerText.toLowerCase().includes(${JSON.stringify(expected.toLowerCase())})`);
+      await shot(screenshot);
+      for (const width of [320, 390, 768]) {
+        await size(width); await fits(label);
+        if (label.startsWith('5.')) {
+          assert.equal(await evaluate(`new Set([...document.querySelectorAll('[aria-label^="Blood group "]')].map(el => Math.round(el.getBoundingClientRect().top))).size`), 2, 'Blood-group selection keeps its original four-by-two grid at every width');
+          const nextButton = await evaluate(`(() => { const button = document.querySelector('[aria-label="Continue"]'); const rect = button?.getBoundingClientRect(); return { top: rect?.top, bottom: rect?.bottom, height: innerHeight, viewport: innerWidth }; })()`);
+          assert.ok(nextButton.top >= 0 && nextButton.bottom <= nextButton.height, 'Blood-group Continue button remains visible: ' + JSON.stringify(nextButton));
+        }
+      }
+      await size(390);
+    }
+    await screen('5. Register: Step 2'); await click('Blood group O-');
+    await wait(`document.body.innerText.includes('O- selected')`);
+    await shot('registration-blood-group-selected');
+    await click('Continue'); await wait(`document.body.innerText.includes('Step 3 of 4')`);
+    console.log('PASS: Original authentication layouts, registration steps, blood-group selection and recovery screens fit 320/390/768px');
+    if (process.argv.includes('--auth-only')) return;
     await screen('4. Register: Step 1');
     await wait(`document.querySelector('input[placeholder="Enter your full name"]')`);
     for (const selector of ['input[placeholder="Enter your full name"]', 'input[aria-label="Sri Lankan mobile number"]', 'input[aria-label="Date of birth, year month day"]']) {
@@ -125,11 +161,12 @@ function installFixtures(requests, banks) {
       assert.notEqual(await evaluate(`getComputedStyle(document.querySelector(${JSON.stringify(selector)})).boxShadow`), 'none', 'Text input keeps a visible focus indicator');
     }
     await shot('registration-focus');
-    await screen('9. Login Screen'); await click('Sign in with email');
+    await screen('9. Login Screen'); await shot('login-light'); await click('Sign in with email');
     await fill('input[placeholder="you@email.com"]', 'fixture@example.com');
     await fill('input[placeholder="Password"]', 'FixtureOnly123!');
     await click('Sign in');
     await wait(`document.body.innerText.includes('Kavindu Perera')`);
+    await shot('home-light');
     await click('Profile'); await wait(`document.body.innerText.includes('Available to donate')`);
     await click('Sign out'); await wait(`document.body.innerText.includes('Sign out of BloodLink?')`);
     await shot('sign-out-confirmation');
@@ -137,39 +174,40 @@ function installFixtures(requests, banks) {
     await wait(`!document.body.innerText.includes('Sign out of BloodLink?')`);
     await click('Sign out'); await click('Confirm sign out');
     await wait(`document.body.innerText.includes('Get Started') && document.body.innerText.includes('Log In')`);
+    await shot('welcome-light');
     await wait(`window.qa.calls.some(call => call.route === '/auth/logout' && call.body.refreshToken === 'fixture-refresh')`);
     console.log('PASS: Form focus styling, sign-out cancellation, session revocation request and return to welcome');
     await screen('14. Blood Requests');
     await wait(`document.body.innerText.includes('Sabaragamuwa General Hospital')`);
     await shot('requests-alerts'); await fits('Requests');
     await click('View details and respond to Sabaragamuwa General Hospital');
-    await wait(`document.body.innerText.includes('CLINICAL REQUIREMENTS')`);
+    await wait(`document.body.innerText.includes('Request details')`);
     await shot('emergency-request');
     for (const width of [320, 390, 768]) { await size(width); await fits('Emergency request'); }
     await size(390);
-    await evaluate('window.qa.failRespond = true'); await click('Accept Request & Coordinate');
+    await evaluate('window.qa.failRespond = true'); await click('Accept request');
     await wait(`document.body.innerText.includes('Connection interrupted')`);
-    assert.ok(await evaluate(`document.body.innerText.includes('CLINICAL REQUIREMENTS')`), 'A failed response keeps the detail screen open');
-    await evaluate('window.qa.failRespond = false'); await click('Accept Request & Coordinate');
-    await wait(`document.body.innerText.includes('ACTIVE DISPATCH MISSION')`);
+    assert.ok(await evaluate(`document.body.innerText.includes('Request details')`), 'A failed response keeps the detail screen open');
+    await evaluate('window.qa.failRespond = false'); await click('Accept request');
+    await wait(`document.body.innerText.includes('Your accepted request')`);
     await shot('requests-active');
-    await click('New Alerts'); await click('View details for Teaching Hospital Ratnapura'); await click('Unable to Donate Right Now');
+    await click('New Alerts'); await click('View details for Teaching Hospital Ratnapura'); await click('Decline request');
     await wait(`!document.body.innerText.includes('Teaching Hospital Ratnapura')`);
     assert.equal(await evaluate(`window.qa.calls.filter(c => c.route.endsWith('/respond') && c.body.status === 'declined').length`), 1);
     console.log('PASS: Request details, failure recovery, acceptance, active mission, and decline');
-    await click('Banks'); await wait(`document.body.innerText.includes('NATIONAL BLOOD NETWORK') && document.body.innerText.includes('Stock Levels at Selected Center')`);
+    await click('Banks'); await wait(`document.body.innerText.includes('Find a centre') && document.body.innerText.includes('Reported stock at this centre')`);
     await shot('blood-banks');
-    await click('Filter blood banks'); await click('Show only critical stock'); await click('Show 1 centers');
-    await wait(`document.body.innerText.includes('Verified Blood Banks (1)')`);
-    await click('View All'); await fill('[aria-label="Search blood banks"]', 'not a center');
+    await click('Ratnapura'); await click('Filter blood banks'); await click('Show only critical stock'); await click('Show 1 centers');
+    await wait(`document.body.innerText.includes('Institutions (1)')`);
+    await click('Reset filters'); await fill('[aria-label="Search blood banks"]', 'not a center');
     await wait(`document.body.innerText.includes('No centers found')`);
     await click('Clear filters'); await click('Colombo');
     await wait(`document.body.innerText.includes('National Blood Center Colombo')`);
     for (const width of [320, 390, 768]) { await size(width); await fits('Blood banks'); }
     await size(390); await click('History');
-    await wait(`document.body.innerText.includes('LIFETIME IMPACT')`);
+    await wait(`document.body.innerText.includes('Your donation record')`);
     await shot('donation-history');
-    await click('Download official donor record as PDF');
+    await click('Download donor record as PDF');
     await wait(`document.body.innerText.includes('Your official donor record will be available')`);
     await click('Home'); await wait(`document.querySelector('[aria-label^="Notifications,"]')`);
     await evaluate(`document.querySelector('[aria-label^="Notifications,"]').click()`);
@@ -184,7 +222,7 @@ function installFixtures(requests, banks) {
     await click('Mark all notifications as read');
     await wait(`!document.body.innerText.includes('3 New')`);
     await click('Requests'); await wait(`document.body.innerText.includes('District Base Hospital')`);
-    await click('History'); await wait(`document.body.innerText.includes('LIFETIME IMPACT')`);
+    await click('History'); await wait(`document.body.innerText.includes('Your donation record')`);
     for (const width of [320, 390, 768]) { await size(width); await fits('History'); }
     await size(390);
     await click('Profile');
@@ -206,7 +244,7 @@ function installFixtures(requests, banks) {
     assert.ok(await evaluate(`(() => {const r=document.querySelector('[aria-label="Dark mode"]').getBoundingClientRect();return r.width>=44 && r.height>=44;})()`), 'Theme control has a comfortable touch target');
     await shot('profile-dark');
     const assertTheme = async (name, dark) => {
-      const card = dark ? 'rgb(21, 33, 55)' : 'rgb(255, 255, 255)';
+      const card = dark ? 'rgb(32, 37, 34)' : 'rgb(255, 255, 255)';
       assert.equal(await evaluate(`getComputedStyle(document.querySelector('[data-testid="donor-bottom-nav"]')).backgroundColor`), card, `${name} navigation uses the selected theme`);
       assert.equal(await evaluate('document.documentElement.style.colorScheme'), dark ? 'dark' : 'light');
       await fits(name);
@@ -215,18 +253,18 @@ function installFixtures(requests, banks) {
       await click(tab);
       await wait(`document.querySelector('[data-testid="donor-bottom-nav"] [role="tab"][aria-selected="true"]')?.getAttribute('aria-label')?.startsWith(${JSON.stringify(tab)})`);
       if (tab === 'Home') await wait(`document.body.innerText.includes('Kavindu Perera')`);
-      if (tab === 'Banks') await wait(`document.body.innerText.includes('Stock Levels at Selected Center')`);
-      if (tab === 'History') await wait(`document.body.innerText.includes('LIFETIME IMPACT')`);
+      if (tab === 'Banks') await wait(`document.body.innerText.includes('Reported stock at this centre')`);
+      if (tab === 'History') await wait(`document.body.innerText.includes('Your donation record')`);
       if (tab === 'Requests') await wait(`document.body.innerText.includes('District Base Hospital')`);
       await assertTheme(tab, true); await shot(tab.toLowerCase() + '-dark');
       for (const width of [320, 390, 768]) { await size(width); await fits(`${tab} dark`); }
       await size(390);
     }
     await click('View details for District Base Hospital');
-    await wait(`document.body.innerText.includes('CLINICAL REQUIREMENTS')`);
+    await wait(`document.body.innerText.includes('Request details')`);
     await assertTheme('Request details', true); await shot('request-details-dark');
     await click('Back to requests'); await click('Active');
-    await wait(`document.body.innerText.includes('ACTIVE DISPATCH MISSION')`);
+    await wait(`document.body.innerText.includes('Your accepted request')`);
     await assertTheme('Active mission', true); await shot('active-mission-dark');
     await click('Notify Coordinator');
     await wait(`document.body.innerText.toLowerCase().includes('select status / reason:')`); await shot('coordinator-dark'); await click('Close');
@@ -235,9 +273,18 @@ function installFixtures(requests, banks) {
     await wait(`document.body.innerText.includes('Post-Donation Screening Report')`);
     await assertTheme('Notifications', true); await shot('notifications-dark');
     await screen('9. Login Screen'); await wait(`document.body.innerText.includes('Sign in method')`);
-    assert.equal(await evaluate(`getComputedStyle([...document.querySelectorAll('div')].find(el => el.textContent === 'Sign in method')).color`), 'rgb(241, 245, 251)', 'Login text uses the selected theme');
+    assert.equal(await evaluate(`getComputedStyle([...document.querySelectorAll('div')].find(el => el.textContent === 'Sign in method')).color`), 'rgb(242, 243, 237)', 'Login text uses the selected theme');
     await shot('login-dark');
     await screen('4. Register: Step 1'); await wait(`document.body.innerText.toLowerCase().includes('personal')`); await shot('registration-dark');
+    for (const [label, expected, screenshot] of [
+      ['5. Register: Step 2', 'Step 2 of 4', 'registration-blood-group-dark'],
+      ['6. Register: Step 3', 'Step 3 of 4', 'registration-verification-dark'],
+      ['7. Register: Step 4', 'Step 4 of 4', 'registration-document-dark'],
+    ]) {
+      await screen(label); await wait(`document.body.innerText.includes(${JSON.stringify(expected)})`);
+      await fits(label + ' dark'); await shot(screenshot);
+      assert.equal(await evaluate('document.documentElement.style.colorScheme'), 'dark');
+    }
     await send('Page.reload', { ignoreCache: true });
     await wait(`document.querySelector('[aria-label="Open development screen navigator"]')`);
     assert.equal(await evaluate('document.documentElement.style.colorScheme'), 'dark', 'Saved dark preference survives reload');
@@ -259,11 +306,39 @@ function installFixtures(requests, banks) {
     await evaluate('window.qa.failDashboard = true');
     await screen('13. Home Dashboard');
     await wait(`document.body.innerText.includes('Your account cannot access the donor dashboard')`);
-    assert.equal(await evaluate(`document.body.innerText.includes('Available Now')`), false, 'Denied requests do not display fabricated donor eligibility');
+    assert.equal(await evaluate(`document.body.innerText.includes('Your donor record')`), false, 'Denied requests do not display fabricated donor eligibility');
     await evaluate('window.qa.failDashboard = false');
     await click('Try again');
     await wait(`document.body.innerText.includes('Kavindu Perera')`);
     console.log('PASS: Dashboard permission errors show account guidance and recover through retry');
+    const holdHomeTab = async () => {
+      const point = await evaluate(`(() => { const rect = document.querySelector('[role="tab"][aria-label="Home"]').getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }; })()`);
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point });
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', button: 'left', clickCount: 1, ...point });
+      await delay(220);
+      const scale = await evaluate(`new DOMMatrix(getComputedStyle(document.querySelector('[role="tab"][aria-label="Home"]')).transform).a`);
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', button: 'left', clickCount: 1, ...point });
+      return scale;
+    };
+    await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+    await delay(100);
+    const pressedScale = await holdHomeTab();
+    assert.ok(pressedScale < 0.995 && pressedScale >= 0.97, 'Press feedback has a restrained scale effect');
+    await delay(550);
+    assert.equal(await evaluate(`[...document.querySelectorAll('[data-testid="card-entrance"]')].every(el => getComputedStyle(el).opacity === '1' && new DOMMatrix(getComputedStyle(el).transform).m42 === 0)`), true, 'Entrance animations settle without retaining an offset');
+    await evaluate(`(() => { window.qa.idleMotionWrites = 0; window.qa.motionObserver = new MutationObserver(records => { window.qa.idleMotionWrites += records.length; }); document.querySelectorAll('[data-testid="card-entrance"], [data-testid="icon-pop"], [data-testid="donor-bottom-nav"] [role="tab"]').forEach(el => window.qa.motionObserver.observe(el, { attributes: true, attributeFilter: ['style'] })); })()`);
+    await delay(650);
+    await evaluate('window.qa.motionObserver.disconnect()');
+    assert.equal(await evaluate('window.qa.idleMotionWrites'), 0, 'Settled motion does not keep updating card, icon or navigation styles while idle');
+    await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+    await delay(100);
+    await click('History'); await wait(`document.body.innerText.includes('Recorded volume')`);
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('[data-testid="card-entrance"]')).opacity`), '1', 'Reduced-motion cards remain fully visible');
+    await click('Home'); await wait(`document.body.innerText.includes('Kavindu Perera')`);
+    assert.equal(await holdHomeTab(), 1, 'Live reduced-motion preference disables press scaling');
+    assert.equal(await evaluate(`[...document.querySelectorAll('[data-testid="icon-pop"]')].every(el => { const matrix = new DOMMatrix(getComputedStyle(el).transform); return matrix.a === 1 && matrix.m42 === 0; })`), true, 'Reduced-motion icons retain their resting size and position');
+    await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
+    console.log('PASS: Press feedback, settled card entrances, idle motion and live reduced-motion preference');
     assert.deepEqual(errors, [], 'No runtime exceptions');
     assert.deepEqual(animationWarnings, [], 'Web animations do not request the native animation driver');
     console.log('PASS: Bank search, districts, critical-stock filter, notification filters and read state, and navigation');

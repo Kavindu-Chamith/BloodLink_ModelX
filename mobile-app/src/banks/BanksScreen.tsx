@@ -7,6 +7,9 @@ import { ActivityIndicator, Linking, Modal, Pressable, RefreshControl, ScrollVie
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DonorBottomNav, { DonorTab } from '../components/DonorBottomNav';
 import DonorHeader from '../components/DonorHeader';
+import { CardEntrance, TactilePressable } from '../components/Motion';
+import IconBadge from '../components/IconBadge';
+import CardArtwork from '../components/CardArtwork';
 import { BanksData, BloodBank, BloodStock, fetchBloodBanks } from './services/banksService';
 
 interface Props { onNavigateTab: (tab: DonorTab) => void; onProfile: () => void }
@@ -39,12 +42,11 @@ export default function BanksScreen({ onNavigateTab, onProfile }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
-  const [district, setDistrict] = useState('Ratnapura');
+  const [district, setDistrict] = useState('All');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [bloodGroup, setBloodGroup] = useState('All');
   const [criticalOnly, setCriticalOnly] = useState(false);
-  const [zoom, setZoom] = useState(1);
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true); else setLoading(true);
     try { setData(await fetchBloodBanks()); setError(''); }
@@ -52,7 +54,7 @@ export default function BanksScreen({ onNavigateTab, onProfile }: Props) {
     finally { setLoading(false); setRefreshing(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
-  const districts = useMemo(() => Array.from(new Set(['All', 'Ratnapura', 'Colombo', 'Kandy', 'Galle', ...(data?.banks.map(b => b.district).filter((d): d is string => !!d) || [])])), [data]);
+  const districts = useMemo(() => Array.from(new Set(['All', ...(data?.banks.map(b => b.district).filter((d): d is string => !!d) || [])])), [data]);
   const banks = useMemo(() => (data?.banks || []).filter(bank => {
     const matchingStocks = bank.stocks.filter(stock => bloodGroup === 'All' || stock.bloodGroup === bloodGroup);
     return (district === 'All' || bank.district === district)
@@ -67,37 +69,30 @@ export default function BanksScreen({ onNavigateTab, onProfile }: Props) {
   const clearFilters = () => { setQuery(''); setDistrict('All'); setBloodGroup('All'); setCriticalOnly(false); };
 
   return <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
-    <DonorHeader title="Blood Banks" initials={data?.donorInitials || 'D'} onProfile={onProfile} />
+    <DonorHeader title="Blood banks" initials={data?.donorInitials || 'D'} onProfile={onProfile} />
     <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary} />}>
-      <View style={s.networkRow}><View style={{ flex: 1 }}><View style={s.row}><View style={s.greenDot} /><Text style={s.eyebrow}>NATIONAL BLOOD NETWORK</Text></View><Text style={s.subtitle}>Find verified centers in your area</Text></View><View style={s.locationPill}><Ionicons name="location-outline" size={12} color={colors.textMuted} /><Text style={s.small}>{district === 'Ratnapura' ? 'Sabaragamuwa' : district === 'All' ? 'Sri Lanka' : district}</Text></View></View>
-      <View style={s.search}><Ionicons name="search-outline" size={18} color={colors.textMuted} /><TextInput value={query} onChangeText={setQuery} placeholder="Search city or blood bank" placeholderTextColor={colors.textMuted} style={s.input} accessibilityLabel="Search blood banks" /><Pressable onPress={() => setFiltersOpen(true)} style={s.filterButton} accessibilityRole="button" accessibilityLabel="Filter blood banks"><Text style={s.filterText}>Filter{bloodGroup !== 'All' || criticalOnly ? ' •' : ''}</Text></Pressable></View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>{districts.map(city => <Pressable key={city} onPress={() => { setDistrict(city); setSelectedId(null); }} accessibilityRole="button" accessibilityState={{ selected: district === city }} aria-pressed={district === city} style={[s.chip, district === city && s.chipActive]}><Text style={[s.chipText, district === city && { color: colors.onPrimary }]}>{city}</Text></Pressable>)}</ScrollView>
+      <View style={s.networkRow}><View style={{ flex: 1 }}><Text style={s.pageTitle}>Find a centre</Text><Text style={s.subtitle}>Verified institutions. Real contact details.</Text></View><IconBadge name="map-outline" tone="info" /></View>
+      <View style={s.search}><Ionicons name="search-outline" size={18} color={colors.textMuted} /><TextInput value={query} onChangeText={setQuery} placeholder="Search city or blood bank" placeholderTextColor={colors.textMuted} style={s.input} accessibilityLabel="Search blood banks" /><TactilePressable onPress={() => setFiltersOpen(true)} style={s.filterButton} accessibilityRole="button" accessibilityLabel="Filter blood banks"><Ionicons name="options-outline" size={15} color={colors.primary} /><Text style={s.filterText}>Filter{bloodGroup !== 'All' || criticalOnly ? ' •' : ''}</Text></TactilePressable></View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>{districts.map(city => <TactilePressable key={city} onPress={() => { setDistrict(city); setSelectedId(null); }} accessibilityRole="button" accessibilityState={{ selected: district === city }} aria-pressed={district === city} style={[s.chip, district === city && s.chipActive]}><Text style={[s.chipText, district === city && { color: colors.onPrimary }]}>{city}</Text></TactilePressable>)}</ScrollView>
       {error ? <View style={s.error}><Text style={s.subtitle}>{error}</Text><Pressable onPress={() => load()} accessibilityRole="button"><Text style={s.link}>Try again</Text></Pressable></View> : null}
       {loading && !data ? <ActivityIndicator style={{ padding: 50 }} color={colors.primary} /> : <>
         {selected ? <>
-          <View style={s.map} accessibilityLabel="Schematic overview of blood banks in the selected area">
-            <View style={[s.mapDrawing, { transform: [{ scale: zoom }] }]} pointerEvents="none"><View style={s.park} /><View style={s.river} />{[15, 40, 70].map(left => <View key={left} style={[s.roadVertical, { left: `${left}%` }]} />)}{[32, 62].map(top => <View key={top} style={[s.roadHorizontal, { top: `${top}%` }]} />)}<View style={s.mainRoad} /></View>
-            <View style={s.mapLabel}><View style={s.redDot} /><Text style={s.mapLabelText}>{banks.length} verified center{banks.length === 1 ? '' : 's'}</Text></View>
-            <View style={s.zoom}><Pressable disabled={zoom >= 1.6} onPress={() => setZoom(z => Math.min(1.6, z + 0.2))} style={s.zoomButton} accessibilityRole="button" accessibilityLabel="Zoom in"><Ionicons name="add" size={20} color={colors.textMuted} /></Pressable><Pressable disabled={zoom <= 1} onPress={() => setZoom(z => Math.max(1, z - 0.2))} style={s.zoomButton} accessibilityRole="button" accessibilityLabel="Zoom out"><Ionicons name="remove" size={20} color={colors.textMuted} /></Pressable></View>
-            {banks.slice(0, 5).map((bank, i) => <Pressable key={bank.id} onPress={() => setSelectedId(bank.id)} hitSlop={12} style={[s.marker, { left: `${Math.max(10, Math.min(85, 20 + i * 15 + (zoom - 1) * (i - 2) * 20))}%`, top: 66 + (i % 2) * 30 }, selected.id === bank.id && s.markerSelected]} accessibilityRole="button" accessibilityLabel={`Show ${bank.name}`}><Ionicons name="add" size={16} color={colors.onPrimary} /></Pressable>)}
-            <Pressable onPress={() => openMap(selected)} style={s.mapPreview} accessibilityRole="button" accessibilityLabel={`Open map for ${selected.name}`}><View style={{ flex: 1 }}><Text style={s.bankName} numberOfLines={1}>{selected.name}</Text><Text style={s.small}>{selected.distanceKm != null ? `${selected.distanceKm} km away · ` : ''}Open in Maps ↗</Text></View>{selected.stocks.some(stock => stock.status === 'Critical') && <View style={s.criticalBadge}><Text style={s.criticalText}>Critical Need</Text></View>}</Pressable>
-            <Text style={s.schematic}>Area overview · schematic</Text>
-          </View>
-          <View style={s.sectionRow}><Text style={s.sectionTitle}>Stock Levels at Selected Center</Text>{updatedAt && <Text style={s.small}>As of {updatedAt}</Text>}</View>
-          {stockGroups.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stocks}>{stockGroups.map(stock => { const tone = tones[stock.status] || tones.Normal; return <View key={stock.bloodGroup} style={[s.stockTile, { backgroundColor: tone.bg, borderColor: tone.border }]}><Text style={[s.stockGroup, { color: tone.ink }]}>{stock.bloodGroup}</Text><Text style={[s.stockUnits, { color: tone.ink }]}>{stock.units} u</Text><View style={[s.stockStatus, { backgroundColor: tone.fill }]}><Text style={s.stockStatusText}>{stock.status === 'Normal' ? 'GOOD' : stock.status.toUpperCase()}</Text></View></View>; })}</ScrollView> : <Text style={s.subtitle}>Stock levels have not been reported by this center.</Text>}
+          <CardEntrance key={selected.id} style={s.selectedCentre}><CardArtwork /><View style={s.row}><Ionicons name="location-outline" size={16} color={colors.primary} /><Text style={s.eyebrow}>SELECTED CENTRE</Text></View><Text style={s.selectedName}>{selected.name}</Text><Text style={s.subtitle}>{selected.address || selected.district || 'Sri Lanka'}{selected.distanceKm != null ? ` · ${selected.distanceKm} km away` : ''}</Text><TactilePressable onPress={() => openMap(selected)} style={s.directionsAction} accessibilityRole="button" accessibilityLabel={`Open map for ${selected.name}`}><Text style={s.link}>Open directions</Text><Ionicons name="arrow-up-right-box-outline" size={17} color={colors.primary} /></TactilePressable></CardEntrance>
+          <View style={s.sectionRow}><Text style={s.sectionTitle}>Reported stock at this centre</Text>{updatedAt && <Text style={s.small}>As of {updatedAt}</Text>}</View>
+          {stockGroups.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.stocks}>{stockGroups.map(stock => { const tone = tones[stock.status] || tones.Normal; return <View key={stock.bloodGroup} style={[s.stockTile, { backgroundColor: colors.card, borderColor: tone.border }]}><View style={s.row}><Ionicons name="water-outline" size={14} color={tone.ink} /><Text style={[s.stockGroup, { color: colors.text }]}>{stock.bloodGroup}</Text></View><Text style={[s.stockUnits, { color: colors.text }]}>{stock.units}<Text style={s.stockUnitLabel}> units</Text></Text><Text style={[s.stockStatusText, { color: tone.ink }]}>{stock.status}</Text></View>; })}</ScrollView> : <Text style={s.subtitle}>Stock levels have not been reported by this center.</Text>}
         </> : <View style={s.empty}><Ionicons name="business-outline" size={32} color={colors.textMuted} /><Text style={s.emptyTitle}>No centers found</Text><Text style={s.subtitle}>Try another district or adjust your filters.</Text><Pressable onPress={clearFilters} accessibilityRole="button" style={s.clearButton}><Text style={s.link}>Clear filters</Text></Pressable></View>}
-        <View style={s.sectionRow}><Text style={s.sectionTitle}>Verified Blood Banks ({banks.length})</Text><Pressable onPress={clearFilters} accessibilityRole="button" style={s.viewAll}><Text style={s.link}>View All</Text></Pressable></View>
+        <View style={s.sectionRow}><View style={s.row}><Ionicons name="business-outline" size={18} color={colors.primary} /><Text style={s.sectionTitle}>Institutions ({banks.length})</Text></View><Pressable onPress={clearFilters} accessibilityRole="button" style={s.viewAll}><Text style={s.link}>Reset filters</Text></Pressable></View>
         {banks.map(bank => <View key={bank.id} style={[s.bankCard, selected?.id === bank.id && { borderColor: colors.primary }]}>
           <View style={s.row}>
-            <Pressable onPress={() => setSelectedId(bank.id)} accessibilityRole="button" accessibilityLabel={`Select ${bank.name}`} accessibilityState={{ selected: bank.id === selected?.id }} aria-pressed={bank.id === selected?.id} style={{ flex: 1 }}>
+            <TactilePressable onPress={() => setSelectedId(bank.id)} accessibilityRole="button" accessibilityLabel={`Select ${bank.name}`} accessibilityState={{ selected: bank.id === selected?.id }} aria-pressed={bank.id === selected?.id} style={{ flex: 1 }}>
               <View style={s.row}>
-                <View style={s.typePill}><Text style={s.typeText}>{bank.type === 'bloodbank' ? 'BLOOD BANK' : 'HOSPITAL'}</Text></View>
+                <View style={[s.typePill, s.row]}><Ionicons name={bank.type === 'bloodbank' ? 'water-outline' : 'medical-outline'} size={13} color={colors.primary} /><Text style={s.typeText}>{bank.type === 'bloodbank' ? 'Blood bank' : 'Hospital'}</Text></View>
                 {bank.distanceKm != null && <Text style={s.small}>{bank.distanceKm} km</Text>}
               </View>
               <Text style={[s.bankName, { marginTop: 7 }]}>{bank.name}</Text>
               <View style={[s.row, { marginTop: 4 }]}><Ionicons name="checkmark-circle-outline" size={12} color={colors.success} /><Text style={s.small}>Verified · {bank.district || 'Sri Lanka'}</Text></View>
-            </Pressable>
-            {bank.phone && <Pressable onPress={() => { void openLink(`tel:${bank.phone}`); }} accessibilityRole="button" accessibilityLabel={`Call ${bank.name}`} style={s.callButton}><Ionicons name="call-outline" size={18} color={colors.success} /></Pressable>}
+            </TactilePressable>
+            {bank.phone && <TactilePressable onPress={() => { void openLink(`tel:${bank.phone}`); }} accessibilityRole="button" accessibilityLabel={`Call ${bank.name}`} style={s.callButton}><Ionicons name="call-outline" size={18} color={colors.success} /></TactilePressable>}
           </View>
           {bank.stocks.length > 0 && <View style={s.stockSummary}><Text style={s.small}>Stocks:</Text>{bank.stocks.slice(0, 3).map(stock => <StockPill key={stock.bloodGroup} stock={stock} />)}</View>}
           {selected?.id === bank.id && <View style={s.bankDetails}>{bank.address && <Text style={s.subtitle}>{bank.address}</Text>}<Pressable onPress={() => openMap(bank)} accessibilityRole="button" style={s.mapLink}><Ionicons name="navigate-outline" size={14} color={colors.primary} /><Text style={s.link}>Get directions</Text></Pressable></View>}
@@ -115,7 +110,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.background,
   },
   content: {
-    padding: 20,
+    padding: 22,
     paddingTop: 12,
     gap: 12,
     paddingBottom: 24,
@@ -173,7 +168,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.card,
     borderWidth: 1,
     borderColor: c.border,
-    borderRadius: 14,
+    borderRadius: 8,
     paddingLeft: 12,
     paddingRight: 6,
     minHeight: 48,
@@ -185,7 +180,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     color: c.text,
     paddingVertical: 10,
   },
-  filterButton: {
+  filterButton: { flexDirection: 'row', alignItems: 'center', gap: 5,
     minHeight: 44,
     justifyContent: 'center',
     padding: 9,
@@ -206,7 +201,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: c.border,
-    borderRadius: 20,
+    borderRadius: 7,
     paddingHorizontal: 13,
     paddingVertical: 9,
     backgroundColor: c.card,
@@ -219,139 +214,11 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     fontSize: 12,
     color: c.textSecondary,
   },
-  map: {
-    height: 240,
-    borderRadius: 20,
-    backgroundColor: c.mapBackground,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: c.border,
-  },
-  mapDrawing: {
-    backgroundColor: c.mapBackground,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    overflow: 'hidden',
-  },
-  park: {
-    position: 'absolute',
-    right: -30,
-    top: -20,
-    width: 125,
-    height: 240,
-    backgroundColor: c.mapPark,
-    transform: [{ rotate: '24deg' }],
-  },
-  river: {
-    position: 'absolute',
-    width: '130%',
-    height: 15,
-    backgroundColor: c.mapRiver,
-    borderColor: c.border,
-    borderWidth: 2,
-    top: 48,
-    left: -30,
-    transform: [{ rotate: '-8deg' }],
-  },
-  roadVertical: {
-    position: 'absolute',
-    top: -40,
-    height: 310,
-    width: 6,
-    backgroundColor: c.mapRoad,
-    transform: [{ rotate: '-5deg' }],
-  },
-  roadHorizontal: {
-    position: 'absolute',
-    left: -30,
-    width: '130%',
-    height: 5,
-    backgroundColor: c.mapRoad,
-    transform: [{ rotate: '-10deg' }],
-  },
-  mainRoad: {
-    position: 'absolute',
-    width: '130%',
-    left: -30,
-    top: 110,
-    height: 5,
-    backgroundColor: c.mapMainRoad,
-    borderWidth: 1,
-    borderColor: c.mapRoad,
-    transform: [{ rotate: '-15deg' }],
-  },
-  mapLabel: {
-    maxWidth: '60%',
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    backgroundColor: c.card,
-    borderRadius: 15,
-    padding: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  mapLabelText: {
-    fontSize: 11,
-    color: c.textSecondary,
-    fontWeight: '600',
-  },
-  zoom: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    flexDirection: 'row',
-    gap: 4,
-  },
-  zoomButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: c.card,
-  },
-  marker: {
-    position: 'absolute',
-    width: 22,
-    height: 22,
-    borderRadius: 12,
-    backgroundColor: c.action,
-    borderWidth: 2,
-    borderColor: c.onPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markerSelected: {
-    borderWidth: 3,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    boxShadow: '0 0 0 4px rgba(208,28,54,0.15)',
-  },
-  mapPreview: {
-    position: 'absolute',
-    bottom: 20,
-    left: 10,
-    right: 10,
-    padding: 12,
-    backgroundColor: c.card,
-    borderRadius: 13,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  schematic: {
-    position: 'absolute',
-    bottom: 4,
-    right: 10,
-    fontSize: 10,
-    color: c.textMuted,
-  },
+  pageTitle: { fontSize: 27, lineHeight: 34, fontWeight: '500', letterSpacing: -0.8, color: c.text },
+  selectedCentre: { padding: 18, backgroundColor: c.primarySoft, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: c.border, marginTop: 6 },
+  selectedName: { fontSize: 19, lineHeight: 26, fontWeight: '500', color: c.text, marginTop: 12, letterSpacing: -0.3 },
+  directionsAction: { flexDirection: 'row', minHeight: 44, alignItems: 'center', justifyContent: 'space-between', marginTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border, paddingTop: 8 },
+  zoomButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   bankName: {
     fontSize: 14,
     fontWeight: '600',
@@ -385,7 +252,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   stockTile: {
     minWidth: 75,
     borderWidth: 1,
-    borderRadius: 15,
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 10,
     alignItems: 'center',
@@ -397,7 +264,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   },
   stockUnits: {
     fontSize: 19,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   stockStatus: {
     paddingHorizontal: 6,
@@ -407,9 +274,10 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   stockStatusText: {
     fontSize: 10,
     letterSpacing: 0.5,
-    color: c.onPrimary,
-    fontWeight: '700',
+    color: c.textMuted,
+    fontWeight: '500',
   },
+  stockUnitLabel: { fontSize: 10, color: c.textMuted },
   link: {
     fontSize: 12,
     color: c.primary,
@@ -424,7 +292,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.card,
     borderWidth: 1,
     borderColor: c.border,
-    borderRadius: 16,
+    borderRadius: 10,
   },
   typePill: {
     paddingHorizontal: 6,
@@ -487,7 +355,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   emptyTitle: {
     fontSize: 17,
     color: c.text,
-    fontWeight: '700',
+    fontWeight: '500',
   },
   clearButton: {
     padding: 12,
@@ -524,6 +392,6 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   applyText: {
     fontSize: 14,
     color: c.onPrimary,
-    fontWeight: '700',
+    fontWeight: '500',
   },
 });

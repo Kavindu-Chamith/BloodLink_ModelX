@@ -23,7 +23,7 @@ export const WelcomeSelectionScreen: React.FC<WelcomeSelectionScreenProps> = ({
   const { styles, colors } = useThemedStyles(createStyles);
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.action} />
 
       {/* Top Banner section */}
       <SafeAreaView style={styles.topSection} edges={['top', 'left', 'right']}>

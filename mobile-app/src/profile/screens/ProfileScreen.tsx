@@ -8,7 +8,6 @@ import {
     ActivityIndicator,
 
     Modal,
-    Pressable,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -16,11 +15,13 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import IconBadge from '../../components/IconBadge';
+import { CardEntrance, IconPop, TactilePressable } from '../../components/Motion';
 import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
 import { ProfileHeaderCard, StatCard, VerificationSection } from '../components';
 import { ProfileState } from '../hooks/useProfile';
 import { ColorPalette, radius, useTheme } from '../theme';
-import { estimateLivesSaved, getEligibility } from '../utils/eligibility';
+import { getEligibility } from '../utils/eligibility';
 import { formatDate } from '../utils/format';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -110,7 +111,7 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
         <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
             <View style={styles.titleRow}>
                 <Text style={styles.title}>Profile</Text>
-                <Pressable
+                <TactilePressable
                     onPress={toggleTheme}
                     style={styles.themeButton}
                     accessibilityRole="switch"
@@ -119,9 +120,9 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                     accessibilityState={{ checked: isDark }}
                     aria-checked={isDark}
                 >
-                    <Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={20} color={colors.text} />
+                    <IconPop value={isDark}><Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={20} color={colors.text} /></IconPop>
                     <Text style={styles.themeLabel}>{isDark ? 'Dark mode' : 'Light mode'}</Text>
-                </Pressable>
+                </TactilePressable>
             </View>
 
             {loading && !profile ? (
@@ -132,9 +133,9 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                 <View style={styles.center}>
                     <Text style={styles.errorTitle}>Could not load your profile</Text>
                     <Text style={styles.errorText}>{error}</Text>
-                    <Pressable style={styles.retry} onPress={state.reload} accessibilityRole="button">
+                    <TactilePressable style={styles.retry} onPress={state.reload} accessibilityRole="button">
                         <Text style={styles.retryText}>Try again</Text>
-                    </Pressable>
+                    </TactilePressable>
                 </View>
             ) : profile ? (
                 <ScrollView
@@ -150,15 +151,15 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                         onEdit={onEdit}
                     />
 
-                    <View style={{ padding: 16, borderRadius: 16, backgroundColor: colors.card, gap: 10 }}>
-                        <Text style={{ color: colors.text, fontWeight: '700' }}>Nearby request matching</Text>
+                    <CardEntrance delay={60} style={{ paddingVertical: 18, borderBottomWidth: 1, borderColor: colors.border, gap: 10 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><IconBadge name="navigate-outline" small tone="info" /><Text style={{ color: colors.text, fontWeight: '500' }}>Nearby request matching</Text></View>
                         <Text style={{ color: colors.textMuted }}>{profile.hasMatchingLocation ? 'A private matching location is saved.' : 'Add your location to find matching requests nearby.'} Your location is not shown to other users.</Text>
-                        <Pressable disabled={locationBusy} onPress={() => { void handleMatchingLocation(); }} accessibilityRole="button" style={styles.retry}>
-                            <Text style={styles.retryText}>{locationBusy ? 'Updating…' : 'Update matching location'}</Text>
-                        </Pressable>
-                        {profile.hasMatchingLocation && <Pressable disabled={locationBusy} onPress={() => { void handleMatchingLocation(true); }} accessibilityRole="button"><Text style={{ color: colors.textMuted }}>Remove matching location</Text></Pressable>}
+                        <TactilePressable disabled={locationBusy} onPress={() => { void handleMatchingLocation(); }} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start' }}>
+                            <Ionicons name="locate-outline" size={17} color={colors.primary} /><Text style={{ color: colors.primary, fontWeight: '500' }}>{locationBusy ? 'Updating…' : 'Update matching location'}</Text>
+                        </TactilePressable>
+                        {profile.hasMatchingLocation && <TactilePressable disabled={locationBusy} onPress={() => { void handleMatchingLocation(true); }} accessibilityRole="button"><Text style={{ color: colors.textMuted }}>Remove matching location</Text></TactilePressable>}
                         {!!locationMessage && <Text accessibilityLiveRegion="polite" style={{ color: colors.textMuted }}>{locationMessage}</Text>}
-                    </View>
+                    </CardEntrance>
 
                     <View style={styles.grid}>
                         <StatCard
@@ -169,10 +170,10 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                             iconBackground={colors.primarySoft}
                         />
                         <StatCard
-                            label="Lives saved"
-                            value={`${estimateLivesSaved(profile.totalDonations)}+`}
-                            caption="Patients touched"
-                            icon={<Ionicons name="heart" size={18} color={colors.primary} />}
+                            label="Blood group"
+                            value={profile.bloodGroup}
+                            caption={profile.bloodGroupVerification === 'approved' ? 'Document verified' : 'Not yet verified'}
+                            icon={<Ionicons name="water-outline" size={18} color={colors.primary} />}
                             iconBackground={colors.primarySoft}
                         />
                     </View>
@@ -188,13 +189,13 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
 
                     <VerificationSection profile={profile} uploading={uploading} onUpload={handleUpload} />
 
-                    <Pressable onPress={() => { setSignOutError(''); setSignOutOpen(true); }} style={styles.signOut} accessibilityRole="button">
+                    <TactilePressable onPress={() => { setSignOutError(''); setSignOutOpen(true); }} style={styles.signOut} accessibilityRole="button">
                         <Ionicons name="log-out-outline" size={20} color={colors.text} />
                         <Text style={styles.signOutText}>Sign out</Text>
-                    </Pressable>
+                    </TactilePressable>
 
                     <Text style={styles.footer}>
-                        BloodLink v1.0 • Protected under the Personal Data Protection Act No. 9 of 2022
+                        BloodLink · Your donor record
                     </Text>
                 </ScrollView>
             ) : null}
@@ -204,12 +205,12 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                         <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>Sign out of BloodLink?</Text>
                         <Text style={{ color: colors.textMuted }}>You will need to sign in again to access your account.</Text>
                         {!!signOutError && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{signOutError}</Text>}
-                        <Pressable disabled={signingOut} onPress={() => { void confirmSignOut(); }} style={styles.retry} accessibilityRole="button" accessibilityLabel="Confirm sign out">
+                        <TactilePressable disabled={signingOut} onPress={() => { void confirmSignOut(); }} style={styles.retry} accessibilityRole="button" accessibilityLabel="Confirm sign out">
                             <Text style={styles.retryText}>{signingOut ? 'Signing out…' : 'Sign out'}</Text>
-                        </Pressable>
-                        <Pressable disabled={signingOut} onPress={() => setSignOutOpen(false)} accessibilityRole="button" accessibilityLabel="Cancel sign out" style={{ padding: 10, alignItems: 'center' }}>
+                        </TactilePressable>
+                        <TactilePressable disabled={signingOut} onPress={() => setSignOutOpen(false)} accessibilityRole="button" accessibilityLabel="Cancel sign out" style={{ padding: 10, alignItems: 'center' }}>
                             <Text style={{ color: colors.text }}>Cancel</Text>
-                        </Pressable>
+                        </TactilePressable>
                     </View>
                 </View>
             </Modal>
@@ -258,12 +259,12 @@ function EligibilityCard({ lastDonationDate, nextEligibleDate }: { lastDonationD
     return (
         <StatCard
             compact
-            label="Eligibility"
-            value={result.eligible ? 'Eligible now' : `In ${result.daysRemaining} day${result.daysRemaining === 1 ? '' : 's'}`}
+            label="Donation interval"
+            value={result.eligible ? 'Interval passed' : `In ${result.daysRemaining} day${result.daysRemaining === 1 ? '' : 's'}`}
             valueColor={result.eligible ? colors.success : colors.warning}
             caption={
                 result.eligible
-                    ? 'Ready to save lives'
+                    ? 'Screening required at donation'
                     : result.nextEligibleDate
                         ? `Next: ${formatDate(result.nextEligibleDate)}`
                         : undefined
@@ -285,20 +286,9 @@ const createStyles = (c: ColorPalette) =>
             paddingBottom: 12,
         },
         title: { fontSize: 22, lineHeight: 30, fontWeight: '600', color: c.text },
-        themeButton: {
-            minHeight: 44,
-            paddingHorizontal: 12,
-            flexDirection: 'row',
-            gap: 8,
-            borderRadius: 22,
-            backgroundColor: c.card,
-            borderWidth: 1,
-            borderColor: c.border,
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
+        themeButton: { minHeight: 44, paddingHorizontal: 10, flexDirection: 'row', gap: 7, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
         themeLabel: { fontSize: 12, fontWeight: '600', color: c.text },
-        content: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },
+        content: { paddingHorizontal: 22, paddingBottom: 32, gap: 18 },
         grid: { flexDirection: 'row', gap: 14 },
         center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
         errorTitle: { fontSize: 18, fontWeight: '600', color: c.text, marginBottom: 6 },

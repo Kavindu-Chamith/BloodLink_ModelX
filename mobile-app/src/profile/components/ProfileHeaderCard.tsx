@@ -1,7 +1,10 @@
 // src/components/ProfileHeaderCard.tsx
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
+import IconBadge from '../../components/IconBadge';
+import { CardEntrance, IconPop, TactilePressable } from '../../components/Motion';
+import CardArtwork from '../../components/CardArtwork';
 import { ColorPalette, radius, useTheme } from '../theme';
 import { DonorProfile } from '../types/profile';
 import { formatMonthYear, getInitials } from '../utils/format';
@@ -18,7 +21,7 @@ export default function ProfileHeaderCard({ profile, onToggleAvailability, onEdi
     const verified = profile.bloodGroupVerification === 'approved';
 
     return (
-        <View style={styles.card}>
+        <CardEntrance style={styles.card}><CardArtwork />
             <View style={styles.row}>
                 <View>
                     <View style={styles.avatar}>
@@ -31,7 +34,7 @@ export default function ProfileHeaderCard({ profile, onToggleAvailability, onEdi
                     )}
                 </View>
 
-                <Pressable style={styles.info} onPress={onEdit} accessibilityRole="button" accessibilityLabel="Edit profile">
+                <TactilePressable style={styles.info} onPress={onEdit} accessibilityRole="button" accessibilityLabel="Edit profile">
                     <View style={styles.nameRow}>
                         <Text style={styles.name}>{profile.fullName}</Text>
                         <Ionicons name="create-outline" size={15} color={colors.textMuted} />
@@ -40,7 +43,7 @@ export default function ProfileHeaderCard({ profile, onToggleAvailability, onEdi
                         {profile.phone} • {profile.district}
                     </Text>
                     <Text style={styles.since}>Donor since {formatMonthYear(profile.donorSince)}</Text>
-                </Pressable>
+                </TactilePressable>
 
                 <View style={styles.bloodBadge}>
                     <Text style={styles.bloodLabel}>BLOOD</Text>
@@ -50,7 +53,7 @@ export default function ProfileHeaderCard({ profile, onToggleAvailability, onEdi
 
             <View style={styles.divider} />
 
-            <View style={styles.availRow}>
+            <View style={styles.availRow}><IconPop value={profile.isAvailable}><IconBadge name={profile.isAvailable ? 'radio-outline' : 'pause-outline'} tone={profile.isAvailable ? 'success' : 'primary'} small /></IconPop>
                 <View style={{ flex: 1, paddingRight: 12 }}>
                     <Text style={styles.availTitle}>Available to donate</Text>
                     <Text style={styles.availSub}>{profile.isAvailable ? 'Receive matched emergency requests' : 'Emergency request alerts are paused'}</Text>
@@ -63,7 +66,7 @@ export default function ProfileHeaderCard({ profile, onToggleAvailability, onEdi
                     accessibilityLabel="Available to donate"
                 />
             </View>
-        </View>
+        </CardEntrance>
     );
 }
 
@@ -71,21 +74,16 @@ const createStyles = (c: ColorPalette) =>
     StyleSheet.create({
         card: {
             backgroundColor: c.card,
-            borderRadius: radius.lg,
+            borderRadius: 18,
+            overflow: 'hidden',
+            boxShadow: '0 5px 18px rgba(20, 25, 21, 0.04)',
             borderWidth: 1,
             borderColor: c.border,
             padding: 18,
         },
         row: { flexDirection: 'row', alignItems: 'center' },
-        avatar: {
-            width: 64,
-            height: 64,
-            borderRadius: 20,
-            backgroundColor: c.action,
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        avatarText: { color: c.onPrimary, fontSize: 22, fontWeight: '600' },
+        avatar: { width: 52, height: 56, borderRadius: 16, backgroundColor: c.primarySoft, alignItems: 'center', justifyContent: 'center' },
+        avatarText: { color: c.primary, fontSize: 19, fontWeight: '500' },
         verifiedDot: {
             position: 'absolute',
             right: -4,
@@ -101,20 +99,14 @@ const createStyles = (c: ColorPalette) =>
         },
         info: { flex: 1, minWidth: 0, minHeight: 44, justifyContent: 'center', marginLeft: 12, marginRight: 8 },
         nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-        name: { fontSize: 17, lineHeight: 23, fontWeight: '600', color: c.text, flexShrink: 1 },
+        name: { fontSize: 18, lineHeight: 24, fontWeight: '500', color: c.text, flexShrink: 1 },
         sub: { fontSize: 12, lineHeight: 18, color: c.textMuted, marginTop: 4 },
         since: { fontSize: 12, lineHeight: 18, color: c.textMuted, marginTop: 2 },
-        bloodBadge: {
-            backgroundColor: c.primarySoft,
-            borderRadius: 16,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-            alignItems: 'center',
-        },
-        bloodLabel: { fontSize: 10, fontWeight: '700', color: c.primary, letterSpacing: 1 },
-        bloodValue: { fontSize: 22, fontWeight: '600', color: c.primary },
+        bloodBadge: { paddingVertical: 5, paddingHorizontal: 8, alignItems: 'center' },
+        bloodLabel: { fontSize: 9, fontWeight: '400', color: c.textMuted, letterSpacing: 0.8 },
+        bloodValue: { fontSize: 25, fontWeight: '500', color: c.primary, letterSpacing: -0.7 },
         divider: { height: 1, backgroundColor: c.border, marginVertical: 14 },
-        availRow: { flexDirection: 'row', alignItems: 'center' },
+        availRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
         availTitle: { fontSize: 14, fontWeight: '600', color: c.text },
         availSub: { fontSize: 12, lineHeight: 18, color: c.textMuted, marginTop: 3 },
     });

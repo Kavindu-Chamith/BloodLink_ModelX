@@ -1,194 +1,30 @@
+import React from 'react';
+import { TactilePressable } from '../../components/Motion';
+import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import type { AppColors } from '../../theme/palette';
-// src/requests/components/AlertRequestCard.tsx
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
 import { AlertRequestItem } from '../types/requests';
 
-interface AlertRequestCardProps {
-  item: AlertRequestItem;
-  onPress: (item: AlertRequestItem) => void;
+interface Props { item: AlertRequestItem; onPress: (item: AlertRequestItem) => void }
+export function AlertRequestCard({ item, onPress }: Props) {
+  const { styles: s, colors } = useThemedStyles(createStyles);
+  const urgent = item.isUrgent || item.type === 'urgent';
+  return <TactilePressable accessibilityRole="button" accessibilityLabel={urgent ? `View details and respond to ${item.hospitalName}` : `View details for ${item.hospitalName}`} onPress={() => onPress(item)} style={({ pressed }) => [s.card, urgent && s.urgentCard, pressed && { opacity: 0.75 }]}>
+    <View style={s.top}><View style={s.status}><View style={[s.dot, { backgroundColor: urgent ? colors.primary : colors.textMuted }]} /><Text style={[s.statusText, urgent && { color: colors.primary }]}>{urgent ? 'Urgent request' : item.type === 'scheduled' ? 'Scheduled request' : 'Donation request'}</Text></View><Text style={s.time}>{item.timeAgo}</Text></View>
+    <Text style={s.hospital}>{item.hospitalName}</Text>
+    <View style={s.requirement}><Ionicons name="water-outline" size={15} color={colors.primary} /><Text style={s.requirementText}>{item.requirementLabel || `${item.bloodGroup} · ${item.unitsNeeded} ${item.unitsNeeded === 1 ? 'unit' : 'units'} needed`}</Text></View>
+    <View style={s.bottom}><View style={s.distance}><Ionicons name="location-outline" size={13} color={colors.textMuted} /><Text style={s.time}>{item.distance}</Text></View><View style={s.review}><Text style={s.reviewText}>Review request</Text><Ionicons name="arrow-forward" size={15} color={colors.primary} /></View></View>
+  </TactilePressable>;
 }
-
-export const AlertRequestCard: React.FC<AlertRequestCardProps> = ({ item, onPress }) => {
-  const { styles, colors } = useThemedStyles(createStyles);
-  const isUrgent = item.isUrgent || item.type === 'urgent';
-  const isScheduled = item.type === 'scheduled';
-
-  return (
-    <View style={styles.card}>
-      {/* Top Tag & Time Ago Row */}
-      <View style={styles.topRow}>
-        <View style={[styles.tagPill, isUrgent ? styles.urgentTagPill : styles.standardTagPill]}>
-          {isUrgent ? (
-            <Ionicons name="alarm-outline" size={13} color={colors.primary} style={styles.tagIcon} />
-          ) : (
-            <Feather name="navigation" size={12} color={colors.textMuted} style={styles.tagIcon} />
-          )}
-          <Text style={[styles.tagText, isUrgent ? styles.urgentTagText : styles.standardTagText]}>
-            {isUrgent ? `Urgent · ${item.distance}` : item.distance}
-          </Text>
-        </View>
-
-        <Text style={styles.timeAgoText}>{item.timeAgo}</Text>
-      </View>
-
-      {/* Hospital Name */}
-      <Text style={styles.hospitalName}>
-        {item.hospitalName}
-      </Text>
-
-      {/* Requirement Details Row */}
-      <View style={styles.requirementRow}>
-        {isScheduled ? (
-          <Ionicons name="calendar-outline" size={15} color={colors.primary} style={styles.reqIcon} />
-        ) : (
-          <Ionicons name="water-outline" size={15} color={colors.primary} style={styles.reqIcon} />
-        )}
-        <Text style={styles.requirementText}>
-          {item.requirementLabel || `${item.bloodGroup} · ${item.unitsNeeded} ${item.unitsNeeded === 1 ? 'Unit' : 'Units'} needed`}
-        </Text>
-      </View>
-
-      {/* Action Button */}
-      {isUrgent ? (
-        <TouchableOpacity
-          style={styles.urgentActionButton}
-          activeOpacity={0.85}
-          onPress={() => onPress(item)}
-          accessibilityRole="button"
-          accessibilityLabel={`View details and respond to ${item.hospitalName}`}
-        >
-          <Text style={styles.urgentActionText}>View Details & Respond</Text>
-          <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} style={styles.actionArrow} />
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          style={styles.standardActionButton}
-          activeOpacity={0.8}
-          onPress={() => onPress(item)}
-          accessibilityRole="button"
-          accessibilityLabel={`View details for ${item.hospitalName}`}
-        >
-          <Text style={styles.standardActionText}>View Details</Text>
-          <Ionicons name="chevron-forward" size={15} color={colors.textSecondary} style={styles.actionChevron} />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-};
-
 const createStyles = (c: AppColors) => StyleSheet.create({
-  card: {
-    backgroundColor: c.card,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: c.border,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  tagPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-  },
-  urgentTagPill: {
-    backgroundColor: c.primarySoft,
-  },
-  standardTagPill: {
-    backgroundColor: c.surface,
-  },
-  tagIcon: {
-    marginRight: 5,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  urgentTagText: {
-    color: c.primary,
-  },
-  standardTagText: {
-    color: c.textSecondary,
-  },
-  timeAgoText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: c.textMuted,
-  },
-  hospitalName: {
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '600',
-    color: c.text,
-    letterSpacing: -0.2,
-    marginBottom: 6,
-  },
-  requirementRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  reqIcon: {
-    marginRight: 6,
-  },
-  requirementText: { lineHeight: 19,
-    flexShrink: 1,
-    fontSize: 13,
-    fontWeight: '500',
-    color: c.textSecondary,
-  },
-  urgentActionButton: {
-    backgroundColor: c.action, // Crimson red
-    height: 46,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#BA1328',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  urgentActionText: {
-    color: c.onPrimary,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  actionArrow: {
-    marginLeft: 6,
-  },
-  standardActionButton: {
-    backgroundColor: c.background,
-    borderWidth: 1,
-    borderColor: c.border,
-    height: 46,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  standardActionText: {
-    color: c.textSecondary,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  actionChevron: {
-    marginLeft: 4,
-  },
+  card: { backgroundColor: c.card, borderRadius: 16, padding: 18, marginBottom: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+  urgentCard: { borderLeftWidth: 3, borderLeftColor: c.primary, backgroundColor: c.primarySoft },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 13 },
+  status: { flexDirection: 'row', alignItems: 'center', gap: 6 }, dot: { height: 5, width: 5, borderRadius: 3 },
+  statusText: { fontSize: 11, color: c.textMuted, fontWeight: '500' }, time: { fontSize: 11, color: c.textMuted, lineHeight: 17 },
+  hospital: { color: c.text, fontSize: 17, lineHeight: 24, fontWeight: '500', letterSpacing: -0.3, marginBottom: 9 },
+  requirement: { flexDirection: 'row', alignItems: 'center', gap: 6 }, requirementText: { color: c.textSecondary, fontSize: 13, lineHeight: 20, flex: 1 },
+  bottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 13, borderTopWidth: StyleSheet.hairlineWidth, borderColor: c.border, flexWrap: 'wrap', gap: 10 },
+  distance: { flexDirection: 'row', gap: 4, alignItems: 'center' }, review: { flexDirection: 'row', gap: 6, alignItems: 'center', minHeight: 32, paddingHorizontal: 10, borderRadius: 8, backgroundColor: c.primarySoft }, reviewText: { fontSize: 12, fontWeight: '500', color: c.primary },
 });
