@@ -35,6 +35,7 @@ export interface BloodRequest {
   radius_km: number; status: 'Active' | 'Fulfilled' | 'Cancelled'; approval_status: 'Pending' | 'Approved' | 'Rejected';
   reason: string; department: string; created_at: string; reviewed_at: string | null; review_reason: string | null;
   accepted_donors: number; donated_units: number;
+  expires_at?:string|null;outreach_target?:number|null;is_simulated?:boolean;source_status?:string|null;
   organization_name?: string; district?: string; branch_name?: string; created_by_email?: string; reviewed_by_email?: string;
   organization_active?: boolean; organization_status?: string;
 }

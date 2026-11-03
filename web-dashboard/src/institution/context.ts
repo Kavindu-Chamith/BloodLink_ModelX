@@ -10,4 +10,4 @@ export interface BankWorkspace {
 export const BankContext = createContext<BankWorkspace | null>(null);
 export function useBank() { const value = useContext(BankContext); if (!value) throw new Error('Institution workspace is missing'); return value; }
 export const requestCode = (id: number) => `BLR-${String(id).padStart(5, '0')}`;
-export function requestState(r: BloodRequest) { return r.status !== 'Active' ? r.status : r.approval_status === 'Approved' ? 'Active' : r.approval_status; }
+export function requestState(r: BloodRequest) { return r.status==='Active' && r.expires_at && Date.parse(r.expires_at)<=Date.now() ? 'Cancelled' : r.status !== 'Active' ? r.status : r.approval_status === 'Approved' ? 'Active' : r.approval_status; }
