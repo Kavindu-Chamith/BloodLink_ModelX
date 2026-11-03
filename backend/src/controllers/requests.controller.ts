@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { positiveId, text } from '../middleware/validation.middleware';
 import { pool } from '../db';
 import { transaction, HttpError } from '../transaction';
-import { matchedRequests, lockDonor, lockRequest, assertRequestMatch, audit } from '../services/coordination.service';
+import { matchedRequests, lockDonor, lockRequest, assertRequestMatch, audit, donationIntervalDays } from '../services/coordination.service';
 
 export function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -18,14 +18,18 @@ function timeAgo(value: Date): string {
 
 export async function getRequestsPageData(req: AuthRequest, res: Response) {
   const donorId = req.user!.id;
-  const donor = (await pool.query('SELECT full_name FROM donor_profiles WHERE user_id = $1', [donorId])).rows[0];
+  const donor = (await pool.query(`SELECT dp.*,
+    COALESCE(dp.next_eligible_date,CURRENT_DATE)<=CURRENT_DATE
+      AND (dp.last_donation_date IS NULL OR dp.last_donation_date+$2::integer<=CURRENT_DATE)
+      AND NOT EXISTS(SELECT 1 FROM donations d WHERE d.donor_id=dp.user_id AND d.donation_date+$2::integer>CURRENT_DATE) AS interval_passed
+    FROM donor_profiles dp WHERE dp.user_id=$1`, [donorId,donationIntervalDays()])).rows[0];
   if (!donor) throw new HttpError(404, 'Donor profile not found');
   const candidates = await matchedRequests(donorId);
   const mission = (await pool.query(`SELECT n.request_id, n.responded_at, r.blood_group, r.required_units,
     o.name, o.branch_name, o.contact_phone FROM notifications n
     JOIN blood_requests r ON r.id = n.request_id JOIN organizations o ON o.id = r.organization_id
     WHERE n.donor_id = $1 AND n.response_status = 'accepted' AND n.closed_at IS NULL
-      AND r.status = 'Active' AND r.approval_status = 'Approved' AND o.is_active AND o.verification_status = 'approved' LIMIT 1`, [donorId])).rows[0];
+      AND r.status = 'Active' AND (r.expires_at IS NULL OR r.expires_at>NOW()) AND r.approval_status = 'Approved' AND o.is_active AND o.verification_status = 'approved' LIMIT 1`, [donorId])).rows[0];
   const alerts = candidates.filter(row => !['accepted', 'declined'].includes(row.response_status)).map(row => ({
     id: String(row.id), hospitalName: row.hospital_name, distance: distanceLabel(row.distance_km),
     timeAgo: timeAgo(row.created_at), bloodGroup: groupLabel(row.blood_group), unitsNeeded: row.required_units,
@@ -38,8 +42,21 @@ export async function getRequestsPageData(req: AuthRequest, res: Response) {
   const unread = (await pool.query(`SELECT COUNT(*)::integer AS count FROM notifications n
     LEFT JOIN blood_requests r ON r.id = n.request_id WHERE n.donor_id = $1 AND n.read_at IS NULL
     AND (n.request_id IS NULL OR r.approval_status = 'Approved')`, [donorId])).rows[0].count;
+  let emptyState: { title:string;message:string;action?:'profile'|'active' } | null = null;
+  if (!alerts.length) {
+    if (mission) emptyState={title:'You have an active request',message:'Open the Active tab to view your accepted request. You can have one active request at a time.',action:'active'};
+    else if (!donor.blood_group_verified) emptyState={title:'Verify your blood group',message:'Submit a blood-group document in Profile. Requests appear after verification and when your other matching details are complete.',action:'profile'};
+    else if (donor.consent_status!=='granted' || !donor.consent_recorded_at) emptyState={title:'Enable request alerts in Profile',message:'Turn on availability in Profile to consent to matched request alerts. Existing notifications are separate from available blood requests.',action:'profile'};
+    else if (!donor.is_available) emptyState={title:'Request alerts are paused',message:'Turn on availability in Profile when you want to receive matched requests.',action:'profile'};
+    else if (!donor.availability_updated_at || new Date(donor.availability_updated_at).getTime()<Date.now()-30*86400000 || new Date(donor.availability_updated_at).getTime()>Date.now()) emptyState={title:'Renew your availability',message:'Update your availability in Profile. Matching uses availability confirmed within the last 30 days.',action:'profile'};
+    else if (donor.latitude==null || donor.longitude==null) emptyState={title:'Set your matching location',message:'Add a matching location in Profile so nearby requests can be shown.',action:'profile'};
+    else if (!donor.interval_passed) emptyState={title:'Recorded donation interval has not passed',message:'See your recorded interval in Profile. Blood-bank staff assess whether you can donate.',action:'profile'};
+    else emptyState={title:'No matching requests right now',message:'Only open, approved requests matching your current profile appear here. Pull down to refresh.'};
+  }
   res.json({ donorInitials: initials(donor.full_name || ''), donorName: donor.full_name || 'Donor',
-    unreadAlertsCount: unread, activeCount: mission ? 1 : 0, alerts,
+    // Legacy field remains compatible, but request badges always count actionable cards.
+    unreadAlertsCount: alerts.length, availableAlertsCount: alerts.length, unreadNotificationsCount: unread,
+    activeCount: mission ? 1 : 0, alerts, emptyState,
     activeMission: mission ? {
       id: String(mission.request_id), hospitalName: mission.name, unitDepartment: mission.branch_name || '',
       bloodGroup: groupLabel(mission.blood_group), unitsNeeded: mission.required_units,
@@ -76,7 +93,7 @@ export async function respondToAlert(req: AuthRequest, res: Response) {
         FROM blood_requests r JOIN organizations o ON o.id = r.organization_id
         WHERE n.request_id = r.id AND n.donor_id = $1 AND n.request_id <> $2
           AND n.response_status = 'accepted' AND n.closed_at IS NULL
-          AND (r.status <> 'Active' OR r.approval_status <> 'Approved'
+          AND (r.status <> 'Active' OR r.approval_status <> 'Approved' OR r.expires_at<=NOW()
             OR NOT o.is_active OR o.verification_status <> 'approved')`, [donorId, requestId]);
       if ((await client.query(`SELECT id FROM notifications WHERE donor_id = $1 AND request_id <> $2
         AND response_status = 'accepted' AND closed_at IS NULL`, [donorId, requestId])).rowCount) throw new HttpError(409, 'You already have an active mission');

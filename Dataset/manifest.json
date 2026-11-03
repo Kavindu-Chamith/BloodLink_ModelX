@@ -1,0 +1,20 @@
+{
+  "dataset_name": "BloodLink Synthetic Test Fixtures",
+  "data_provenance": "SYNTHETIC_TEST_DATA_NOT_REAL",
+  "snapshot_utc": "2026-11-03T00:00:00Z",
+  "random_seed": 20261103,
+  "requested_donors": 10000,
+  "generated_counts": {
+    "donors": 10000,
+    "locations_reference": 48,
+    "donation_history": 71097,
+    "institutions": 48,
+    "blood_requests": 333,
+    "donor_responses": 275,
+    "blood_stocks": 384
+  },
+  "source_reference": "Original uploaded sample examined for schema and aggregate blood-group/availability patterns ONLY; no source rows or personal attributes were reused.",
+  "matching_scope": "Exact same blood group for outreach simulations only; never clinical transfusion compatibility or medical eligibility",
+  "geography": "Curated approximate city centers; simulated donor coordinates lie within 2 km of reference town centers; no district polygon/geocoding validation",
+  "license_note": "Original dataset licensing remains unverified; generator uses only aggregate counts, not original donor records."
+}

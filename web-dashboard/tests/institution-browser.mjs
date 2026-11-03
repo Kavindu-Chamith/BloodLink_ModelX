@@ -48,8 +48,8 @@ try {
   await user('bank.b@example.test', 'bloodbank_staff', bankB);
   await user('super.admin@example.test', 'admin');
   const donorId = await user('donor@example.test', 'donor');
-  await pool.query(`INSERT INTO donor_profiles(user_id,full_name,blood_group,blood_group_verified,phone,latitude,longitude)
-    VALUES ($1,'Test Donor','O-',true,'+94771234567',6.6801,80.4001)`, [donorId]);
+  await pool.query(`INSERT INTO donor_profiles(user_id,full_name,blood_group,blood_group_verified,phone,latitude,longitude,consent_status,consent_recorded_at,availability_updated_at)
+    VALUES ($1,'Test Donor','O-',true,'+94771234567',6.6801,80.4001,'granted',NOW(),NOW())`, [donorId]);
   for (const [i, group] of ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].entries()) {
     const units = [42, 8, 31, 3, 18, 2, 55, 7][i];
     await pool.query('INSERT INTO blood_stocks(organization_id,blood_group,available_units,status) VALUES($1,$2,$3,$4)', [bankA, group, units, units <= 2 ? 'Critical' : units < 10 ? 'Low' : 'Normal']);

@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { BLOOD_GROUPS, positiveId, emailValue, optionalText, validatePasswordStrength } from '../middleware/validation.middleware';
 import { pool } from '../db';
 import { transaction, HttpError } from '../transaction';
-import { audit, dispatchMatches, donationIntervalDays, lockRequest, lockDonor, queueNotificationPush } from '../services/coordination.service';
+import { audit, dispatchMatches, donationIntervalDays, lockRequest, lockDonor, queueNotificationPush, requestCoverage } from '../services/coordination.service';
 import { hashPassword } from '../services/password.service';
 import { revokeAllUserTokens } from '../services/token.service';
 
@@ -46,13 +46,15 @@ export async function createBloodRequest(req: AuthRequest, res: Response) {
   const { bloodGroup, requiredUnits } = req.body, priority = req.body.priority ?? 'Normal', radius = req.body.radiusKm ?? 20;
   const reason = optionalText(req.body.reason, 'reason', 1000);
   const department = optionalText(req.body.department, 'department', 150);
+  const outreachTarget = req.body.outreachTarget ?? 10, responseHours = req.body.responseHours ?? 24;
+  if (!Number.isInteger(outreachTarget) || outreachTarget<1 || outreachTarget>10000 || !Number.isInteger(responseHours) || responseHours<1 || responseHours>168) throw new HttpError(400,'Invalid outreachTarget or responseHours');
   if (!BLOOD_GROUPS.includes(bloodGroup) || !Number.isInteger(requiredUnits) || requiredUnits < 1 || requiredUnits > 1000 ||
     !['Normal', 'Urgent', 'Emergency'].includes(priority) || typeof radius !== 'number' || !Number.isFinite(radius) || radius <= 0 || radius > 500) throw new HttpError(400, 'Invalid blood group, requiredUnits, priority or radiusKm');
   const result = await transaction(async client => {
     const org = await activeInstitution(client, req);
     if (org.latitude == null || org.longitude == null) throw new HttpError(409, 'Set the institution location before creating requests');
-    const request = (await client.query(`INSERT INTO blood_requests(organization_id, blood_group, required_units, priority, radius_km, created_by, reason, department)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`, [org.id, bloodGroup, requiredUnits, priority, radius, req.user!.id, reason, department])).rows[0];
+    const request = (await client.query(`INSERT INTO blood_requests(organization_id, blood_group, required_units, priority, radius_km, created_by, reason, department,outreach_target,expires_at,is_simulated)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()+$10::integer*INTERVAL '1 hour',$11) RETURNING *`, [org.id,bloodGroup,requiredUnits,priority,radius,req.user!.id,reason,department,outreachTarget,responseHours,org.is_simulated])).rows[0];
     await audit(client, req, 'BLOOD_REQUEST_SUBMITTED', 'blood_request', request.id);
     return { request, matchedDonors: 0 };
   });
@@ -79,7 +81,7 @@ export async function institutionRequestDetails(req: AuthRequest, res: Response)
     CASE WHEN n.response_status = 'accepted' THEN dp.phone END AS phone
     FROM notifications n JOIN donor_profiles dp ON dp.user_id = n.donor_id WHERE n.request_id = $1 ORDER BY n.id DESC LIMIT 1000`, [id])).rows;
   const messages = (await pool.query('SELECT id, donor_id, message, created_at FROM coordinator_messages WHERE request_id = $1 ORDER BY id DESC LIMIT 100', [id])).rows;
-  res.json({ request, responses, messages });
+  res.json({ request, responses, messages, coverage: await requestCoverage(id) });
 }
 
 export async function dispatchBloodRequest(req: AuthRequest, res: Response) {
@@ -135,8 +137,8 @@ export async function confirmDonation(req: AuthRequest, res: Response) {
     const recent = await client.query(`SELECT id FROM donations WHERE donor_id = $1 AND donation_date + $2::integer > CURRENT_DATE
       UNION ALL SELECT id FROM donor_profiles WHERE user_id = $1 AND (last_donation_date + $2::integer > CURRENT_DATE OR next_eligible_date > CURRENT_DATE)`, [donorId, donationIntervalDays()]);
     if (recent.rowCount) throw new HttpError(409, 'Donation interval has not passed');
-    const row = (await client.query(`INSERT INTO donations(donor_id, organization_id, request_id, confirmed_by)
-      VALUES ($1, $2, $3, $4) RETURNING *`, [donorId, request.organization_id, id, req.user!.id])).rows[0];
+    const row = (await client.query(`INSERT INTO donations(donor_id, organization_id, request_id, confirmed_by,is_simulated)
+      VALUES ($1,$2,$3,$4,$5) RETURNING *`, [donorId,request.organization_id,id,req.user!.id,request.is_simulated || donor.is_simulated])).rows[0];
     await client.query(`UPDATE donor_profiles SET last_donation_date = CURRENT_DATE,
       next_eligible_date = CURRENT_DATE + $1::integer, updated_at = NOW() WHERE user_id = $2`, [donationIntervalDays(), donorId]);
     await client.query(`UPDATE notifications SET closed_at = NOW() WHERE donor_id = $1 AND response_status = 'accepted' AND closed_at IS NULL`, [donorId]);

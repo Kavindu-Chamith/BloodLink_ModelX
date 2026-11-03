@@ -49,7 +49,7 @@ function installFixtures(requests, banks) {
     else if (route === '/notifications') data = window.qa.notifications;
     else if (route === '/notifications/read-all') { window.qa.notifications.forEach(item => { item.isRead = true; }); data = { success: true }; }
     else if (/^\/notifications\/\d+\/read$/.test(route)) { window.qa.notifications.find(item => item.id === route.split('/')[2]).isRead = true; data = { success: true }; }
-    else if (route === '/requests/me') data = { donorInitials: 'KP', donorName: 'Kavindu Perera', unreadAlertsCount: window.qa.requests.length, activeCount: window.qa.mission ? 1 : 0, alerts: window.qa.requests, activeMission: window.qa.mission };
+    else if (route === '/requests/me') data = { donorInitials: 'KP', donorName: 'Kavindu Perera', unreadAlertsCount: window.qa.badgeOverride ?? window.qa.requests.length, activeCount: window.qa.mission ? 1 : 0, alerts: window.qa.requests, activeMission: window.qa.mission,emptyState:window.qa.emptyState || null };
     else if (route === '/donors/banks') data = { donorInitials: 'KP', banks: window.qa.banks };
     else if (/\/requests\/\d+\/respond/.test(route)) {
       if (window.qa.failRespond) { status = 503; data = { error: 'Connection interrupted. Please try again.' }; }
@@ -177,8 +177,16 @@ function installFixtures(requests, banks) {
     await shot('welcome-light');
     await wait(`window.qa.calls.some(call => call.route === '/auth/logout' && call.body.refreshToken === 'fixture-refresh')`);
     console.log('PASS: Form focus styling, sign-out cancellation, session revocation request and return to welcome');
+    await evaluate('window.qa.badgeOverride = 99');
     await screen('14. Blood Requests');
     await wait(`document.body.innerText.includes('Sabaragamuwa General Hospital')`);
+    assert.ok(await evaluate(`!!document.querySelector('[aria-label="New Alerts, 3 available"]')`),'Request badge counts rendered cards instead of unrelated unread messages');
+    await evaluate(`window.qa.savedRequests=window.qa.requests;window.qa.requests=[];window.qa.emptyState={title:'Enable request alerts in Profile',message:'Turn on availability in Profile to consent to matched request alerts.',action:'profile'}`);
+    await click('Home');await click('Requests');await wait(`document.body.innerText.includes('Enable request alerts in Profile')`);
+    assert.ok(await evaluate(`!!document.querySelector('[aria-label="New Alerts, 0 available"]')`),'Empty request list has a zero badge even if legacy unread count is nonzero');
+    await click('Review Profile');await wait(`document.body.innerText.includes('Available to donate')`);
+    await evaluate('window.qa.requests=window.qa.savedRequests;window.qa.emptyState=null;delete window.qa.badgeOverride');
+    await click('Requests');await wait(`document.body.innerText.includes('Sabaragamuwa General Hospital')`);
     await shot('requests-alerts'); await fits('Requests');
     await click('View details and respond to Sabaragamuwa General Hospital');
     await wait(`document.body.innerText.includes('Request details')`);

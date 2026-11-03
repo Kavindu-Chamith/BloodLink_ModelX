@@ -44,3 +44,7 @@ uploads/
 # Local dependency audit cache
 .npm-cache/
 .qa-private/
+
+# Python dataset tooling caches
+__pycache__/
+*.pyc

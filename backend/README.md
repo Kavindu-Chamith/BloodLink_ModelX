@@ -6,7 +6,7 @@ JWT secrets must be different, at least 32 characters long, and must not use exa
 
 The completed operational API, role boundaries, private document storage, matching,
 stock/donation workflow, notifications and deployment settings are documented in
-[the backend handoff](../docs/BACKEND_COMPLETION.md). Apply migration 008 before
+[the backend handoff](../docs/BACKEND_COMPLETION.md). Apply migration 009 before
 starting this version. `MIGRATION_DATABASE_URL` can supply the owner connection
 for CLI migrations while `DATABASE_URL` uses a limited runtime login.
 
@@ -14,6 +14,14 @@ For a labeled local dataset, run `npm run seed:preview` in development. It creat
 DEMO institutions, stocks, requests and donor history without resetting the local
 test donor password. See [local testing status](../docs/LOCAL_TESTING_STATUS.md)
 for test steps and the features that still require implementation or providers.
+
+The full synthetic dataset and current-day demonstration are integrated. See
+[the demo handoff](../docs/TODAY_DEMO.md) for local URLs, private credential locations,
+import commands, coverage behavior and validation results. Outreach now requires
+recorded consent and an availability update within 30 days. Turning availability
+on grants that consent; turning it off withdraws it. New requests have independent
+volunteer targets and response windows. Expired requests cannot be matched,
+accepted or dispatched. Synthetic accounts/requests never enqueue real push jobs.
 
 ```sh
 npm ci

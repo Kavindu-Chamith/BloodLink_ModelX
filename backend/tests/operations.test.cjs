@@ -6,7 +6,7 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 test('secure operational workflows against a disposable PostgreSQL database', { timeout: 120000 }, async t => {
-  const configured = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
+  const configured = process.env.TEST_DATABASE_URL || process.env.MIGRATION_DATABASE_URL || process.env.DATABASE_URL;
   assert.ok(configured, 'Configure TEST_DATABASE_URL or local DATABASE_URL');
   const url = new URL(configured);
   if (!process.env.TEST_DATABASE_URL) assert.ok(['localhost', '127.0.0.1', '[::1]'].includes(url.hostname));
@@ -37,8 +37,8 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
     const orgA = await org('Test institution A'), orgB = await org('Test institution B');
     async function user(label, role = 'donor', organizationId = null, overrides = {}) {
       const row = (await pool.query(`INSERT INTO users(email, password_hash, role, organization_id) VALUES ($1, $2, $3, $4) RETURNING id`, [`${label}@example.test`, passwordHash, role, organizationId])).rows[0];
-      if (role === 'donor') await pool.query(`INSERT INTO donor_profiles(user_id, full_name, blood_group, blood_group_verified, latitude, longitude)
-        VALUES ($1, $2, 'O-', true, 6.9001, 79.9001)`, [row.id, label]);
+      if (role === 'donor') await pool.query(`INSERT INTO donor_profiles(user_id, full_name, blood_group, blood_group_verified, latitude, longitude,consent_status,consent_recorded_at,availability_updated_at)
+        VALUES ($1,$2,'O-',true,6.9001,79.9001,'granted',NOW(),NOW())`, [row.id,label]);
       for (const [column, value] of Object.entries(overrides)) {
         assert.ok(['blood_group_verified', 'is_available', 'latitude', 'longitude', 'blood_group', 'next_eligible_date'].includes(column));
         await pool.query(`UPDATE donor_profiles SET ${column} = $1 WHERE user_id = $2`, [value, row.id]);
@@ -110,6 +110,33 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
       assert.equal((await api('/requests/me', unverified)).status, 200);
       assert.equal((await pool.query('SELECT COUNT(*)::integer AS count FROM blood_requests')).rows[0].count, before, 'GET must never seed requests');
     });
+    await t.test('request badges count actionable cards, not unread inbox messages, and explain missing consent',async()=>{
+      const identity=await user('badge-regression','donor',null,{blood_group:'B+'});
+      await pool.query("UPDATE donor_profiles SET consent_status='not_provided',consent_recorded_at=NULL,availability_updated_at=NULL WHERE user_id=$1",[identity.id]);
+      const expired=(await pool.query(`INSERT INTO blood_requests(organization_id,blood_group,required_units,approval_status,expires_at)
+        VALUES($1,'B+',1,'Approved',NOW()-INTERVAL '1 day') RETURNING id`,[orgA])).rows[0];
+      await pool.query(`INSERT INTO notifications(donor_id,request_id,title,message,kind) VALUES
+        ($1,NULL,'Profile update','Inbox message','profile_synced'),($1,NULL,'Private message','Inbox message','health_advisory'),
+        ($1,$2,'Old request','Expired request','critical_need')`,[identity.id,expired.id]);
+      let feed=(await api('/requests/me',identity)).data;
+      assert.equal(feed.alerts.length,0);assert.equal(feed.unreadAlertsCount,0);assert.equal(feed.availableAlertsCount,0);
+      assert.equal(feed.unreadNotificationsCount,3);assert.equal(feed.emptyState.action,'profile');
+      assert.equal(feed.emptyState.title,'Enable request alerts in Profile');
+      await api('/donors/me/availability',identity,{isAvailable:true},'PATCH');
+      assert.equal((await api('/requests/me',identity)).data.emptyState.title,'No matching requests right now');
+      const created=(await api('/requests',staffA,{bloodGroup:'B+',requiredUnits:1})).data.request;
+      await api(`/admin/blood-requests/${created.id}/review`,platformAdmin,{decision:'Approved'},'PATCH');
+      feed=(await api('/requests/me',identity)).data;
+      assert.equal(feed.alerts.length,1);assert.equal(feed.availableAlertsCount,1);assert.equal(feed.unreadNotificationsCount,4);
+      assert.equal((await api('/notifications/read-all',identity,{},'PATCH')).status,200);
+      feed=(await api('/requests/me',identity)).data;
+      assert.equal(feed.availableAlertsCount,1);assert.equal(feed.unreadNotificationsCount,0);
+      await api(`/requests/${created.id}/respond`,identity,{status:'accepted'});
+      feed=(await api('/requests/me',identity)).data;
+      assert.equal(feed.availableAlertsCount,0);assert.equal(feed.activeCount,1);assert.equal(feed.emptyState.action,'active');
+      assert.equal((await api('/donors/home',identity)).data.donor.availableAlertsCount,0);
+      await api(`/requests/mission/${created.id}/cancel`,identity,{});
+    });
     await t.test('request creation matches only verified, available, nearby donors of the requested group', async () => {
       assert.equal((await api('/requests', donor, { bloodGroup: 'O-', requiredUnits: 1 })).status, 403);
       assert.equal((await api('/requests', staffA, { bloodGroup: 'O-', requiredUnits: '1' })).status, 400);
@@ -140,6 +167,31 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
       assert.equal((await api(`/requests/${requestId}/dispatch`, staffA, {})).data.matchedDonors, 0);
       secondRequestId = (await api('/requests', staffA, { bloodGroup: 'O-', requiredUnits: 2, radiusKm: 10 })).data.request.id;
       assert.equal((await api(`/admin/blood-requests/${secondRequestId}/review`, platformAdmin, { decision: 'Approved' }, 'PATCH')).status, 200);
+    });
+    await t.test('coverage, consent, freshness and expiry use the same outreach rules',async()=>{
+      const good=await user('coverage-current','donor',null,{blood_group:'AB-'});
+      const stale=await user('coverage-stale','donor',null,{blood_group:'AB-'});
+      const unknown=await user('coverage-no-consent','donor',null,{blood_group:'AB-'});
+      await pool.query("UPDATE donor_profiles SET availability_updated_at=NOW()-INTERVAL '31 days' WHERE user_id=$1",[stale.id]);
+      await pool.query("UPDATE donor_profiles SET consent_status='not_provided',consent_recorded_at=NULL WHERE user_id=$1",[unknown.id]);
+      const created=await api('/requests',staffA,{bloodGroup:'AB-',requiredUnits:2,outreachTarget:4,responseHours:2,radiusKm:50});
+      assert.equal(created.status,201);const id=created.data.request.id;
+      assert.equal(created.data.request.outreach_target,4);assert.ok(created.data.request.expires_at);
+      assert.equal((await api(`/admin/blood-requests/${id}/review`,platformAdmin,{decision:'Approved'},'PATCH')).status,200);
+      const coverage=(await api(`/requests/${id}`,staffA)).data.coverage;
+      assert.deepEqual(coverage.bands.map(b=>[b.radiusKm,b.candidates,b.gap]),[[10,1,3],[25,1,3],[50,1,3]]);
+      assert.doesNotMatch(JSON.stringify(coverage),/latitude|longitude|@example|coverage-current/);
+      for(const blocked of [stale,unknown])assert.equal((await api(`/requests/${id}/respond`,blocked,{status:'accepted'})).status,409);
+      assert.equal((await api('/donors/me/availability',stale,{isAvailable:true},'PATCH')).data.outreachConsent,'granted');
+      assert.equal((await api(`/requests/${id}`,staffA)).data.coverage.bands[0].candidates,2);
+      await api('/donors/me/availability',stale,{isAvailable:false},'PATCH');
+      assert.equal((await api(`/requests/${id}`,staffA)).data.coverage.bands[0].candidates,1);
+      await pool.query("UPDATE blood_requests SET expires_at=NOW()-INTERVAL '1 second' WHERE id=$1",[id]);
+      assert.equal((await api(`/requests/${id}`,staffA)).data.coverage.bands[0].candidates,0);
+      assert.equal((await api(`/requests/${id}/respond`,good,{status:'accepted'})).status,409);
+      assert.equal((await api(`/requests/${id}/dispatch`,staffA,{})).status,409);
+      await createEligibilityReminders();
+      assert.equal((await pool.query('SELECT status FROM blood_requests WHERE id=$1',[id])).rows[0].status,'Cancelled');
     });
     await t.test('rejected and cancelled pending requests never reach donors or permit dispatch', async () => {
       const rejected = (await api('/requests', staffA, { bloodGroup: 'O-', requiredUnits: 1, approval_status: 'Approved', organizationId: orgB })).data.request;
@@ -268,6 +320,39 @@ test('secure operational workflows against a disposable PostgreSQL database', { 
       assert.equal((await api(`/notifications/${notice.id}/health-message`, other)).status, 404);
       assert.equal((await api(`/notifications/${notice.id}/health-message`, staffB)).status, 403);
       assert.equal((await api(`/notifications/${notice.id}/health-message`, donor)).data.alert.message, body.message);
+    });
+    await t.test('queued outreach is rechecked for consent, freshness, interval, group, simulation and expiry before delivery',async()=>{
+      const identity=await user('push-rule-check','donor',null,{blood_group:'A+'});
+      const created=await api('/requests',staffA,{bloodGroup:'A+',requiredUnits:1});const id=created.data.request.id;
+      await api(`/admin/blood-requests/${id}/review`,platformAdmin,{decision:'Approved'},'PATCH');
+      process.env.PUSH_TRANSPORT='fcm';
+      const device=await api('/notifications/devices',identity,{token:'test-outreach-rule-device-at-least-20-characters'});
+      assert.equal(device.status,201);
+      const notice=(await pool.query('SELECT id FROM notifications WHERE request_id=$1 AND donor_id=$2',[id,identity.id])).rows[0].id;
+      const {queueNotificationPush}=require('../src/services/coordination.service');
+      const client=await pool.connect();try{await queueNotificationPush(client,[notice]);}finally{client.release();}
+      process.env.PUSH_TRANSPORT='fcm';let sent=0;
+      try{
+        await processPushJobs(async()=>{sent++;});assert.equal(sent,1);
+        const changes=[
+          "UPDATE donor_profiles SET consent_status='withdrawn' WHERE user_id=$1",
+          "UPDATE donor_profiles SET availability_updated_at=NOW()-INTERVAL '31 days' WHERE user_id=$1",
+          'UPDATE donor_profiles SET last_donation_date=CURRENT_DATE WHERE user_id=$1',
+          'UPDATE donor_profiles SET is_simulated=true WHERE user_id=$1',
+          "UPDATE donor_profiles SET blood_group='O+' WHERE user_id=$1",
+          "UPDATE blood_requests SET expires_at=NOW()-INTERVAL '1 second' WHERE id=$1",
+        ];
+        for(const sql of changes){
+          await pool.query("UPDATE donor_profiles SET consent_status='granted',availability_updated_at=NOW(),last_donation_date=NULL,is_simulated=false,blood_group='A+' WHERE user_id=$1",[identity.id]);
+          await pool.query("UPDATE blood_requests SET expires_at=NOW()+INTERVAL '1 day' WHERE id=$1",[id]);
+          await pool.query(sql,[sql.includes('blood_requests')?id:identity.id]);
+          await pool.query("UPDATE push_delivery_jobs SET status='pending',attempts=0,next_attempt_at=NOW() WHERE notification_id=$1",[notice]);
+          await processPushJobs(async()=>{sent++;});assert.equal(sent,1,sql);
+          assert.equal((await pool.query('SELECT status FROM push_delivery_jobs WHERE notification_id=$1',[notice])).rows[0].status,'cancelled');
+        }
+      }finally{
+        process.env.PUSH_TRANSPORT='disabled';await pool.query('DELETE FROM push_devices WHERE id=$1',[device.data.device.id]);
+      }
     });
     await t.test('reminders are deduplicated and push workers recover, retry, and suppress logged-out devices', async () => {
       await pool.query("UPDATE donor_profiles SET last_donation_date = CURRENT_DATE - 100, next_eligible_date = CURRENT_DATE - 10 WHERE user_id = $1", [donor.id]);

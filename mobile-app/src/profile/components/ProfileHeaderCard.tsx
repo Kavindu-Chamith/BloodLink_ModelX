@@ -56,7 +56,7 @@ export default function ProfileHeaderCard({ profile, onToggleAvailability, onEdi
             <View style={styles.availRow}><IconPop value={profile.isAvailable}><IconBadge name={profile.isAvailable ? 'radio-outline' : 'pause-outline'} tone={profile.isAvailable ? 'success' : 'primary'} small /></IconPop>
                 <View style={{ flex: 1, paddingRight: 12 }}>
                     <Text style={styles.availTitle}>Available to donate</Text>
-                    <Text style={styles.availSub}>{profile.isAvailable ? 'Receive matched emergency requests' : 'Emergency request alerts are paused'}</Text>
+                    <Text style={styles.availSub}>{profile.isAvailable ? 'Outreach enabled for 30 days. Turn off to withdraw.' : 'Turn on to consent to matched request alerts for 30 days.'}</Text>
                 </View>
                 <Switch
                     value={profile.isAvailable}

@@ -1,7 +1,7 @@
 import { GoogleAuth } from 'google-auth-library';
 import { pool } from '../db';
 import { transaction } from '../transaction';
-import { queueNotificationPush, donationIntervalDays } from './coordination.service';
+import { queueNotificationPush, donationIntervalDays, donorEligibilitySQL, requestOpenSQL, distanceSQL } from './coordination.service';
 
 let auth: GoogleAuth | undefined;
 export function assertPushConfigured() {
@@ -44,9 +44,13 @@ export async function processPushJobs(send: (token: string, notificationId: numb
   const target = (await pool.query(`SELECT d.token, d.user_id, n.request_id FROM push_devices d
     JOIN notifications n ON n.id = $2 JOIN users u ON u.id = d.user_id
     LEFT JOIN blood_requests r ON r.id = n.request_id LEFT JOIN organizations o ON o.id = r.organization_id
+    LEFT JOIN donor_profiles dp ON dp.user_id=n.donor_id
     WHERE d.id = $1 AND n.donor_id = d.user_id AND u.status = 'active' AND n.closed_at IS NULL
-      AND (n.request_id IS NULL OR (r.status = 'Active' AND r.approval_status = 'Approved' AND o.is_active AND o.verification_status = 'approved' AND n.response_status = 'pending'))
-      AND EXISTS(SELECT 1 FROM refresh_tokens t WHERE t.user_id = d.user_id AND t.family_id = d.family_id AND NOT t.is_revoked AND t.expires_at > NOW())`, [job.device_id, job.notification_id])).rows[0];
+      AND NOT COALESCE(dp.is_simulated,false) AND NOT COALESCE(r.is_simulated,false)
+      AND (n.request_id IS NULL OR (${requestOpenSQL} AND u.role='donor' AND o.is_active AND o.verification_status='approved'
+        AND ${donorEligibilitySQL.replaceAll('$2::integer','$3::integer')} AND dp.blood_group=r.blood_group
+        AND ${distanceSQL('dp','o')}<=r.radius_km AND n.response_status='pending'))
+      AND EXISTS(SELECT 1 FROM refresh_tokens t WHERE t.user_id = d.user_id AND t.family_id = d.family_id AND NOT t.is_revoked AND t.expires_at > NOW())`, [job.device_id, job.notification_id,donationIntervalDays()])).rows[0];
   if (!target) {
     await pool.query("UPDATE push_delivery_jobs SET status = 'cancelled', lease_until = NULL WHERE id = $1 AND status = 'processing' AND attempts = $2", [job.id, job.attempts]);
     return;
@@ -68,11 +72,20 @@ export async function processPushJobs(send: (token: string, notificationId: numb
 
 export async function createEligibilityReminders() {
   await transaction(async client => {
+    const expired = await client.query(`UPDATE blood_requests SET status='Cancelled',updated_at=NOW(),
+      review_reason=COALESCE(review_reason,'Response window expired') WHERE status='Active' AND expires_at<=NOW() RETURNING id`);
+    if (expired.rowCount) {
+      await client.query('UPDATE notifications SET closed_at=NOW() WHERE request_id=ANY($1::integer[]) AND closed_at IS NULL',[expired.rows.map(r=>r.id)]);
+      await client.query(`UPDATE push_delivery_jobs j SET status='cancelled',lease_until=NULL FROM notifications n
+        WHERE j.notification_id=n.id AND n.request_id=ANY($1::integer[]) AND j.status IN ('pending','processing')`,[expired.rows.map(r=>r.id)]);
+    }
     const result = await client.query(`INSERT INTO notifications(donor_id, title, message, kind, category, dedupe_key)
       SELECT dp.user_id, 'Donation interval reminder', 'Your recorded donation interval has passed. Staff will assess eligibility before a donation.',
         'health_advisory', 'system', 'interval:' || dp.user_id::text || ':' || dp.next_eligible_date::text
       FROM donor_profiles dp JOIN users u ON u.id = dp.user_id
       WHERE u.role = 'donor' AND u.status = 'active' AND dp.blood_group_verified AND dp.is_available
+        AND dp.consent_status='granted' AND dp.consent_recorded_at<=NOW()
+        AND dp.availability_updated_at BETWEEN NOW()-INTERVAL '30 days' AND NOW()
         AND dp.next_eligible_date <= CURRENT_DATE AND dp.last_donation_date + $1::integer <= CURRENT_DATE
         AND NOT EXISTS (SELECT 1 FROM donations d WHERE d.donor_id = dp.user_id AND d.donation_date + $1::integer > CURRENT_DATE)
       ON CONFLICT (dedupe_key) DO NOTHING RETURNING id`, [donationIntervalDays()]);

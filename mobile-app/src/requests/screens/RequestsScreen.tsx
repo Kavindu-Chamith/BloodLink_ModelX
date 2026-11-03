@@ -66,6 +66,7 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
     handleCallCoordinator,
     handleSendCoordinatorNotification,
   } = useBloodRequests(initialTab, initialRequestId);
+  const alertsCount = data?.alerts.length ?? 0;
 
   const handleTabPress = (tab: DonorTab) => {
     if (tab !== 'Requests' && onNavigateTab) {
@@ -77,7 +78,7 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
     request={selectedRequest} responding={responding} error={responseError}
     onBack={handleCloseDetails} onRespond={handleRespondToRequest}
     onNavigateTab={(tab) => { if (tab === 'Requests') handleCloseDetails(); else handleTabPress(tab); }}
-    requestsCount={data?.unreadAlertsCount}
+    requestsCount={alertsCount}
   />;
 
   return (
@@ -94,7 +95,7 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
       <RequestsTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        alertsCount={data?.unreadAlertsCount ?? 0}
+        alertsCount={alertsCount}
         activeCount={data?.activeCount ?? 0}
       />
 
@@ -130,7 +131,7 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
                 />
               ))}
 
-              {data && data.alerts.length === 0 && <View style={styles.emptyMissionCard}><Ionicons name="checkmark-circle-outline" size={32} color={colors.success} /><Text style={styles.emptyMissionTitle}>You’re all caught up</Text><Text style={styles.emptyMissionDesc}>New blood donation requests will appear here. Pull down to refresh.</Text></View>}
+              {data && alertsCount === 0 && <View style={styles.emptyMissionCard}><Ionicons name="information-circle-outline" size={32} color={colors.textMuted} /><Text style={styles.emptyMissionTitle}>{data.emptyState?.title || 'No matching requests right now'}</Text><Text style={styles.emptyMissionDesc}>{data.emptyState?.message || 'Only open, approved requests matching your current profile appear here. Pull down to refresh.'}</Text>{data.emptyState?.action==='profile' && onNavigateToProfile && <TouchableOpacity accessibilityRole="button" style={styles.browseButton} onPress={onNavigateToProfile}><Text style={styles.browseButtonText}>Review Profile</Text></TouchableOpacity>}{data.emptyState?.action==='active' && <TouchableOpacity accessibilityRole="button" style={styles.browseButton} onPress={()=>setActiveTab('active')}><Text style={styles.browseButtonText}>View active request</Text></TouchableOpacity>}</View>}
 
               {/* Bottom Reminder Note */}
               <DonationRecommendationCard />
@@ -189,7 +190,7 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
       )}
 
       {/* Bottom Navigation Bar */}
-      <DonorBottomNav activeTab="Requests" onSelect={handleTabPress} requestsCount={data?.unreadAlertsCount} />
+      <DonorBottomNav activeTab="Requests" onSelect={handleTabPress} requestsCount={alertsCount} />
 
       {/* Notify Coordinator Modal */}
       <NotifyCoordinatorModal

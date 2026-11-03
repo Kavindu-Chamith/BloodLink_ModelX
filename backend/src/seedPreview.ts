@@ -60,7 +60,7 @@ export async function seedPreview() {
     }
     // Only the reserved local test donor is modified. Existing passwords stay intact.
     await client.query(`UPDATE donor_profiles SET full_name='DEMO Test Donor', blood_group='O+', blood_group_verified=true,
-      district='Colombo', is_available=true, latitude=6.927, longitude=79.861,
+      district='Colombo', is_available=true,consent_status='granted',consent_recorded_at=NOW(),availability_updated_at=NOW(),is_simulated=true, latitude=6.927, longitude=79.861,
       last_donation_date=CURRENT_DATE-180, next_eligible_date=CURRENT_DATE-90, updated_at=NOW() WHERE user_id=$1`, [donor.id]);
     const documentId = crypto.randomUUID();
     await client.query("INSERT INTO verification_documents(id,owner_id,file_name,mime_type,content) VALUES ($1,$2,'DEMO-not-medical-evidence.pdf','application/pdf',$3)", [documentId, donor.id, content]);
