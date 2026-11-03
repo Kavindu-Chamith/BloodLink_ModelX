@@ -1,0 +1,49 @@
+institution_id,institution_name,institution_type,province,district,city,latitude,longitude,staff_authorization,data_provenance
+INS001,BloodLink Mock Coordination Centre 001 (Colombo),mock_blood_bank,Western,Colombo,Colombo,6.935480,79.848680,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS002,BloodLink Mock Coordination Centre 002 (Maharagama),mock_blood_bank,Western,Colombo,Maharagama,6.848000,79.926500,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS003,BloodLink Mock Coordination Centre 003 (Moratuwa),mock_hospital,Western,Colombo,Moratuwa,6.773000,79.881600,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS004,BloodLink Mock Coordination Centre 004 (Gampaha),mock_hospital,Western,Gampaha,Gampaha,7.091700,79.999700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS005,BloodLink Mock Coordination Centre 005 (Negombo),mock_blood_bank,Western,Gampaha,Negombo,7.208300,79.835800,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS006,BloodLink Mock Coordination Centre 006 (Ja-Ela),mock_blood_bank,Western,Gampaha,Ja-Ela,7.074400,79.891900,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS007,BloodLink Mock Coordination Centre 007 (Kalutara),mock_hospital,Western,Kalutara,Kalutara,6.585400,79.960700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS008,BloodLink Mock Coordination Centre 008 (Panadura),mock_blood_bank,Western,Kalutara,Panadura,6.713200,79.902600,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS009,BloodLink Mock Coordination Centre 009 (Kandy),mock_hospital,Central,Kandy,Kandy,7.290600,80.633600,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS010,BloodLink Mock Coordination Centre 010 (Gampola),mock_blood_bank,Central,Kandy,Gampola,7.164300,80.576200,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS011,BloodLink Mock Coordination Centre 011 (Matale),mock_blood_bank,Central,Matale,Matale,7.467500,80.623400,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS012,BloodLink Mock Coordination Centre 012 (Dambulla),mock_blood_bank,Central,Matale,Dambulla,7.860000,80.651700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS013,BloodLink Mock Coordination Centre 013 (Nuwara Eliya),mock_blood_bank,Central,Nuwara Eliya,Nuwara Eliya,6.949700,80.789100,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS014,BloodLink Mock Coordination Centre 014 (Hatton),mock_hospital,Central,Nuwara Eliya,Hatton,6.891600,80.595500,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS015,BloodLink Mock Coordination Centre 015 (Galle),mock_hospital,Southern,Galle,Galle,6.046100,80.210300,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS016,BloodLink Mock Coordination Centre 016 (Ambalangoda),mock_blood_bank,Southern,Galle,Ambalangoda,6.235500,80.053800,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS017,BloodLink Mock Coordination Centre 017 (Matara),mock_blood_bank,Southern,Matara,Matara,5.948500,80.535300,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS018,BloodLink Mock Coordination Centre 018 (Weligama),mock_hospital,Southern,Matara,Weligama,5.973000,80.429700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS019,BloodLink Mock Coordination Centre 019 (Hambantota),mock_hospital,Southern,Hambantota,Hambantota,6.124100,81.118500,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS020,BloodLink Mock Coordination Centre 020 (Tangalle),mock_blood_bank,Southern,Hambantota,Tangalle,6.023400,80.797400,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS021,BloodLink Mock Coordination Centre 021 (Jaffna),mock_blood_bank,Northern,Jaffna,Jaffna,9.668400,80.007400,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS022,BloodLink Mock Coordination Centre 022 (Point Pedro),mock_blood_bank,Northern,Jaffna,Point Pedro,9.816700,80.233300,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS023,BloodLink Mock Coordination Centre 023 (Kilinochchi),mock_hospital,Northern,Kilinochchi,Kilinochchi,9.380300,80.377000,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS024,BloodLink Mock Coordination Centre 024 (Mannar),mock_blood_bank,Northern,Mannar,Mannar,8.977900,79.904200,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS025,BloodLink Mock Coordination Centre 025 (Vavuniya),mock_blood_bank,Northern,Vavuniya,Vavuniya,8.751400,80.497100,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS026,BloodLink Mock Coordination Centre 026 (Mullaitivu),mock_blood_bank,Northern,Mullaitivu,Mullaitivu,9.267100,80.814200,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS027,BloodLink Mock Coordination Centre 027 (Batticaloa),mock_hospital,Eastern,Batticaloa,Batticaloa,7.710200,81.692400,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS028,BloodLink Mock Coordination Centre 028 (Kattankudy),mock_blood_bank,Eastern,Batticaloa,Kattankudy,7.683300,81.733300,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS029,BloodLink Mock Coordination Centre 029 (Ampara),mock_blood_bank,Eastern,Ampara,Ampara,7.291700,81.674700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS030,BloodLink Mock Coordination Centre 030 (Kalmunai),mock_blood_bank,Eastern,Ampara,Kalmunai,7.409000,81.834700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS031,BloodLink Mock Coordination Centre 031 (Trincomalee),mock_hospital,Eastern,Trincomalee,Trincomalee,8.577800,81.228900,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS032,BloodLink Mock Coordination Centre 032 (Kinniya),mock_blood_bank,Eastern,Trincomalee,Kinniya,8.497800,81.180700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS033,BloodLink Mock Coordination Centre 033 (Kurunegala),mock_hospital,North Western,Kurunegala,Kurunegala,7.486300,80.364700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS034,BloodLink Mock Coordination Centre 034 (Kuliyapitiya),mock_hospital,North Western,Kurunegala,Kuliyapitiya,7.468800,80.040100,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS035,BloodLink Mock Coordination Centre 035 (Puttalam),mock_hospital,North Western,Puttalam,Puttalam,8.036200,79.828300,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS036,BloodLink Mock Coordination Centre 036 (Chilaw),mock_blood_bank,North Western,Puttalam,Chilaw,7.575800,79.795300,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS037,BloodLink Mock Coordination Centre 037 (Anuradhapura),mock_blood_bank,North Central,Anuradhapura,Anuradhapura,8.311400,80.403700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS038,BloodLink Mock Coordination Centre 038 (Kekirawa),mock_hospital,North Central,Anuradhapura,Kekirawa,8.040000,80.598000,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS039,BloodLink Mock Coordination Centre 039 (Polonnaruwa),mock_hospital,North Central,Polonnaruwa,Polonnaruwa,7.940300,81.018800,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS040,BloodLink Mock Coordination Centre 040 (Hingurakgoda),mock_blood_bank,North Central,Polonnaruwa,Hingurakgoda,8.036700,80.948600,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS041,BloodLink Mock Coordination Centre 041 (Badulla),mock_blood_bank,Uva,Badulla,Badulla,6.993400,81.055000,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS042,BloodLink Mock Coordination Centre 042 (Bandarawela),mock_hospital,Uva,Badulla,Bandarawela,6.828800,80.985700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS043,BloodLink Mock Coordination Centre 043 (Monaragala),mock_hospital,Uva,Monaragala,Monaragala,6.871400,81.348700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS044,BloodLink Mock Coordination Centre 044 (Wellawaya),mock_hospital,Uva,Monaragala,Wellawaya,6.737100,81.103400,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS045,BloodLink Mock Coordination Centre 045 (Ratnapura),mock_blood_bank,Sabaragamuwa,Ratnapura,Ratnapura,6.682800,80.399200,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS046,BloodLink Mock Coordination Centre 046 (Balangoda),mock_hospital,Sabaragamuwa,Ratnapura,Balangoda,6.646400,80.704700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS047,BloodLink Mock Coordination Centre 047 (Kegalle),mock_blood_bank,Sabaragamuwa,Kegalle,Kegalle,7.251300,80.346400,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL
+INS048,BloodLink Mock Coordination Centre 048 (Mawanella),mock_blood_bank,Sabaragamuwa,Kegalle,Mawanella,7.253600,80.446700,verified_simulated,SYNTHETIC_TEST_DATA_NOT_REAL

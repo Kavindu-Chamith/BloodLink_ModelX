@@ -1,0 +1,49 @@
+location_id,country,province,district,city,center_latitude,center_longitude,coordinate_quality,data_provenance
+LOC001,Sri Lanka,Western,Colombo,Colombo,6.935480,79.848680,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC002,Sri Lanka,Western,Colombo,Maharagama,6.848000,79.926500,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC003,Sri Lanka,Western,Colombo,Moratuwa,6.773000,79.881600,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC004,Sri Lanka,Western,Gampaha,Gampaha,7.091700,79.999700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC005,Sri Lanka,Western,Gampaha,Negombo,7.208300,79.835800,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC006,Sri Lanka,Western,Gampaha,Ja-Ela,7.074400,79.891900,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC007,Sri Lanka,Western,Kalutara,Kalutara,6.585400,79.960700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC008,Sri Lanka,Western,Kalutara,Panadura,6.713200,79.902600,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC009,Sri Lanka,Central,Kandy,Kandy,7.290600,80.633600,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC010,Sri Lanka,Central,Kandy,Gampola,7.164300,80.576200,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC011,Sri Lanka,Central,Matale,Matale,7.467500,80.623400,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC012,Sri Lanka,Central,Matale,Dambulla,7.860000,80.651700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC013,Sri Lanka,Central,Nuwara Eliya,Nuwara Eliya,6.949700,80.789100,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC014,Sri Lanka,Central,Nuwara Eliya,Hatton,6.891600,80.595500,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC015,Sri Lanka,Southern,Galle,Galle,6.046100,80.210300,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC016,Sri Lanka,Southern,Galle,Ambalangoda,6.235500,80.053800,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC017,Sri Lanka,Southern,Matara,Matara,5.948500,80.535300,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC018,Sri Lanka,Southern,Matara,Weligama,5.973000,80.429700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC019,Sri Lanka,Southern,Hambantota,Hambantota,6.124100,81.118500,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC020,Sri Lanka,Southern,Hambantota,Tangalle,6.023400,80.797400,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC021,Sri Lanka,Northern,Jaffna,Jaffna,9.668400,80.007400,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC022,Sri Lanka,Northern,Jaffna,Point Pedro,9.816700,80.233300,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC023,Sri Lanka,Northern,Kilinochchi,Kilinochchi,9.380300,80.377000,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC024,Sri Lanka,Northern,Mannar,Mannar,8.977900,79.904200,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC025,Sri Lanka,Northern,Vavuniya,Vavuniya,8.751400,80.497100,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC026,Sri Lanka,Northern,Mullaitivu,Mullaitivu,9.267100,80.814200,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC027,Sri Lanka,Eastern,Batticaloa,Batticaloa,7.710200,81.692400,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC028,Sri Lanka,Eastern,Batticaloa,Kattankudy,7.683300,81.733300,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC029,Sri Lanka,Eastern,Ampara,Ampara,7.291700,81.674700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC030,Sri Lanka,Eastern,Ampara,Kalmunai,7.409000,81.834700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC031,Sri Lanka,Eastern,Trincomalee,Trincomalee,8.577800,81.228900,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC032,Sri Lanka,Eastern,Trincomalee,Kinniya,8.497800,81.180700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC033,Sri Lanka,North Western,Kurunegala,Kurunegala,7.486300,80.364700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC034,Sri Lanka,North Western,Kurunegala,Kuliyapitiya,7.468800,80.040100,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC035,Sri Lanka,North Western,Puttalam,Puttalam,8.036200,79.828300,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC036,Sri Lanka,North Western,Puttalam,Chilaw,7.575800,79.795300,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC037,Sri Lanka,North Central,Anuradhapura,Anuradhapura,8.311400,80.403700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC038,Sri Lanka,North Central,Anuradhapura,Kekirawa,8.040000,80.598000,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC039,Sri Lanka,North Central,Polonnaruwa,Polonnaruwa,7.940300,81.018800,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC040,Sri Lanka,North Central,Polonnaruwa,Hingurakgoda,8.036700,80.948600,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC041,Sri Lanka,Uva,Badulla,Badulla,6.993400,81.055000,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC042,Sri Lanka,Uva,Badulla,Bandarawela,6.828800,80.985700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC043,Sri Lanka,Uva,Monaragala,Monaragala,6.871400,81.348700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC044,Sri Lanka,Uva,Monaragala,Wellawaya,6.737100,81.103400,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC045,Sri Lanka,Sabaragamuwa,Ratnapura,Ratnapura,6.682800,80.399200,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC046,Sri Lanka,Sabaragamuwa,Ratnapura,Balangoda,6.646400,80.704700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC047,Sri Lanka,Sabaragamuwa,Kegalle,Kegalle,7.251300,80.346400,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
+LOC048,Sri Lanka,Sabaragamuwa,Kegalle,Mawanella,7.253600,80.446700,approximate_reference_town_center,SYNTHETIC_TEST_DATA_NOT_REAL
