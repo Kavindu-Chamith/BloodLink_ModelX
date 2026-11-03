@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -12,9 +13,15 @@ import { preview } from 'vite';
 const require = createRequire(new URL('../../backend/package.json', import.meta.url));
 require('dotenv').config({ path: new URL('../../backend/.env', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1') });
 const { Pool } = require('pg');
-const configured = process.env.TEST_DATABASE_URL;
-assert.ok(configured, 'Configure TEST_DATABASE_URL for disposable browser checks');
-const chromium = process.env.CHROMIUM_PATH;
+const configured = process.env.TEST_DATABASE_URL || process.env.MIGRATION_DATABASE_URL || process.env.DATABASE_URL;
+assert.ok(configured, 'Configure TEST_DATABASE_URL or a local database connection for disposable browser checks');
+if (!process.env.TEST_DATABASE_URL) assert.ok(['localhost', '127.0.0.1', '[::1]'].includes(new URL(configured).hostname), 'Remote browser tests require explicit TEST_DATABASE_URL');
+const chromium = process.env.CHROMIUM_PATH || [
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+  '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].find(existsSync);
 assert.ok(chromium, 'Set CHROMIUM_PATH to an installed Chrome/Chromium');
 const databaseName = 'bloodlink_browser_' + crypto.randomBytes(8).toString('hex');
 const admin = new Pool({ connectionString: configured, connectionTimeoutMillis: 5000 });
@@ -91,7 +98,7 @@ try {
   const fill = async (selector, value) => evaluate(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) throw new Error('Missing field ' + ${JSON.stringify(selector)}); const type = el.tagName === 'SELECT' ? HTMLSelectElement : el.tagName === 'TEXTAREA' ? HTMLTextAreaElement : HTMLInputElement; Object.getOwnPropertyDescriptor(type.prototype, 'value').set.call(el, ${JSON.stringify(value)}); el.dispatchEvent(new Event(el.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true })); })()`);
   const go = async route => { await evaluate(`document.querySelector('nav a[href=${JSON.stringify(route)}]').click()`); await delay(200); };
   const width = async size => { await send('Emulation.setDeviceMetricsOverride', { width: size, height: 1000, deviceScaleFactor: 1, mobile: false }); await delay(150); };
-  const shot = async name => { await evaluate('document.fonts.ready.then(() => true)'); const result = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }); await fs.writeFile(path.join(output, name + '.png'), Buffer.from(result.data, 'base64')); };
+  const shot = async name => { await evaluate('document.querySelector(".toast [aria-label=\\"Dismiss notification\\"]")?.click(); window.scrollTo(0, 0); document.fonts.ready.then(() => true)'); const result = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }); await fs.writeFile(path.join(output, name + '.png'), Buffer.from(result.data, 'base64')); };
   const login = async (email, secret = password) => { await wait(`document.querySelector('[name="email"]')`); await fill('[name="email"]', email); await fill('[name="password"]', secret); await click('Sign in securely'); };
   const logout = async () => { const bank = await evaluate('!!document.querySelector(".bank-workspace")'); await evaluate(`document.querySelector('[aria-label="Sign out"]').click()`); if (bank) await click('Sign out'); await wait('document.querySelector("[name=email]")'); };
   await send('Runtime.enable'); await send('Page.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: 'http://localhost:4000/api/*' }] });
@@ -105,6 +112,14 @@ try {
   await wait('!document.querySelector("dialog[open]")');
   assert.equal((await pool.query('SELECT available_units FROM blood_stocks WHERE organization_id=$1 AND blood_group=$2', [bankA, 'A+'])).rows[0].available_units, 43);
   await shot('02-blood-stock');
+  await evaluate(`document.querySelector('[aria-label="Stock status"] button:nth-child(2)').click()`);
+  assert.equal(await evaluate('document.querySelectorAll(".bank-stock-card").length'), 1);
+  await evaluate(`document.querySelector('[aria-label="Stock status"] button:first-child').click()`);
+  await fill('[aria-label="Find blood group"]', 'AB-');
+  assert.equal(await evaluate('document.querySelectorAll(".bank-stock-card").length'), 1);
+  await fill('[aria-label="Find blood group"]', '');
+  await fill('[aria-label="Sort blood stock"]', 'attention');
+  assert.equal(await evaluate('document.querySelector(".stock-group-heading h2").textContent'), 'AB-');
   await go('/bank/requests'); await click('Create request'); await fill('[name="reason"]', 'Emergency surgery'); await fill('[name="department"]', 'Trauma unit'); await click('Submit for approval');
   await wait('!document.querySelector("dialog[open]")'); await wait('document.querySelector("tbody")?.innerText.includes("Pending")'); await shot('03-awaiting-approval');
   const request = (await pool.query('SELECT * FROM blood_requests WHERE organization_id=$1', [bankA])).rows[0];
@@ -124,7 +139,15 @@ try {
   await go('/bank/requests'); await shot('06-active-blood-requests');
   for (const route of ['/bank', '/bank/stock', '/bank/requests', '/bank/health-alerts', '/bank/team']) {
     await go(route);
-    for (const size of [320, 390, 768, 1024, 1440]) { await width(size); assert.ok(await evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), `${route} fits ${size}px`); }
+    for (const size of [320, 390, 768, 1024, 1440]) {
+      await width(size);
+      const fits = await evaluate('document.documentElement.scrollWidth <= innerWidth + 1');
+      if (!fits) {
+        await shot(`overflow-${route.split('/').at(-1)}-${size}`);
+        console.log('Overflow diagnostics:', await evaluate(`JSON.stringify([...document.querySelectorAll('.main-content *')].map(el => ({ tag: el.tagName, class: el.className, right: Math.round(el.getBoundingClientRect().right) })).filter(el => el.right > innerWidth + 1).slice(0, 12))`));
+      }
+      assert.ok(fits, `${route} fits ${size}px`);
+    }
   }
   await width(390); await go('/bank'); await shot('07-dashboard-mobile'); await width(1440);
   console.log('PASS: All institution screens fit desktop, tablet and 320px mobile viewports');
@@ -139,6 +162,22 @@ try {
   console.log('PASS: Bank confirms a real donation and sends an owner-protected private message to the donor app');
   await go('/bank/team'); await click('Add teammate'); await fill('[name="email"]', 'teammate@example.test'); await fill('[name="password"]', password); await click('Create teammate');
   await wait('!document.querySelector("dialog[open]")'); assert.equal((await pool.query('SELECT organization_id FROM users WHERE email=$1', ['teammate@example.test'])).rows[0].organization_id, bankA);
+  await fill('[aria-label="Search team by email"]', 'teammate');
+  assert.equal(await evaluate('document.querySelectorAll("tbody tr").length'), 1);
+  await click('Suspend'); await click('Suspend teammate'); await wait('!document.querySelector("dialog[open]")');
+  await evaluate(`document.querySelector('[aria-label="Team account status"] button:nth-child(2)').click()`);
+  assert.equal(await evaluate('document.querySelectorAll("tbody tr").length'), 0);
+  await evaluate(`document.querySelector('[aria-label="Team account status"] button:nth-child(3)').click()`);
+  assert.equal(await evaluate('document.querySelectorAll("tbody tr").length'), 1);
+  await click('Activate'); await click('Activate teammate'); await wait('!document.querySelector("dialog[open]")');
+  await evaluate(`document.querySelector('[aria-label="Team account status"] button:first-child').click()`);
+  await fill('[aria-label="Search team by email"]', '');
+  await shot('09-team-directory');
+  for (const [route, name] of [['/bank/stock', '10-stock-mobile'], ['/bank/requests', '11-requests-mobile'], ['/bank/health-alerts', '12-health-mobile'], ['/bank/team', '13-team-mobile']]) {
+    await go(route); if (route === '/bank/requests') await click('All'); await width(390); await shot(name);
+    assert.ok(await evaluate(`[...document.querySelectorAll('.bank-subpage .table-scroll')].every(el => el.scrollWidth <= el.clientWidth + 1)`), `${route} table does not require horizontal scrolling on mobile`);
+    await width(1440);
+  }
   assert.equal(errors.length, 0, JSON.stringify(errors));
   await logout(); console.log('PASS: Team accounts stay in their bank, sign-out revokes the session, and no browser exceptions occur');
   console.log('Institution browser checks passed. Screenshots: ' + output);
