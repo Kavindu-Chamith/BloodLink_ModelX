@@ -41,20 +41,15 @@ export const MissionProgressCard: React.FC<MissionProgressCardProps> = ({ steps 
 const createStyles = (c: AppColors) => StyleSheet.create({
   card: {
     backgroundColor: c.card,
-    borderRadius: 18,
+    borderRadius: 10,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: c.border,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
   sectionSubtitle: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     color: c.textMuted,
     letterSpacing: 0.6,
     marginBottom: 16,

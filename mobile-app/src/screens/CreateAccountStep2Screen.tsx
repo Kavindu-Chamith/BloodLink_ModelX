@@ -8,14 +8,10 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { StepIndicator } from '../components/StepIndicator';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_SIZE = Math.floor((SCREEN_WIDTH - 48 - 30) / 4);
 
 interface CreateAccountStep2ScreenProps {
   onBack: () => void;
@@ -59,6 +55,9 @@ export const CreateAccountStep2Screen: React.FC<CreateAccountStep2ScreenProps> =
             return (
               <TouchableOpacity
                 key={group}
+                accessibilityRole="button"
+                accessibilityLabel={`Blood group ${group}`}
+                accessibilityState={{ selected: isSelected }}
                 style={[
                   styles.bloodCard,
                   isSelected ? styles.selectedBloodCard : styles.unselectedBloodCard,
@@ -103,6 +102,8 @@ export const CreateAccountStep2Screen: React.FC<CreateAccountStep2ScreenProps> =
           style={styles.primaryButton}
           activeOpacity={0.85}
           onPress={() => onContinue(selectedGroup)}
+          accessibilityRole="button"
+          accessibilityLabel="Continue"
         >
           <Text style={styles.primaryButtonText}>Continue</Text>
         </TouchableOpacity>
@@ -150,12 +151,13 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    columnGap: '3%',
+    rowGap: 10,
     marginVertical: 18,
   },
   bloodCard: {
-    width: CARD_SIZE,
-    height: CARD_SIZE,
+    width: '22.75%',
+    aspectRatio: 1,
     borderRadius: 16,
     borderWidth: 1.5,
     overflow: 'hidden',

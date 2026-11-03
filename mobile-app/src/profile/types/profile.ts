@@ -23,9 +23,11 @@ export interface DonorProfile {
     donorSince: string; // ISO date
     bloodGroup: BloodGroup;
     isAvailable: boolean; // donor availability status
+    hasMatchingLocation: boolean;
 
     totalDonations: number;
     lastDonationDate: string | null; // ISO date
+    nextEligibleDate?: string | null;
     lastDonationPlace: string | null;
 
     bloodGroupVerification: VerificationStatus;

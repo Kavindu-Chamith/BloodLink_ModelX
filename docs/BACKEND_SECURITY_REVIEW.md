@@ -1,5 +1,9 @@
 # Backend and database security review
 
+The review below records the 12 October baseline. See the
+[31 October backend completion and security handoff](BACKEND_COMPLETION.md) for
+the current implementation, subsequent fixes, new workflows and deployment requirements.
+
 Reviewed on 2026-10-12. Scope: every backend controller, route, middleware, service,
 database/seed/migration script, dependency manifest, and CI setup, plus the mobile
 authentication API and screens required to preserve compatibility.

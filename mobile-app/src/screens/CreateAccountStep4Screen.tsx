@@ -160,7 +160,7 @@ export const CreateAccountStep4Screen: React.FC<CreateAccountStep4ScreenProps> =
             <UploadIcon size={24} color={colors.primary} />
           </View>
 
-          <Text style={styles.uploadPrompt}>Document upload is coming soon</Text>
+          <Text style={styles.uploadPrompt}>Upload from your profile after registration</Text>
           <Text style={styles.uploadSpecs}>Your blood group remains unverified until a document is reviewed.</Text>
         </TouchableOpacity>
 

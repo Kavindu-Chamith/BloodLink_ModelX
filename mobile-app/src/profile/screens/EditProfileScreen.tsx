@@ -1,9 +1,10 @@
+import { showAlert } from '../../utils/showAlert';
 
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
+
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -56,7 +57,7 @@ export default function EditProfileScreen({ profile, onSave, onClose }: Props) {
             await onSave({ fullName: fullName.trim(), phone: phone.trim(), district });
             onClose();
         } catch (e) {
-            Alert.alert('Could not save changes', e instanceof Error ? e.message : 'Please try again.');
+            showAlert('Could not save changes', e instanceof Error ? e.message : 'Please try again.');
         } finally {
             setSaving(false);
         }

@@ -22,7 +22,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = ({
     <View style={styles.card}>
       {/* Top Header Row */}
       <View style={styles.topRow}>
-        <Text style={styles.sectionSubtitle}>ACTIVE DISPATCH MISSION</Text>
+        <Text style={styles.sectionSubtitle}>Your accepted request</Text>
         <View style={styles.statusBadge}>
           <View style={styles.statusDot} />
           <Text style={styles.statusBadgeText}>{mission.status}</Text>
@@ -86,16 +86,11 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = ({
 const createStyles = (c: AppColors) => StyleSheet.create({
   card: {
     backgroundColor: c.card,
-    borderRadius: 18,
+    borderRadius: 10,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: c.border,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
   topRow: {
     flexDirection: 'row',
@@ -170,7 +165,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   },
   requiredLabel: {
     fontSize: 9.5,
-    fontWeight: '800',
+    fontWeight: '600',
     color: c.primary,
     letterSpacing: 0.5,
     marginBottom: 1,
@@ -191,14 +186,14 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   },
   arrivalLabel: {
     fontSize: 9.5,
-    fontWeight: '800',
+    fontWeight: '600',
     color: c.textMuted,
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   arrivalValue: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '600',
     color: c.text,
   },
   buttonsRow: {
@@ -213,11 +208,6 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#BA1328',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
   },
   directionsButtonText: {
     color: c.onPrimary,

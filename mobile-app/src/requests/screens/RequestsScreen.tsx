@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { CardEntrance } from '../../components/Motion';
 import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
 import {
   RequestsHeader,
@@ -119,7 +120,8 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
           {error && <View style={styles.errorCard}><Text style={styles.errorText} accessibilityRole="alert">{error}</Text><TouchableOpacity onPress={reload} accessibilityRole="button" style={styles.retryButton}><Text style={styles.notifyLinkText}>Try again</Text></TouchableOpacity></View>}
           {activeTab === 'alerts' ? (
             /* ================= WINDOW 1: NEW ALERTS ================= */
-            <View style={styles.alertsContainer}>
+            <CardEntrance key="alerts" style={styles.alertsContainer}>
+              <View style={{ marginBottom: 20, gap: 5 }}><Text style={{ fontSize: 23, fontWeight: '500', letterSpacing: -0.7, color: colors.text }}>Matched to you</Text><Text style={{ fontSize: 13, lineHeight: 21, color: colors.textMuted }}>Nearby requests for your verified blood group.</Text></View>
               {data?.alerts.map((item) => (
                 <AlertRequestCard
                   key={item.id}
@@ -132,10 +134,10 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
 
               {/* Bottom Reminder Note */}
               <DonationRecommendationCard />
-            </View>
+            </CardEntrance>
           ) : (
             /* ================= WINDOW 2: ACTIVE MISSION ================= */
-            <View style={styles.activeContainer}>
+            <CardEntrance key="active" style={styles.activeContainer}>
               {data?.activeMission ? (
                 <>
                   {/* Top Dispatch Mission Card */}
@@ -181,7 +183,7 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
                   </TouchableOpacity>
                 </View>
               )}
-            </View>
+            </CardEntrance>
           )}
         </ScrollView>
       )}

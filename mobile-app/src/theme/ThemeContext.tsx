@@ -33,7 +33,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
     document.body.style.backgroundColor = colors.background;
     const focusStyle = document.createElement('style');
-    focusStyle.textContent = `:where(button, [role="button"], [role="tab"], [role="switch"], input, textarea):focus-visible { outline: 3px solid ${colors.focus}; outline-offset: 3px; }`;
+    focusStyle.textContent = `
+      :where(button, [role="button"], [role="tab"], [role="switch"]):focus-visible {
+        outline: 2px solid ${colors.primary}; outline-offset: 2px;
+      }
+      input:focus, textarea:focus {
+        outline: none !important;
+        box-shadow: inset 0 -2px 0 ${colors.primary} !important;
+      }
+    `;
     document.head.appendChild(focusStyle);
     return () => { focusStyle.remove(); };
   }, [colors, isDark]);

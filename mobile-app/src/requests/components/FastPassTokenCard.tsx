@@ -1,8 +1,9 @@
+import { showAlert } from '../../utils/showAlert';
 import { useThemedStyles } from '../../theme/useThemedStyles';
 import type { AppColors } from '../../theme/palette';
 // src/requests/components/FastPassTokenCard.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface FastPassTokenCardProps {
@@ -13,10 +14,9 @@ export const FastPassTokenCard: React.FC<FastPassTokenCardProps> = ({ token }) =
   const { styles, colors } = useThemedStyles(createStyles);
   if (!token) return null;
   const handlePress = () => {
-    Alert.alert(
-      'Fast-Pass Token',
-      `Show your token ${token} to the hospital triage team when you arrive.`,
-      [{ text: 'Close' }]
+    showAlert(
+      'Donation reference',
+      `Share reference ${token} with the donation team when you arrive.`
     );
   };
 
@@ -26,16 +26,16 @@ export const FastPassTokenCard: React.FC<FastPassTokenCardProps> = ({ token }) =
       activeOpacity={0.85}
       onPress={handlePress}
       accessibilityRole="button"
-      accessibilityLabel={`Fast-pass token ${token}`}
+      accessibilityLabel={`Donation reference ${token}`}
     >
       <View style={styles.qrContainer}>
-        <Ionicons name="qr-code-outline" size={26} color={colors.textSecondary} />
+        <Ionicons name="document-text-outline" size={23} color={colors.textSecondary} />
       </View>
 
       <View style={styles.textContainer}>
-        <Text style={styles.tokenLabel}>DONOR FAST–PASS TOKEN</Text>
+        <Text style={styles.tokenLabel}>Donation reference</Text>
         <Text style={styles.tokenCode}>{token}</Text>
-        <Text style={styles.tokenHint}>Show this at triage desk upon arrival</Text>
+        <Text style={styles.tokenHint}>Share this with the donation team on arrival.</Text>
       </View>
     </TouchableOpacity>
   );
@@ -44,18 +44,13 @@ export const FastPassTokenCard: React.FC<FastPassTokenCardProps> = ({ token }) =
 const createStyles = (c: AppColors) => StyleSheet.create({
   card: {
     backgroundColor: c.card,
-    borderRadius: 18,
+    borderRadius: 10,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: c.border,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
   qrContainer: {
     width: 48,
@@ -71,13 +66,13 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   },
   tokenLabel: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
     color: c.textMuted,
     letterSpacing: 0.5,
   },
   tokenCode: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '600',
     color: c.text,
     letterSpacing: 0.4,
     marginVertical: 2,
