@@ -1,9 +1,9 @@
+import { showAlert } from '../../utils/showAlert';
 // src/notifications/screens/NotificationsScreen.tsx
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Linking,
     Pressable,
     RefreshControl,
@@ -21,6 +21,7 @@ import { AppNotification } from '../types/notifications';
 import { FILTERS } from '../utils/kindConfig';
 import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
 import DonorHeader from '../../components/DonorHeader';
+import { fetchPrivateHealthMessage } from '../services/notificationsService';
 
 interface Props {
     state: NotificationsState;
@@ -68,14 +69,14 @@ export default function NotificationsScreen({ state, onBack, onViewRequest, onNa
         try {
             await state.markAllRead();
         } catch {
-            Alert.alert('Could not update', 'Please check your connection and try again.');
+            showAlert('Could not update', 'Please check your connection and try again.');
         }
     };
 
     const handleViewRequest = (n: AppNotification) => {
         state.markRead(n.id);
         if (onViewRequest) onViewRequest(n.requestId);
-        else Alert.alert('Requests', 'The Requests screen is not connected here yet.');
+        else showAlert('Requests', 'The Requests screen is not connected here yet.');
     };
 
     const handleShare = async (n: AppNotification) => {
@@ -91,7 +92,7 @@ export default function NotificationsScreen({ state, onBack, onViewRequest, onNa
 
     return (
         <SafeAreaView style={styles.safe} edges={['top']}>
-            <DonorHeader title="Home" onBack={onBack} onProfile={onNavigateToProfile} colors={colors} />
+            <DonorHeader title="Updates" onBack={onBack} onProfile={onNavigateToProfile} colors={colors} />
             <View style={styles.topRow}>
                 <View style={styles.titleWrap}>
                     <Text style={styles.title}>Notifications</Text>
@@ -162,6 +163,13 @@ export default function NotificationsScreen({ state, onBack, onViewRequest, onNa
                                         setActionMessage(await openUrl(item.guidelinesUrl, 'Donation guidelines have not been attached to this notification.'));
                                     }}
                                     onShareHonor={handleShare}
+                                    onViewPrivateMessage={async item => {
+                                        try {
+                                            const message = await fetchPrivateHealthMessage(item.id);
+                                            showAlert(message.subject, `${message.institution}\n\n${message.message}`);
+                                            await state.markRead(item.id);
+                                        } catch { setActionMessage('Could not open the private message. Please try again.'); }
+                                    }}
                                 />
                             ))
                         )}

@@ -1,0 +1,4085 @@
+{
+  "info": {
+    "name": "BloodLink backend complete local workflow checks",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run with npm run test:postman or import alongside the environment from npm run test:postman:serve. Uses only a disposable local database and synthetic credentials. FCM is deliberately disabled; a 503 is expected. Email is captured by a test-only inbox outside the production API."
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (pm.environment.get('isolatedRun') !== 'true' || !/^http:\\/\\/127\\.0\\.0\\.1:\\d+$/.test(pm.environment.get('baseUrl') || '')) { throw new Error('Start the disposable harness and select its generated environment.'); }"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Public health and authentication guards",
+      "item": [
+        {
+          "name": "API identity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('API online', () => pm.expect(data.status).to.eql('online'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Database health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Database connected', () => pm.expect(data.status).to.eql('ok'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public institution directory",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/donors/banks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Directory shape', () => pm.expect(data.banks).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/not-a-route"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 404', () => pm.response.to.have.status(404));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor profile requires authentication",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/donors/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 401', () => pm.response.to.have.status(401));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Administration requires authentication",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/stats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 401', () => pm.response.to.have.status(401));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid login rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{donorEmail}}\",\"password\":\"Incorrect!123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 401', () => pm.response.to.have.status(401));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "admin login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save adminAccessToken', () => { const value = data.accessToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"adminAccessToken\", value); });",
+                  "pm.test('Save adminRefreshToken', () => { const value = data.refreshToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"adminRefreshToken\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current administrator",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Administrator role', () => pm.expect(data.user.role).to.eql('admin'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Donor email verification and registration",
+      "item": [
+        {
+          "name": "Send registration email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/send-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"identifier\":\"{{donorEmail}}\",\"type\":\"email\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('OTP is private', () => { pm.expect(data).to.not.have.property('otp'); pm.expect(data).to.not.have.property('devOtp'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read captured test email",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{inboxKey}}"
+              }
+            ],
+            "url": "{{inboxUrl}}/otp/{{donorEmail}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save registrationOtp', () => { const value = data.otp; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"registrationOtp\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify registration OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/verify-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"identifier\":\"{{donorEmail}}\",\"type\":\"email\",\"otp\":\"{{registrationOtp}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save registrationToken', () => { const value = data.registrationToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"registrationToken\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register donor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{donorEmail}}\",\"password\":\"{{password}}\",\"fullName\":\"SYNTHETIC Postman Donor\",\"phone\":\"0771234501\",\"nic\":\"199012345678\",\"bloodGroup\":\"O-\",\"registrationToken\":\"{{registrationToken}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save donorAccessToken', () => { const value = data.accessToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"donorAccessToken\", value); });",
+                  "pm.test('Save donorRefreshToken', () => { const value = data.refreshToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"donorRefreshToken\", value); });",
+                  "pm.test('Save donorId', () => { const value = data.user.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"donorId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current donor",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Donor role', () => pm.expect(data.user.role).to.eql('donor'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor cannot access admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/stats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 403', () => pm.response.to.have.status(403));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor profile and location",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fullName\":\"SYNTHETIC Postman Donor\",\"phone\":\"0771234501\",\"district\":\"Colombo\",\"latitude\":6.9001,\"longitude\":79.9001}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set availability",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me/availability",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"isAvailable\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cannot self-verify blood group",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bloodGroupVerified\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 400', () => pm.response.to.have.status(400));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Precise location stays private', () => { pm.expect(data).to.not.have.property('latitude'); pm.expect(data).to.not.have.property('longitude'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 Private verification documents and review",
+      "item": [
+        {
+          "name": "Upload verification with trailing slash",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me/verification-documents/",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": "fixtures/verification.pdf"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save verificationId', () => { const value = data.document.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"verificationId\", value); });",
+                  "pm.test('Save documentPath', () => { const value = data.document.downloadPath; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"documentPath\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pending donor reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/admin/pending"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download private document as owner",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}{{documentPath}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('PDF response', () => { pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'); pm.expect(pm.response.text().slice(0, 5)).to.eql('%PDF-'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Anonymous document denied",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{documentPath}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 401', () => pm.response.to.have.status(401));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject verification",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/admin/{{verificationId}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reason\":\"Synthetic review rejection for API coverage\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resubmit owned private document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/submit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"documentUrl\":\"{{documentPath}}\",\"claimedBloodGroup\":\"O-\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save verificationId', () => { const value = data.verification.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"verificationId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve verification",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/admin/{{verificationId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verified profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Verified group persisted', () => pm.expect(data.bloodGroupVerified).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 Organization and hospital staff onboarding",
+      "item": [
+        {
+          "name": "Hospital self-registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/organizations/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"SYNTHETIC Postman Hospital\",\"type\":\"hospital\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save hospitalId', () => { const value = data.organization.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"hospitalId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pending organizations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/organizations/admin/pending"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve hospital",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/organizations/admin/{{hospitalId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Second hospital to reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/organizations/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"SYNTHETIC Rejected Hospital\",\"type\":\"hospital\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save rejectedHospitalId', () => { const value = data.organization.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"rejectedHospitalId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject hospital",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/organizations/admin/{{rejectedHospitalId}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Hospital staff self-registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{hospitalEmail}}\",\"password\":\"{{password}}\",\"organizationId\":\"{{hospitalId}}\",\"role\":\"hospital_staff\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save hospitalStaffId', () => { const value = data.user.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"hospitalStaffId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pending hospital staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/admin/pending"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve hospital staff",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/admin/{{hospitalStaffId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Second hospital staff to reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{rejectedStaffEmail}}\",\"password\":\"{{password}}\",\"organizationId\":\"{{hospitalId}}\",\"role\":\"hospital_staff\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save rejectedStaffId', () => { const value = data.user.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"rejectedStaffId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject hospital staff",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/staff/admin/{{rejectedStaffId}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "hospital login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{hospitalEmail}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save hospitalAccessToken', () => { const value = data.accessToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"hospitalAccessToken\", value); });",
+                  "pm.test('Save hospitalRefreshToken', () => { const value = data.refreshToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"hospitalRefreshToken\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Hospital overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hospitalAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/overview"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Hospital cannot administer network",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hospitalAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/organizations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 403', () => pm.response.to.have.status(403));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 Bank onboarding, credentials, directory and access",
+      "item": [
+        {
+          "name": "Create primary bank login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/bank-accounts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"accountEmail\":\"{{bankEmail}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save bankAccountId', () => { const value = data.user.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"bankAccountId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bank accounts including unassigned",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/bank-accounts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Onboard bank with selected login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/blood-banks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"SYNTHETIC Postman Blood Bank\",\"type\":\"bloodbank\",\"district\":\"Colombo\",\"address\":\"Synthetic Postman test address\",\"latitude\":6.9,\"longitude\":79.9,\"accountId\":\"{{bankAccountId}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save bankId', () => { const value = data.organization.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"bankId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "bank login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{bankEmail}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save bankAccessToken', () => { const value = data.accessToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"bankAccessToken\", value); });",
+                  "pm.test('Save bankRefreshToken', () => { const value = data.refreshToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"bankRefreshToken\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Temporary password restricts operations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/stocks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 403', () => pm.response.to.have.status(403));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Replace temporary password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"currentPassword\":\"{{password}}\",\"password\":\"{{changedPassword}}\",\"confirmPassword\":\"{{changedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "bank login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{bankEmail}}\",\"password\":\"{{changedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save bankAccessToken', () => { const value = data.accessToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"bankAccessToken\", value); });",
+                  "pm.test('Save bankRefreshToken', () => { const value = data.refreshToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"bankRefreshToken\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create pending bank in directory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/organizations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"SYNTHETIC Secondary Blood Bank\",\"type\":\"bloodbank\",\"district\":\"Colombo\",\"address\":\"Synthetic Postman test address\",\"latitude\":6.9,\"longitude\":79.9}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save secondBankId', () => { const value = data.organization.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"secondBankId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve secondary bank",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/organizations/admin/{{secondBankId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit bank details",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/organizations/{{secondBankId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"SYNTHETIC Secondary Bank Updated\",\"type\":\"bloodbank\",\"district\":\"Colombo\",\"address\":\"Synthetic Postman test address\",\"latitude\":6.9,\"longitude\":79.9,\"branchName\":\"Synthetic branch\",\"parentOrganizationId\":\"{{bankId}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create secondary primary login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/bank-accounts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"accountEmail\":\"{{secondBankEmail}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save secondBankAccountId', () => { const value = data.user.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"secondBankAccountId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Assign login to existing bank",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/blood-banks/{{secondBankId}}/account",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"accountId\":\"{{secondBankAccountId}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Network organizations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/organizations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bank details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/organizations/{{bankId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Network overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/network-overview"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suspend secondary institution",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/organizations/{{secondBankId}}/access",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"isActive\":false}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reactivate secondary institution",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/organizations/{{secondBankId}}/access",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"isActive\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Provision staff centrally",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/staff",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{centralStaffEmail}}\",\"password\":\"{{password}}\",\"role\":\"bloodbank_staff\",\"organizationId\":\"{{bankId}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save centralStaffId', () => { const value = data.user.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"centralStaffId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Network staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/staff"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "User directory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suspend user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/users/{{centralStaffId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"suspended\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reactivate user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/users/{{centralStaffId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"active\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Platform statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/stats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Audit log",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?limit=100"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Audit history persisted', () => pm.expect(data.logs.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delivery queue status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/delivery-status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 Institution stocks and teammates",
+      "item": [
+        {
+          "name": "Institution overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/overview"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Initial eight blood stock groups",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/stocks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Eight groups', () => pm.expect(data.stocks).to.have.lengthOf(8));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create stock report",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/stocks/O-",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"availableUnits\":5}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save stockStamp', () => { const value = data.stock.updated_at; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"stockStamp\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject stale stock update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/stocks/O-",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"availableUnits\":6}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 409', () => pm.response.to.have.status(409));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update stock with current version",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/stocks/O-",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"availableUnits\":12,\"expectedUpdatedAt\":\"{{stockStamp}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Derived stock status', () => pm.expect(data.stock.status).to.eql('Normal'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Primary login creates teammate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/staff",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{teammateEmail}}\",\"password\":\"{{password}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save teammateId', () => { const value = data.user.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"teammateId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Institution staff list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/staff"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suspend own teammate",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/staff/{{teammateId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"suspended\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reactivate own teammate",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/staff/{{teammateId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"active\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor cannot change stock",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/stocks/O-",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"availableUnits\":100}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 403', () => pm.response.to.have.status(403));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 Blood requests, approval and donor missions",
+      "item": [
+        {
+          "name": "Create pending blood request with blank optional details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bloodGroup\":\"O-\",\"requiredUnits\":1,\"priority\":\"Emergency\",\"radiusKm\":10,\"reason\":\"\",\"department\":\"\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save requestId', () => { const value = data.request.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"requestId\", value); });",
+                  "pm.test('Approval required', () => pm.expect(data.request.approval_status).to.eql('Pending'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request review queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/blood-requests?approvalStatus=Pending"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor cannot see pending request",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('No pending donor alerts', () => pm.expect(data.alerts).to.have.lengthOf(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pending request dispatch blocked",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{requestId}}/dispatch",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 409', () => pm.response.to.have.status(409));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Super admin approves and matches donors",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/blood-requests/{{requestId}}/review",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"decision\":\"Approved\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Eligible donor matched', () => pm.expect(data.matchedDonors).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Institution request list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Institution request details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{requestId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Other institution cannot inspect request",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hospitalAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{requestId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 404', () => pm.response.to.have.status(404));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Redispatch is deduplicated",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{requestId}}/dispatch",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('No duplicate matches', () => pm.expect(data.matchedDonors).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor home",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/home"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('One matched request', () => pm.expect(data.donor.matchedRequestsCount).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nearby requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/requests"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donor requests alias",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/requests/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Requests dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Accept through donor alias",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/requests/{{requestId}}/respond",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"accepted\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send coordinator update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/mission/{{requestId}}/notify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reason\":\"Synthetic test donor is on the way\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Coordinator update cooldown",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/mission/{{requestId}}/notify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reason\":\"Repeated test update\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 429', () => pm.response.to.have.status(429));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel active mission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/mission/{{requestId}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Accept request again",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{requestId}}/respond",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"accepted\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm collected donation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{requestId}}/donations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"donorId\":\"{{donorId}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save donationId', () => { const value = data.donation.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"donationId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Donation confirmation is idempotent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{requestId}}/donations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"donorId\":\"{{donorId}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Same donation', () => pm.expect(String(data.donation.id)).to.eql(String(pm.environment.get('donationId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fulfilled request details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{requestId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Fulfilled automatically', () => pm.expect(data.request.status).to.eql('Fulfilled'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create request to cancel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bloodGroup\":\"O-\",\"requiredUnits\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save cancelledRequestId', () => { const value = data.request.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"cancelledRequestId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel pending request",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests/{{cancelledRequestId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"Cancelled\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create request to reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bloodGroup\":\"O-\",\"requiredUnits\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save rejectedRequestId', () => { const value = data.request.id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"rejectedRequestId\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject request with reason",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/blood-requests/{{rejectedRequestId}}/review",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"decision\":\"Rejected\",\"reason\":\"Synthetic rejection test\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 History, PDFs, private health messages and notifications",
+      "item": [
+        {
+          "name": "Donation history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me/donations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Donation persisted', () => pm.expect(data.records).to.have.lengthOf(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create expiring PDF link",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/donors/me/donation-record"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save pdfPath', () => { const value = data.url; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"pdfPath\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Download donation record",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{pdfPath}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('PDF response', () => { pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'); pm.expect(pm.response.text().slice(0, 5)).to.eql('%PDF-'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PDF link cannot be reused",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}{{pdfPath}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 404', () => pm.response.to.have.status(404));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health message recipients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/health-alerts/recipients"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Donor relationship established', () => pm.expect(data.donors).to.have.lengthOf(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send private health message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/health-alerts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"donorId\":\"{{donorId}}\",\"subject\":\"Synthetic follow-up\",\"message\":\"Synthetic API test message. No clinical result.\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sent health messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bankAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/institution/health-alerts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Private follow-up persisted', () => pm.expect(data.alerts).to.have.lengthOf(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Notification inbox",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save notificationId', () => { const value = data.find(n => n.hasPrivateMessage).id; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"notificationId\", value); });",
+                  "pm.test('Health details excluded from inbox', () => pm.expect(JSON.stringify(data)).to.not.include('No clinical result.'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open private health message",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}/health-message"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Private message content', () => pm.expect(data.alert.subject).to.eql('Synthetic follow-up'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark notification read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark all notifications read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/read-all",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read status persisted",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Every notice read', () => pm.expect(data.every(n => n.isRead)).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "FCM registration reports disabled transport",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/devices",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"token\":\"synthetic-device-token-not-a-real-fcm-token\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 503', () => pm.response.to.have.status(503));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unregister owned or absent device safely",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/devices/00000000-0000-4000-8000-000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid device ID rejected",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/notifications/devices/not-a-uuid"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 400', () => pm.response.to.have.status(400));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 Password recovery, refresh and logout",
+      "item": [
+        {
+          "name": "Shared public registration throttle enforced",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 429', () => pm.response.to.have.status(429));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Request password reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/forgot-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{donorEmail}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read queued reset email from test inbox",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{inboxKey}}"
+              }
+            ],
+            "url": "{{inboxUrl}}/otp/{{donorEmail}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save resetOtp', () => { const value = data.otp; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"resetOtp\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify reset email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/verify-reset-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{donorEmail}}\",\"otp\":\"{{resetOtp}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save resetToken', () => { const value = data.resetToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"resetToken\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset donor password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/reset-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"resetToken\":\"{{resetToken}}\",\"password\":\"{{changedPassword}}\",\"confirmPassword\":\"{{changedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset revoked donor access",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 401', () => pm.response.to.have.status(401));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "donor login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{donorEmail}}\",\"password\":\"{{changedPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save donorAccessToken', () => { const value = data.accessToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"donorAccessToken\", value); });",
+                  "pm.test('Save donorRefreshToken', () => { const value = data.refreshToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"donorRefreshToken\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rotate refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{donorRefreshToken}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));",
+                  "pm.test('Save donorAccessToken', () => { const value = data.accessToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"donorAccessToken\", value); });",
+                  "pm.test('Save donorRefreshToken', () => { const value = data.refreshToken; pm.expect(value).to.not.equal(undefined); pm.environment.set(\"donorRefreshToken\", value); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refreshed access works",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{donorRefreshToken}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout revoked access",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{donorAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 401', () => pm.response.to.have.status(401));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout revoked refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\":\"{{donorRefreshToken}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected HTTP 401', () => pm.response.to.have.status(401));",
+                  "const data = pm.response.json(); pm.test('JSON response', () => pm.expect(typeof data).to.eql('object'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DonorTab } from './src/components/DonorBottomNav';
@@ -28,9 +28,10 @@ import RequestsFlow from './src/requests/RequestsFlow';
 import NotificationsFlow from './src/notifications/NotificationsFlow';
 import BanksScreen from './src/banks/BanksScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+import { MotionProvider } from './src/components/Motion';
 
 export default function App() {
-  return <SafeAreaProvider><ThemeProvider><AuthProvider><AppContent /></AuthProvider></ThemeProvider></SafeAreaProvider>;
+  return <SafeAreaProvider><ThemeProvider><MotionProvider><AuthProvider><AppContent /></AuthProvider></MotionProvider></ThemeProvider></SafeAreaProvider>;
 }
 
 function AppContent() {
@@ -285,10 +286,10 @@ function AppContent() {
   return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
           <StatusBar style={isDark || !isLightBackground ? 'light' : 'dark'} />
-          {renderScreen()}
+          <View style={[styles.appFrame, Platform.OS === 'web' && styles.webFrame, { backgroundColor: colors.background }]}>{renderScreen()}</View>
 
           {/* Floating Screen Switcher for Testing and Review */}
-          {__DEV__ && process.env.EXPO_PUBLIC_SHOW_SCREEN_PICKER !== 'false' && <DevScreenPicker
+          {__DEV__ && process.env.EXPO_PUBLIC_SHOW_SCREEN_PICKER === 'true' && <DevScreenPicker
             currentScreen={currentScreen}
             onSelectScreen={(screen) => setCurrentScreen(screen)}
           />}
@@ -299,6 +300,9 @@ function AppContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
   },
+  appFrame: { flex: 1, width: '100%' },
+  webFrame: { maxWidth: 520 },
 });

@@ -12,7 +12,7 @@ export const SecurityBadge: React.FC = () => {
         <LockIcon size={14} color={colors.textMuted} />
       </View>
       <Text style={styles.text}>
-        Bank-grade encryption ensures your donor records and credentials remain protected.
+        Keep your password and verification codes private. BloodLink will never ask you to share them with another donor.
       </Text>
     </View>
   );

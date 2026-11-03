@@ -1,0 +1,641 @@
+{
+  "generatedAt": "2026-11-01T15:01:05.051Z",
+  "runner": "Installed Postman CLI",
+  "cloudReporting": false,
+  "collectionRequests": 127,
+  "apiRequests": 125,
+  "routeCount": 82,
+  "coveredRoutes": 82,
+  "assertions": {
+    "executed": 317,
+    "failed": 0
+  },
+  "cliExitCode": 0,
+  "passed": true,
+  "unexpectedServerErrors": [],
+  "missingRoutes": [],
+  "coverage": [
+    {
+      "method": "GET",
+      "path": "/",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit-logs",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/bank-accounts",
+      "responses": [
+        201,
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/bank-accounts",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/blood-banks",
+      "responses": [
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/blood-requests",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/delivery-status",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/network-overview",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/organizations",
+      "responses": [
+        403,
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/organizations",
+      "responses": [
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/staff",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/staff",
+      "responses": [
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/stats",
+      "responses": [
+        401,
+        403,
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/change-password",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/forgot-password",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "responses": [
+        401,
+        200,
+        200,
+        200,
+        200,
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "responses": [
+        200,
+        200,
+        401,
+        200,
+        401
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/refresh",
+      "responses": [
+        200,
+        401
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "responses": [
+        201,
+        429
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/reset-password",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/send-otp",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/verify-otp",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/verify-reset-otp",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donors/admin/pending",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donors/banks",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donors/home",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donors/me",
+      "responses": [
+        401,
+        200,
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/donors/me",
+      "responses": [
+        200,
+        400
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/donors/me/availability",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donors/me/donation-record",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donors/me/donations",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/donors/me/verification-documents",
+      "responses": [
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donors/requests",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donors/requests/me",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/donors/submit",
+      "responses": [
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/institution/health-alerts",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/institution/health-alerts",
+      "responses": [
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/institution/health-alerts/recipients",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/institution/overview",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/institution/staff",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/institution/staff",
+      "responses": [
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/notifications/devices",
+      "responses": [
+        503
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/notifications/read-all",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/organizations/admin/pending",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/organizations/register",
+      "responses": [
+        201,
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/requests",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/requests",
+      "responses": [
+        201,
+        201,
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/requests/me",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/staff/admin/pending",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/staff/register",
+      "responses": [
+        201,
+        201
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/stocks",
+      "responses": [
+        403,
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/blood-banks/:id/account",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/blood-requests/:id/review",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/organizations/:id",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/organizations/:id",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/organizations/:id/access",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/users/:id/status",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/documents/:id",
+      "responses": [
+        200,
+        401
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/donation-records/:token",
+      "responses": [
+        200,
+        404
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/donors/admin/:id/approve",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/donors/admin/:id/reject",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/donors/requests/:id/respond",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/institution/staff/:id/status",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications/:id/health-message",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/notifications/:id/read",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/notifications/devices/:id",
+      "responses": [
+        200,
+        400
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/organizations/admin/:id/approve",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/organizations/admin/:id/reject",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/requests/:id",
+      "responses": [
+        200,
+        404,
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/requests/:id/dispatch",
+      "responses": [
+        409,
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/requests/:id/donations",
+      "responses": [
+        200,
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/requests/:id/respond",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/requests/:id/status",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/requests/mission/:id/cancel",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/requests/mission/:id/notify",
+      "responses": [
+        200,
+        429
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/staff/admin/:id/approve",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/staff/admin/:id/reject",
+      "responses": [
+        200
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/stocks/:bloodGroup",
+      "responses": [
+        200,
+        409,
+        200,
+        403
+      ]
+    }
+  ],
+  "limits": [
+    "Email delivered to captured test inbox, not SMTP.",
+    "FCM disabled: device registration intentionally returns 503; no physical-device delivery verified.",
+    "Global IP counter reset between requests; route-specific limiters remain active.",
+    "Single-process happy/negative workflows; concurrency and migration upgrade checks are in npm test."
+  ]
+}

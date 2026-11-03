@@ -33,24 +33,24 @@ export interface ColorPalette {
 }
 
 export const lightColors: ColorPalette = {
-  background: '#F7F8FC', card: '#FFFFFF', surface: '#EEF2F8', border: '#DCE3ED',
-  text: '#0F172A', textSecondary: '#42526B', textMuted: '#5E6E86',
-  primary: '#BD1732', action: '#BE1730', primarySoft: '#FDECEF',
+  background: '#F7F6F2', card: '#FFFFFF', surface: '#EFEEE9', border: '#E2E0DA',
+  text: '#242723', textSecondary: '#50564F', textMuted: '#686F65',
+  primary: '#A6253B', action: '#AB243B', primarySoft: '#FAECEE',
   success: '#087B52', successFill: '#087B52', successSoft: '#E6F7F0', warning: '#945400', warningSoft: '#FFF4DC',
   danger: '#B91C35', dangerSoft: '#FDEDEE', info: '#245BCC', infoSoft: '#EAF1FF',
-  dark: '#0F172A', onDark: '#FFFFFF', onPrimary: '#FFFFFF',
-  heroDark: '#101B2E', heroMuted: '#B8C6DA', overlay: 'rgba(2, 8, 20, 0.62)', focus: '#245BCC',
+  dark: '#242723', onDark: '#FFFFFF', onPrimary: '#FFFFFF',
+  heroDark: '#262C28', heroMuted: '#C1C8BE', overlay: 'rgba(20, 25, 21, 0.55)', focus: '#A6253B',
   mapBackground: '#E8EEF2', mapPark: '#DCEEE5', mapRiver: '#C4DDEB', mapRoad: '#FFFFFF', mapMainRoad: '#FFDAA0',
 };
 
 export const darkColors: ColorPalette = {
-  background: '#0C1424', card: '#152137', surface: '#202E45', border: '#35445D',
-  text: '#F1F5FB', textSecondary: '#CCD6E6', textMuted: '#A6B5CC',
-  primary: '#FF8FA2', action: '#BE1730', primarySoft: '#3A2030',
+  background: '#151817', card: '#202522', surface: '#2B322D', border: '#414B43',
+  text: '#F2F3ED', textSecondary: '#CDD3CA', textMuted: '#ABB7AB',
+  primary: '#F09AA9', action: '#AB243B', primarySoft: '#3C262C',
   success: '#6CE0B3', successFill: '#087B52', successSoft: '#14382F', warning: '#FFD17A', warningSoft: '#3C301C',
   danger: '#FF9CA9', dangerSoft: '#3D202D', info: '#95BDFF', infoSoft: '#203554',
-  dark: '#E5EDF8', onDark: '#0C1424', onPrimary: '#FFFFFF',
-  heroDark: '#101B2E', heroMuted: '#B8C6DA', overlay: 'rgba(2, 8, 20, 0.76)', focus: '#95BDFF',
+  dark: '#E5EDE5', onDark: '#151817', onPrimary: '#FFFFFF',
+  heroDark: '#202822', heroMuted: '#BECBBE', overlay: 'rgba(5, 10, 7, 0.76)', focus: '#F09AA9',
   mapBackground: '#202E42', mapPark: '#1D3D36', mapRiver: '#294C66', mapRoad: '#52627A', mapMainRoad: '#9C794D',
 };
 

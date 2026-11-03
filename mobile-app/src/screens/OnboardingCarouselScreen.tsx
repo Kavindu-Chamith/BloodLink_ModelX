@@ -41,9 +41,9 @@ const slides = [
   {
     id: 3,
     tag: 'Privacy First',
-    title: 'Your location\nis always \nprotected',
+    title: 'Your location\nis yours to\nmanage',
     description:
-      'Hospitals never see your exact location. Only your approximate distance and availability are shared.',
+      'Your matching location is not displayed to other donors. You can update or remove it in Profile.',
     image: require('../../assets/images/onboarding3.jpg'),
     buttonText: 'Continue',
   },

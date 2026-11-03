@@ -161,7 +161,7 @@ const createStyles = (c: AppColors) => StyleSheet.create({
   },
   title: {
     fontSize: 19,
-    fontWeight: '800',
+    fontWeight: '600',
     color: c.text,
   },
   subtitle: {
@@ -269,11 +269,6 @@ const createStyles = (c: AppColors) => StyleSheet.create({
     backgroundColor: c.action,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#BA1328',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
   },
   sendButtonText: {
     color: c.onPrimary,

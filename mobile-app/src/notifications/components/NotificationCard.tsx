@@ -15,6 +15,7 @@ interface Props {
     onOpenDoctorNote: (n: AppNotification) => void;
     onViewGuidelines: (n: AppNotification) => void;
     onShareHonor: (n: AppNotification) => void;
+    onViewPrivateMessage: (n: AppNotification) => void;
 }
 
 export default function NotificationCard({
@@ -25,12 +26,13 @@ export default function NotificationCard({
     onOpenDoctorNote,
     onViewGuidelines,
     onShareHonor,
+    onViewPrivateMessage,
 }: Props) {
     const { colors } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
-    const cfg = KIND_CONFIG[n.kind];
+    const cfg = KIND_CONFIG[n.kind] || KIND_CONFIG.profile_synced;
 
-    const iconBg = cfg.tone === 'primary' ? colors.primarySoft : colors.infoSoft;
+    const iconBg = cfg.tone === 'primary' ? colors.primarySoft : colors.surface;
     const iconColor = cfg.tone === 'primary' ? colors.primary : cfg.tone === 'info' ? colors.text : colors.textMuted;
 
     return (
@@ -43,21 +45,7 @@ export default function NotificationCard({
 
                 <View style={styles.headerText}>
                     <View style={styles.labelRow}>
-                        {cfg.label ? (
-                            cfg.labelStyle === 'pill' ? (
-                                <View style={styles.pill}>
-                                    <MaterialCommunityIcons name="check-decagram-outline" size={14} color={colors.primary} />
-                                    <Text style={styles.pillText}>{cfg.label}</Text>
-                                </View>
-                            ) : (
-                                <View style={styles.dotLabel}>
-                                    {!n.isRead && <View style={styles.dot} />}
-                                    <Text style={styles.labelText}>{cfg.label}</Text>
-                                </View>
-                            )
-                        ) : (
-                            <View />
-                        )}
+                        <View style={styles.dotLabel}>{!n.isRead && <View style={styles.dot} />}<Text style={styles.labelText}>{cfg.label || 'Update'}</Text></View>
                         <Text style={styles.time}>{timeAgo(n.createdAt)}</Text>
                     </View>
 
@@ -157,7 +145,8 @@ export default function NotificationCard({
             )}
 
             {/* Health advisory footer */}
-            {n.kind === 'health_advisory' && (
+            {n.hasPrivateMessage && <View style={styles.footerRow}><Pressable onPress={() => onViewPrivateMessage(n)} style={styles.primaryButton} accessibilityRole="button" accessibilityLabel="View private health message"><MaterialCommunityIcons name="shield-lock-outline" size={17} color={colors.onPrimary} /><Text style={styles.primaryButtonText}>View private message</Text></Pressable></View>}
+            {n.kind === 'health_advisory' && !n.hasPrivateMessage && (
                 <View style={styles.footerRow}>
                     <View style={styles.distance}>
                         <MaterialCommunityIcons name="calendar-month-outline" size={18} color={colors.primary} />
@@ -203,20 +192,14 @@ export default function NotificationCard({
 
 const createStyles = (c: ColorPalette) =>
     StyleSheet.create({
-        card: {
-            backgroundColor: c.card,
-            borderRadius: radius.lg,
-            borderWidth: 1,
-            borderColor: c.border,
-            padding: 14,
-        },
+        card: { backgroundColor: c.card, borderRadius: 0, borderBottomWidth: 1, borderColor: c.border, paddingVertical: 20, paddingHorizontal: 16 },
         headerRow: { flexDirection: 'row', marginBottom: 10 },
-        iconCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+        iconCircle: { width: 33, height: 33, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
         headerText: { flex: 1, marginLeft: 10 },
         labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
         dotLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
         dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: c.action },
-        labelText: { fontSize: 11, fontWeight: '600', color: c.primary },
+        labelText: { fontSize: 10, fontWeight: '500', color: c.textMuted },
         pill: {
             flexDirection: 'row',
             alignItems: 'center',
@@ -228,7 +211,7 @@ const createStyles = (c: ColorPalette) =>
         },
         pillText: { fontSize: 10, fontWeight: '500', color: c.textMuted },
         time: { fontSize: 11, color: c.textMuted, fontWeight: '500' },
-        title: { fontSize: 15, lineHeight: 21, fontWeight: '600', color: c.text },
+        title: { fontSize: 16, lineHeight: 23, fontWeight: '500', color: c.text },
         subtitle: { lineHeight: 18, fontSize: 12, color: c.textMuted, marginTop: 2 },
         body: { fontSize: 14, lineHeight: 22, color: c.textMuted },
         bodyBold: { fontSize: 14, lineHeight: 22, color: c.text, fontWeight: '500' },
@@ -248,23 +231,14 @@ const createStyles = (c: ColorPalette) =>
         primaryButtonText: { color: c.onPrimary, fontWeight: '600', fontSize: 12 },
         linkButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center' },
         linkText: { color: c.primary, fontWeight: '500', fontSize: 12 },
-        infoBox: { backgroundColor: c.infoSoft, borderRadius: radius.md, padding: 10, marginTop: 4, marginBottom: 10 },
+        infoBox: { backgroundColor: c.surface, borderRadius: 7, padding: 13, marginTop: 6, marginBottom: 10 },
         infoTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
         infoTitle: { fontSize: 12, fontWeight: '600', color: c.text },
         marker: { lineHeight: 19, fontSize: 13, color: c.textMuted, marginTop: 4 },
         markerValue: { color: c.text, fontWeight: '600' },
         quote: { flex: 1, fontSize: 13, lineHeight: 21, color: c.text },
         buttonRow: { flexDirection: 'row', gap: 12 },
-        secondaryButton: {
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            backgroundColor: c.infoSoft,
-            borderRadius: radius.md,
-            height: 44,
-        },
+        secondaryButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, backgroundColor: c.surface, borderRadius: 7, minHeight: 44 },
         secondaryButtonText: { fontWeight: '500', fontSize: 12, color: c.text },
         primaryButtonWide: {
             flex: 1,

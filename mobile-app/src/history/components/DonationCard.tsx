@@ -1,7 +1,9 @@
 // src/history/components/DonationCard.tsx
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import IconBadge from '../../components/IconBadge';
+import { TactilePressable } from '../../components/Motion';
 import { ColorPalette, radius, useTheme } from '../../profile/theme';
 import { formatDate } from '../../profile/utils/format';
 import { DonationRecord } from '../types/history';
@@ -18,8 +20,8 @@ export default function DonationCard({ record, onViewCertificate }: Props) {
 
     return (
         <View style={styles.card}>
-            <View style={styles.topRow}>
-                <View style={{ flex: 1, paddingRight: 10 }}>
+            <View style={styles.topRow}><IconBadge name="calendar-outline" small tone="info" />
+                <View style={{ flex: 1, minWidth: 130 }}>
                     <Text style={styles.hospital}>{record.hospitalName}</Text>
                     <Text style={styles.meta}>
                         {formatDate(record.donatedAt)} · {record.donationType} ({record.volumeMl}ml)
@@ -46,22 +48,19 @@ export default function DonationCard({ record, onViewCertificate }: Props) {
                 </View>
             </View>
 
-            <View style={styles.divider} />
-
+            {(record.note || record.certificateUrl) && <><View style={styles.divider} />
             <View style={styles.bottomRow}>
-                <Text style={styles.note} numberOfLines={1}>
-                    {record.note}
-                </Text>
-                <Pressable
+                {record.note && <Text style={styles.note}>{record.note}</Text>}
+                {record.certificateUrl && <TactilePressable
                     onPress={() => onViewCertificate(record)}
                     style={styles.certButton}
                     accessibilityRole="button"
                     accessibilityLabel={`View certificate for donation at ${record.hospitalName}`}
                 >
-                    <Text style={styles.certText}>View Certificate</Text>
+                    <Text style={styles.certText}>View certificate</Text>
                     <Ionicons name="open-outline" size={16} color={colors.text} />
-                </Pressable>
-            </View>
+                </TactilePressable>}
+            </View></>}
         </View>
     );
 }
@@ -75,7 +74,7 @@ const createStyles = (c: ColorPalette) =>
             borderColor: c.border,
             padding: 14,
         },
-        topRow: { flexDirection: 'row', alignItems: 'flex-start' },
+        topRow: { flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap', gap: 9 },
         hospital: { fontSize: 15, lineHeight: 21, fontWeight: '600', color: c.text },
         meta: { fontSize: 12, lineHeight: 18, color: c.textMuted, marginTop: 4 },
         badge: {
