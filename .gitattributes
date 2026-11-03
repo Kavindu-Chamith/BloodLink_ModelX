@@ -1,0 +1,4 @@
+# Dataset manifests verify SHA-256 over exact file bytes. Preserve generated
+# CSV line endings and manifest bytes on every platform.
+Dataset/*.csv -text
+Dataset/*manifest.json -text

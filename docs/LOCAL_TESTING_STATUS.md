@@ -1,5 +1,8 @@
 # Local testing status
 
+For the 3 November 2026 full-dataset integration and current working demo, use
+[TODAY_DEMO.md](TODAY_DEMO.md). The older preview notes below remain historical.
+
 Updated 31 October 2026.
 
 ## Preview data loaded
