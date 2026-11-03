@@ -25,6 +25,7 @@ export interface DonorProfileData {
   authorityVerified: boolean; lastDonationDate: string; nextEligibleStatus: string;
   qualificationInterval: string; totalDonations: number; monthlyGain: number;
   urgentRequestsCount: number; matchedRequestsCount: number; unreadNotificationsCount?: number;
+  availableAlertsCount?: number;
   isEligible?: boolean;
 }
 interface DashboardData { donor: DonorProfileData; emergencyMatch: EmergencyMatchData | null; requests: BloodRequestItem[] }
@@ -80,7 +81,7 @@ export function HomeScreen({ onNavigateToRequests, onNavigateToBanks, onNavigate
       {data.requests.length ? <View style={s.requestList}>{data.requests.slice(0, 3).map(request => <Pressable key={request.id} style={s.requestRow} accessibilityRole="button" accessibilityLabel={`View request from ${request.hospitalName}`} onPress={() => openRequest(request.id)}><Text style={s.requestGroup}>{request.bloodGroup}</Text><View style={s.flex}><Text style={s.listTitle}>{request.hospitalName}</Text><Text style={s.meta}>{request.distance}{request.requiredUnits ? ` · ${request.requiredUnits} units needed` : ''}</Text></View><Ionicons name="chevron-forward" size={17} color={colors.textMuted} /></Pressable>)}</View> : <View style={s.quietEmpty}><Ionicons name="water-outline" size={23} color={colors.textMuted} /><Text style={s.listTitle}>No matching requests right now</Text><Text style={s.body}>You can check your matching location and availability in Profile.</Text><Pressable style={s.textAction} accessibilityRole="button" onPress={onNavigateToProfile}><Text style={s.link}>Manage availability</Text></Pressable></View>}
       <TactilePressable style={s.findBank} accessibilityRole="button" onPress={onNavigateToBanks}><IconBadge name="business-outline" /><View style={s.flex}><Text style={s.sectionTitle}>Find a donation centre</Text><Text style={s.meta}>Locations, contact details and reported stock.</Text></View><Ionicons name="arrow-forward" size={19} color={colors.primary} /></TactilePressable>
     </ScrollView> : null}
-    <DonorBottomNav activeTab="Home" onSelect={navigate} requestsCount={donor?.matchedRequestsCount} />
+    <DonorBottomNav activeTab="Home" onSelect={navigate} requestsCount={donor?.availableAlertsCount ?? data?.requests.filter(r=>r.status!=='en_route').length ?? 0} />
   </SafeAreaView>;
 }
 
