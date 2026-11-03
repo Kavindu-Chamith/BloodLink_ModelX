@@ -17,6 +17,8 @@ async function start() {
   await pool.query('SELECT id FROM verification_documents LIMIT 0');
   await pool.query('SELECT approval_status FROM blood_requests LIMIT 0');
   await pool.query('SELECT id FROM health_alerts LIMIT 0');
+  await pool.query('SELECT consent_status,availability_updated_at FROM donor_profiles LIMIT 0');
+  await pool.query('SELECT expires_at,outreach_target FROM blood_requests LIMIT 0');
   const app = createApp();
   const server = app.listen(port);
   await new Promise<void>((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });

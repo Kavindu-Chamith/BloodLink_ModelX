@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
 dotenv.config();
-const configured = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
+const configured = process.env.TEST_DATABASE_URL || process.env.MIGRATION_DATABASE_URL || process.env.DATABASE_URL;
 if (!configured) throw new Error("Set TEST_DATABASE_URL to a PostgreSQL account with CREATEDB permission");
 const url = new URL(configured);
 if (!process.env.TEST_DATABASE_URL && !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) throw new Error("Remote tests require explicit TEST_DATABASE_URL");

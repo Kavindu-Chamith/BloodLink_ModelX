@@ -25,12 +25,16 @@ export async function profileData(donorId: string) {
   return {
     id: String(row.user_id), fullName: row.full_name || '', phone: row.phone || '', district: row.district || '',
     hasMatchingLocation: row.latitude != null && row.longitude != null,
-    donorSince: row.donor_since, bloodGroup: row.blood_group, isAvailable: row.is_available,
+    donorSince: row.donor_since, bloodGroup: row.blood_group, isAvailable: row.is_available && row.consent_status==='granted'
+      && row.consent_recorded_at && new Date(row.consent_recorded_at).getTime()<=Date.now()
+      && row.availability_updated_at && new Date(row.availability_updated_at).getTime()<=Date.now()
+      && new Date(row.availability_updated_at).getTime()>=Date.now()-30*86400000 ? true:false,
     totalDonations: row.total_donations, lastDonationDate: row.last_donation_date, lastDonationPlace: row.last_place,
     nextEligibleDate: row.effective_next_date,
-    bloodGroupVerified: row.blood_group_verified,
+    bloodGroupVerified: row.blood_group_verified, isSimulated: row.is_simulated,
+    outreachConsent: row.consent_status, availabilityUpdatedAt: row.availability_updated_at,
     bloodGroupVerification: row.blood_group_verified ? 'approved' : row.verification_status || 'none',
-    verifiedBy: row.blood_group_verified ? 'BloodLink administrator' : undefined,
+    verifiedBy: row.blood_group_verified ? row.is_simulated ? 'Simulated verification' : 'BloodLink administrator' : undefined,
     verifiedAt: row.blood_group_verified ? row.reviewed_at : undefined,
     nicNumber: row.nic || '', nicVerified: false,
     document: row.verification_id ? {
@@ -75,7 +79,9 @@ export async function setAvailability(req: AuthRequest, res: Response) {
   if (typeof req.body.isAvailable !== 'boolean' || Object.keys(req.body).some(key => key !== 'isAvailable')) throw new HttpError(400, 'isAvailable must be a boolean');
   await transaction(async client => {
     await lockDonor(client, req.user!.id);
-    await client.query('UPDATE donor_profiles SET is_available = $1, updated_at = NOW() WHERE user_id = $2', [req.body.isAvailable, req.user!.id]);
+    await client.query(`UPDATE donor_profiles SET is_available=$1,availability_updated_at=NOW(),
+      consent_status=CASE WHEN $1 THEN 'granted' ELSE 'withdrawn' END,consent_recorded_at=NOW(),updated_at=NOW()
+      WHERE user_id=$2`, [req.body.isAvailable, req.user!.id]);
     await audit(client, req, 'DONOR_AVAILABILITY_UPDATED', 'user', req.user!.id, { isAvailable: req.body.isAvailable });
   });
   res.json(await profileData(req.user!.id));
@@ -112,7 +118,8 @@ export async function getDonorHomeDashboard(req: AuthRequest, res: Response) {
     qualificationInterval: `${donationIntervalDays()}-day donation interval`,
     isEligible: intervalPassed && profile.bloodGroupVerified && profile.isAvailable,
     totalDonations: stats.units, monthlyGain: stats.monthly,
-    urgentRequestsCount: requests.filter(row => row.priority !== 'Normal').length, matchedRequestsCount: requests.length, unreadNotificationsCount: unread,
+    urgentRequestsCount: requests.filter(row => row.priority !== 'Normal').length, matchedRequestsCount: requests.length,
+    availableAlertsCount:requests.filter(row=>row.response_status!=='accepted').length,unreadNotificationsCount: unread,
   }, emergencyMatch: emergency ? {
     requestId: String(emergency.id), hospitalName: emergency.hospital_name, bloodGroup: emergency.blood_group,
     distance: `${Number(emergency.distance_km).toFixed(1)} km away`, details: `${emergency.required_units} units requested`,
