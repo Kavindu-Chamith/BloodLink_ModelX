@@ -52,7 +52,8 @@ const createStyles = (c: ColorPalette) =>
     StyleSheet.create({
         scroll: { flexGrow: 0, flexShrink: 0, height: 44, minHeight: 44 },
         row: { paddingHorizontal: 20, gap: 10 },
-        chip: { minHeight: 44, justifyContent: 'center',
+        chip: {
+            minHeight: 44, justifyContent: 'center',
             paddingHorizontal: 12,
             paddingVertical: 8,
             borderRadius: radius.pill,
