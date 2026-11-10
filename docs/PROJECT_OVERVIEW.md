@@ -1,10 +1,9 @@
 # BloodLink - Comprehensive Project Technical Reference
 
-> **Document status:** This is a historical academic proposal/reference from the original BloodLink project, preserved in this repository. It is not the ModelX competition implementation report, proof that every proposed feature shipped, or an independent privacy/legal compliance assessment. Competition demo fixtures are synthetic; donation interval calculations are reminders, not medical clearance.
+> **Document status:** This is a product and technical reference. It describes design goals and requirements; it is not the competition implementation report, proof that every proposed feature shipped, or an independent privacy/legal compliance assessment. Competition demo fixtures are synthetic; donation interval calculations are reminders, not medical clearance.
 
 > **Project Name**: BloodLink - Smart Blood Donation Coordination System<br>
-> **Academic Context**: SE5104 Mini Project | Department of Software Engineering, Faculty of Computing, Sabaragamuwa University of Sri Lanka<br>
-> **Document Purpose**: Complete technical reference compiled from the official Project Proposal for development, architecture lookup, and team reference.
+> **Document Purpose**: Product, requirements, architecture and implementation reference.
 
 ---
 

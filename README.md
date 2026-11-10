@@ -10,8 +10,6 @@
 
 **BloodLink** is a smart, centralized blood donation management and donor coordination system designed to bridge the communication gap between healthcare institutions (hospitals and blood banks) and eligible blood donors in Sri Lanka.
 
-> **Academic Context**: SE5104 Mini Project | Group 7 | Department of Software Engineering, Faculty of Computing, Sabaragamuwa University of Sri Lanka.
-
 > **Competition data note:** The checked-in dataset is fictional test data, not a real blood-service dataset. It supports local workflow demonstrations only; it does not establish current blood demand, stock levels, or population trends.
 
 ---
@@ -116,7 +114,7 @@ BloodLink/
 
 ## Getting Started
 
-For this independent Windows copy, see [ModelX local setup](docs/MODELX_SETUP.md).
+For local Windows setup, see [development setup](docs/MODELX_SETUP.md).
 After installing module dependencies, `npm.cmd run setup` initializes its private
 database and `npm.cmd start` launches the API, admin dashboard and mobile preview.
 
@@ -172,7 +170,7 @@ npm run dev
 
 ## Documentation
 
-* **[Comprehensive Technical Project Overview](docs/PROJECT_OVERVIEW.md)** — Historical academic proposal and technical reference covering the problem statement, requirements, database design, security intentions and test plan; it is not an independent legal-compliance audit.
+* **[Project Overview](docs/PROJECT_OVERVIEW.md)** — Product purpose, requirements, architecture, security design and test plan; proposed features should be checked against the running implementation.
 * **[Contribution Guidelines](docs/CONTRIBUTING.md)** — Branching rules, PR guidelines, and commit standards.
 * **[ModelX 2 competition disclosure](COMPETITION_DISCLOSURE.md)** — Recorded AI assistance, synthetic fixture provenance, prior project history, and reviewer-access checks.
 * **[Competition data-source review](docs/MODELX_DATA_SOURCE_REVIEW.md)** — Rights and recency checks for candidate real-data sources.
@@ -181,7 +179,7 @@ npm run dev
 
 ## Security & Privacy Statement
 
-BloodLink processes personal information, including blood groups and location data, subject to **Sri Lanka's Personal Data Protection Act (PDPA) No. 9 of 2022**.
+BloodLink can process personal information, including blood groups and location data. Deployments must meet applicable privacy laws; this repository has not received an independent legal compliance audit.
 * Donor location coordinates are used exclusively server-side for radius matching and are **never exposed to other users or public APIs**.
 * Verification documents are protected behind authenticated access endpoints.
 * No API keys, credentials, or private verification documents should ever be committed to git.
