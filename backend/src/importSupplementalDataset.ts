@@ -16,7 +16,7 @@ export function loadSupplement(directory = root) {
   const base = loadDataset(directory);
   const manifest = JSON.parse(fs.readFileSync(path.join(directory,'supplement_manifest.json'),'utf8'));
   const hash = crypto.createHash('sha256').update('bloodlink-supplement-v1');
-  for (const [name, expected] of Object.entries(manifest.original_input_sha256)) {
+  for (const [name, expected] of Object.entries(manifest.baseline_input_sha256)) {
     requireValue(/^[a-z_]+\.csv$/.test(name),'Invalid source filename');
     const bytes=fs.readFileSync(path.join(directory,name));
     requireValue(crypto.createHash('sha256').update(bytes).digest('hex')===expected,`Source changed: ${name}`);
@@ -61,7 +61,7 @@ export async function importSupplement(database:Pool,supplement:Supplement,apply
     await client.query(apply?'BEGIN':'BEGIN READ ONLY');
     if(apply)await client.query("SELECT pg_advisory_xact_lock(hashtext('bloodlink-supplement-v1'))");
     const original=(await client.query('SELECT id FROM bloodlink_dataset.batches WHERE id=$1',[batch])).rows[0];
-    requireValue(original,'Import the matching original dataset first');
+    requireValue(original,'Import the matching synthetic baseline dataset first');
     requireValue((await client.query("SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='blood_requests' AND column_name='expires_at'")).rowCount,'Apply migration 009 first');
     if((await client.query("SELECT to_regclass('bloodlink_dataset.supplement_runs') name")).rows[0].name) {
       const previous=(await client.query('SELECT id,report FROM bloodlink_dataset.supplement_runs WHERE batch_id=$1',[batch])).rows[0];

@@ -1,5 +1,11 @@
 # Database import — 3 November 2026 (Sri Lanka)
 
+**Historical local-import note:** this report documents the 3 November local
+database snapshot and its then-current synthetic fixtures. The checked-in
+generators and fixture CSVs were subsequently rebuilt to remove dependence on
+external demographic aggregates. This old local database/report is not the
+current fixture bundle and is not part of the competition submission.
+
 **Follow-up:** the supplemental import and migration 009 are now complete. The
 333 requests, 71,097 donation events, 275 responses and 48 staff accounts have
 been added. See [the current demo handoff](../docs/TODAY_DEMO.md). The sections

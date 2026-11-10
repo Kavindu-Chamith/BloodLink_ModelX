@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Generate synthetic, non-clinical supplement WITHOUT changing BloodLink source CSVs.
-Python 3.10+; standard library only. No repository/database/network calls.
+"""Generate supplemental fixtures from the in-repository synthetic baseline CSVs.
+Python 3.10+; standard library only. No external data, database, or network calls.
 """
 from __future__ import annotations
 import argparse, csv, hashlib, json, math, random
@@ -45,13 +45,13 @@ def generate(source, out, min_units, max_units):
     out.mkdir(parents=True, exist_ok=True)
     names = ['donors.csv','institutions.csv','blood_requests.csv','donor_responses.csv','donation_history.csv','blood_stocks.csv','locations_reference.csv']
     missing=[name for name in names if not (source/name).is_file()]
-    if missing:raise FileNotFoundError(f'Missing original files: {missing}')
+    if missing:raise FileNotFoundError(f'Missing synthetic baseline files: {missing}')
     donors = read_csv(source/'donors.csv'); institutions=read_csv(source/'institutions.csv')
     requests=read_csv(source/'blood_requests.csv'); events=read_csv(source/'donation_history.csv')
-    if len(set(x['donor_id'] for x in donors)) != len(donors): raise ValueError('Original donor IDs not unique')
-    if len(set(x['institution_id'] for x in institutions)) != len(institutions):raise ValueError('Original institution IDs not unique')
-    if len(set(x['request_id'] for x in requests)) != len(requests):raise ValueError('Original request IDs not unique')
-    if len(set(x['donation_event_id'] for x in events)) != len(events):raise ValueError('Original donation event IDs not unique')
+    if len(set(x['donor_id'] for x in donors)) != len(donors): raise ValueError('Synthetic donor IDs not unique')
+    if len(set(x['institution_id'] for x in institutions)) != len(institutions):raise ValueError('Synthetic institution IDs not unique')
+    if len(set(x['request_id'] for x in requests)) != len(requests):raise ValueError('Synthetic request IDs not unique')
+    if len(set(x['donation_event_id'] for x in events)) != len(events):raise ValueError('Synthetic donation event IDs not unique')
     if not 1 <= min_units <= max_units <= 999:raise ValueError('Invalid positive required_units range')
     dmap={x['donor_id']:x for x in donors}
     req_rows=[]; decision_rows=[]
@@ -102,15 +102,15 @@ def generate(source, out, min_units, max_units):
     write_csv(out/'institution_staff.csv',['source_staff_id','institution_id','fictional_full_name','email','role','is_bank_account','must_change_password','data_provenance','is_simulated'],staff)
 
     manifest={'package':'BloodLink synthetic supplementary fixtures','data_provenance':PROVENANCE,
-      'original_snapshot_utc':SNAPSHOT,'generation_seed':SEED,'generated_at_utc':datetime.now(timezone.utc).isoformat(timespec='seconds'),
+      'baseline_snapshot_utc':SNAPSHOT,'generation_seed':SEED,'generated_at_utc':datetime.now(timezone.utc).isoformat(timespec='seconds'),
       'units_range':[min_units,max_units], 'historical_site_assignment':'weighted among three nearest current simulated institutions; not actual historical residence or hospital',
-      'original_input_sha256':{n:hash_file(source/n) for n in names},
+      'baseline_input_sha256':{n:hash_file(source/n) for n in names},
       'supplemental_csv_sha256':{p.name:hash_file(p) for p in sorted(out.glob('*.csv'))},
       'generated_row_counts':{'request_details':len(req_rows),'request_import_decisions':len(decision_rows),'donation_institution_links':len(link_rows),'institution_staff':len(staff)},
-      'fixed_source_data_modified':False, 'actual_user_credentials_generated':False}
+      'baseline_input_files_modified':False, 'actual_user_credentials_generated':False}
     (out/'supplement_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(manifest['generated_row_counts'],indent=2))
 
 if __name__=='__main__':
-    a=argparse.ArgumentParser();a.add_argument('--source',type=Path,default=Path(__file__).resolve().parents[2]/'bloodlink_synthetic_dataset');a.add_argument('--out',type=Path,default=Path(__file__).resolve().parent);a.add_argument('--min-units',type=int,default=1);a.add_argument('--max-units',type=int,default=6)
+    a=argparse.ArgumentParser();a.add_argument('--source',type=Path,default=Path(__file__).resolve().parent);a.add_argument('--out',type=Path,default=Path(__file__).resolve().parent);a.add_argument('--min-units',type=int,default=1);a.add_argument('--max-units',type=int,default=6)
     x=a.parse_args();generate(x.source,x.out,x.min_units,x.max_units)

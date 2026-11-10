@@ -1,10 +1,16 @@
-# Local demo handoff — 3 November 2026
+# Local demo handoff — historical snapshot from 3 November 2026
+
+This handoff describes a local database snapshot created before the current
+synthetic fixture refresh. The database/report is not the current generated
+dataset and is excluded from the competition package. Rebuild a fresh local
+database from the current checked-in fixtures before recording or sharing a
+new live demo.
 
 For the full request journey in simple English, see [REQUEST_FLOW.md](REQUEST_FLOW.md).
 
-The local PostgreSQL database `bloodlink_modelx` contains the original donor dataset
-and the supplemental records. All generated people, institutions, histories and
-inventory remain explicitly synthetic. This is a working local demonstration,
+The local PostgreSQL database `bloodlink_modelx` contains the earlier baseline
+synthetic dataset and the supplemental records. All generated people,
+institutions, histories and inventory are synthetic. This is a local demonstration,
 not a production deployment or a source of actual emergency coverage.
 
 ## Open the applications
@@ -84,9 +90,10 @@ time**; consult the recorded `expiresAt` for the exact timestamp.
 | Responses | 275 |
 | Institution staff | 48 |
 
-Original donor/profile/organization/stock mappings are reused. New `request_map`,
+Baseline synthetic donor/profile/organization/stock mappings are reused. New `request_map`,
 `donation_map`, `response_map` and `staff_map` tables in `bloodlink_dataset` retain
-source IDs and payloads. Original CSVs and manifests remain unchanged.
+source IDs and payloads. The 3 November source CSVs and manifests were unchanged
+by that historical import.
 
 - The 47 source `closed` requests are operationally archived as `Cancelled`, with
   `source_status='closed'` and an explanatory reason. None was called fulfilled.
@@ -135,8 +142,8 @@ npm.cmd run test:dataset-import           # Disposable local database
 npm.cmd run test:operations               # Disposable local database
 ```
 
-On a new database, initialize and import the original data before the supplement.
-The original importer is `npm.cmd run dataset:import -- --apply`.
+On a new database, initialize and import the current synthetic baseline before
+the supplement. The baseline importer is `npm.cmd run dataset:import -- --apply`.
 The commands require local development configuration. The supplied credentials are
 test-only and use non-deliverable addresses.
 

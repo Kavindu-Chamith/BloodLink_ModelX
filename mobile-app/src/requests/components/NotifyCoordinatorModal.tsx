@@ -35,8 +35,8 @@ const PRESET_REASONS = [
 
 export const NotifyCoordinatorModal: React.FC<NotifyCoordinatorModalProps> = ({
   visible,
-  coordinatorName = 'Dr. Nirmal Weerasinghe',
-  coordinatorPhone = '+94 77 123 4567',
+  coordinatorName = 'Demo Coordinator',
+  coordinatorPhone = 'Contact information unavailable',
   onClose,
   onSubmit,
   onCall,
