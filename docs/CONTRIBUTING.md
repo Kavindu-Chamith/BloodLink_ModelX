@@ -1,18 +1,20 @@
 # Contributing to BloodLink
 
-## Branching Strategy
-- `main` — stable, review-approved code only
-- `develop` — shared integration branch
-- `feature/<module-name>` — e.g. `feature/donor-matching`, `feature/emergency-request`
+## Branching strategy
+
+- `main` is the shared integration branch.
+- Create a short-lived `feature/<name>` or `fix/<name>` branch from `main`.
+- Open a pull request to `main` and request review before merging.
 
 ## Workflow
-1. Branch off `develop`: `git checkout -b feature/your-feature develop`
-2. Commit with clear messages: "Implement radius-based donor query"
-3. Push and open a Pull Request into `develop`
-4. At least one other team member reviews before merging
-5. Automated checks (lint, type-check, tests) must pass
+
+1. Make a focused change and keep unrelated files out of the branch.
+2. Use clear commit messages and actual commit dates. Do not rewrite dates to imply earlier work.
+3. Run the relevant checks and record any checks that could not be run.
+4. Ask a teammate to review before merging.
 
 ## Rules
-- Never commit `.env` files, API keys, or real verification documents
-- Each member uses their own identifiable GitHub account
-- Reference the related GitHub Issue in every PR
+
+- Never commit `.env` files, API keys, credentials, or real verification documents.
+- Preserve data-source licenses and attribution.
+- Credit contributors and disclose AI assistance accurately.

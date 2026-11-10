@@ -26,4 +26,4 @@ Database integration tests created and removed disposable databases. Existing ap
 
 ## External delivery limits
 
-The local configuration uses console email delivery and has no enabled FCM push transport. Actual email inbox delivery and physical-device push delivery were not verified. Tests capture email delivery and inject a push sender; they verify the API and queue behavior without contacting those providers. See `LOCAL_TESTING_STATUS.md` for the broader feature and provider limitations.
+The local configuration uses console email delivery and has no enabled FCM push transport. Actual email inbox delivery and physical-device push delivery were not verified. Tests capture email delivery and inject a push sender; they verify the API and queue behavior without contacting those providers. See `TODAY_DEMO.md` for current local setup and provider limitations.

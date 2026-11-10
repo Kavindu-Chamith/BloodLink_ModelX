@@ -12,8 +12,9 @@ for CLI migrations while `DATABASE_URL` uses a limited runtime login.
 
 For a labeled local dataset, run `npm run seed:preview` in development. It creates
 DEMO institutions, stocks, requests and donor history without resetting the local
-test donor password. See [local testing status](../docs/LOCAL_TESTING_STATUS.md)
-for test steps and the features that still require implementation or providers.
+test donor password. The records are synthetic and do not represent live service
+conditions. See [the demo handoff](../docs/TODAY_DEMO.md) for the local workflow,
+test limits and external providers that remain unconfigured.
 
 The full synthetic dataset and current-day demonstration are integrated. See
 [the demo handoff](../docs/TODAY_DEMO.md) for local URLs, private credential locations,
