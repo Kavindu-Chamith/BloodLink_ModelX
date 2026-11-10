@@ -1,26 +1,33 @@
 {
   "package": "BloodLink synthetic supplementary fixtures",
   "data_provenance": "SYNTHETIC_TEST_DATA_NOT_REAL",
-  "original_snapshot_utc": "2026-11-03T00:00:00Z",
+  "baseline_snapshot_utc": "2026-11-03T00:00:00Z",
   "generation_seed": 20261104,
-  "generated_at_utc": "2026-11-03T03:34:37+00:00",
+  "generated_at_utc": "2026-11-10T10:16:15+00:00",
   "units_range": [
     1,
     6
   ],
   "historical_site_assignment": "weighted among three nearest current simulated institutions; not actual historical residence or hospital",
-  "original_input_sha256": {
-    "donors.csv": "d70443bddc7a98d17f8b58fdc824d1a2ebed536997c9d9d418952b65aa2aacfa",
+  "baseline_input_sha256": {
+    "donors.csv": "2827a1f3b99bd6cd6160e1e7a89f5ed0d95ae045c16233bd1d4bbf6fd8263f0f",
     "institutions.csv": "75f6ca1512f55f32fd3be94d4ab2e7a43a84bda05f8e2a1d7b080b0633f7b868",
-    "blood_requests.csv": "cbd45e32be8740e3ee9e3b7e8a1441070315e1e764164098c9fed6d47c5b48a4",
-    "donor_responses.csv": "42d989d7c439418c5be50556a6ab311c12b4821df0c8f2aca0de70ad5fc2ec7d",
+    "blood_requests.csv": "e54d42e9747f6ea06ccde9632867919409e88dcd76bef888c2fcc1d490b3f99f",
+    "donor_responses.csv": "3933ff38f14a9749aca2503b2d0f0ca97a59b4e9f316712a6846a075e7201779",
     "donation_history.csv": "ff290620e874aa2df403f565da269e13ae5815b1c9f9a6e5247b1f150a85d4cd",
-    "blood_stocks.csv": "c857ecb5f69eea77c7ef2c666f7674fda4ff79d06ff2ba449c5c490ebbeabd9f",
+    "blood_stocks.csv": "b9b7921023f8007345db4b39cb1d46dc970ce41641824cd83ca36bf312dddf6b",
     "locations_reference.csv": "3320b2e969b660a1d28de37233e8750d40ae7344b1525732471b89b1130d14a6"
   },
   "supplemental_csv_sha256": {
+    "blood_requests.csv": "e54d42e9747f6ea06ccde9632867919409e88dcd76bef888c2fcc1d490b3f99f",
+    "blood_stocks.csv": "b9b7921023f8007345db4b39cb1d46dc970ce41641824cd83ca36bf312dddf6b",
+    "donation_history.csv": "ff290620e874aa2df403f565da269e13ae5815b1c9f9a6e5247b1f150a85d4cd",
     "donation_institution_links.csv": "62b4acd6f0f3204949ae1e8308777a405a7bef7c2e3b381db13007f40afe92a4",
+    "donor_responses.csv": "3933ff38f14a9749aca2503b2d0f0ca97a59b4e9f316712a6846a075e7201779",
+    "donors.csv": "2827a1f3b99bd6cd6160e1e7a89f5ed0d95ae045c16233bd1d4bbf6fd8263f0f",
     "institution_staff.csv": "7a2b2789c58210e744ab56719b65ce57efd74ea58df86e6b8844820b4c6a70c7",
+    "institutions.csv": "75f6ca1512f55f32fd3be94d4ab2e7a43a84bda05f8e2a1d7b080b0633f7b868",
+    "locations_reference.csv": "3320b2e969b660a1d28de37233e8750d40ae7344b1525732471b89b1130d14a6",
     "request_details.csv": "81c8a55a6434a195c6e9490338b1e547964aa9b0703d32bd63cb3e62a1ffba22",
     "request_import_decisions.csv": "51074515b5ce93c5e71f3d9cb6909b443b460b86da0385d1aaf8a5b65b59dd38"
   },
@@ -30,6 +37,6 @@
     "donation_institution_links": 71097,
     "institution_staff": 48
   },
-  "fixed_source_data_modified": false,
+  "baseline_input_files_modified": false,
   "actual_user_credentials_generated": false
 }

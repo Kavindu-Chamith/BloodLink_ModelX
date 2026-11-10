@@ -105,7 +105,7 @@ def validate(source,out,reminder_days=56):
             for next_accepted,next_expires,next_rid in items[j+1:]:
                 if next_accepted<expires:flag('potential_multiple_active_accepted_missions',f'{did}:{rid}:{next_rid}')
     # Unchanged stock and all other original input files.
-    for name,sha in manifest['original_input_sha256'].items():check(hash_file(source/name)==sha,'original_source_hash_unchanged',name)
+    for name,sha in manifest['baseline_input_sha256'].items():check(hash_file(source/name)==sha,'synthetic_baseline_hash_unchanged',name)
     for name,sha in manifest['supplemental_csv_sha256'].items():check(hash_file(out/name)==sha,'supplemental_file_hash_matches_manifest',name)
     # Existing identities not edited (original source protected).
     check(all(k.lower() not in ('password','password_hash','temporary_password','plain_password') for rows in [details,links,staff,decisions] for x in rows[:1] for k in x),'no_password_field_any_supplement')
@@ -123,5 +123,5 @@ def validate(source,out,reminder_days=56):
     if failures:raise SystemExit(1)
 
 if __name__=='__main__':
-    ap=argparse.ArgumentParser();ap.add_argument('--source',type=Path,default=Path(__file__).resolve().parents[2]/'bloodlink_synthetic_dataset');ap.add_argument('--out',type=Path,default=Path(__file__).resolve().parent);ap.add_argument('--reminder-days',type=int,default=56)
+    ap=argparse.ArgumentParser();ap.add_argument('--source',type=Path,default=Path(__file__).resolve().parent);ap.add_argument('--out',type=Path,default=Path(__file__).resolve().parent);ap.add_argument('--reminder-days',type=int,default=56)
     a=ap.parse_args();validate(a.source,a.out,a.reminder_days)

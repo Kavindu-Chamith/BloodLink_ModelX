@@ -42,8 +42,9 @@ PLACES=[
 GIVEN=['Nethmi','Dinuka','Amasha','Dulani','Sahan','Kavisha','Ishara','Tharindu','Shenali','Lahiru','Yasiru','Sanduni','Janith','Piumi','Nimasha','Ravindu','Sithumi','Dinesh','Hasini','Malith','Ayesha','Fathima','Mohamed','Ahamed','Zahra','Rizwan','Nusra','Imran','Ameen','Farhana','Arun','Kavitha','Niroshan','Tharshini','Sivakumar','Shalini','Priya','Sanjayan','Yalini','Kishore','Dilshan','Roshan','Sachini','Nipuna','Lakshani','Dhanushka','Rehana','Nawaz']
 FAMILY=['Perera','Silva','Fernando','Jayasinghe','Wijesinghe','Herath','Bandara','Rathnayake','Gunasekara','Abeysekara','Ekanayake','Senanayake','Karunaratne','Dissanayake','Samarasinghe','Weerasinghe','Amarasinghe','De Silva','Mohideen','Hussain','Ismail','Rahman','Fazil','Nazar','Kumar','Rajan','Selvarajah','Kanagaratnam','Sivarajah','Tharmalingam','Nadarajah','Subramaniam','Balasubramaniam','Ibrahim','Manoharan','Wickramasinghe','Pathirana','Madushanka','De Alwis','Nirmalan']
 GROUPS=['A+','A-','B+','B-','AB+','AB-','O+','O-']
-# Aggregates only from supplied 10k-row sample; no original row data retained.
-GROUP_WEIGHTS=[1238,1236,1282,1290,1219,1284,1240,1211]
+# Equal group weights keep the fixture wholly synthetic and independent of any
+# donor population or externally supplied demographic aggregates.
+GROUP_WEIGHTS=[1 for _ in GROUPS]
 
 def stamp(dt): return dt.isoformat(timespec='seconds').replace('+00:00','Z')
 def date(dt): return dt.date().isoformat()
@@ -151,7 +152,7 @@ def generate(out,n,seed):
             level='critical' if units<7 else 'low' if units<18 else 'normal'
             stock_rows.append({'stock_record_id':f'STK{stock_id:05d}','institution_id':ins['institution_id'],'blood_group':group,'simulated_units':units,'stock_status':level,'recorded_at':stamp(SNAPSHOT-timedelta(hours=rng.randint(0,72))),'data_provenance':PROVENANCE})
     write_csv(out/'blood_stocks.csv',stock_rows,list(stock_rows[0]))
-    manifest={'dataset_name':'BloodLink Synthetic Test Fixtures','data_provenance':PROVENANCE,'snapshot_utc':stamp(SNAPSHOT),'random_seed':seed,'requested_donors':n,'generated_counts':{'donors':len(donor_rows),'locations_reference':len(locs),'donation_history':len(histories),'institutions':len(institutions),'blood_requests':len(requests),'donor_responses':len(responses),'blood_stocks':len(stock_rows)},'source_reference':'Original uploaded sample examined for schema and aggregate blood-group/availability patterns ONLY; no source rows or personal attributes were reused.','matching_scope':'Exact same blood group for outreach simulations only; never clinical transfusion compatibility or medical eligibility','geography':'Curated approximate city centers; simulated donor coordinates lie within 2 km of reference town centers; no district polygon/geocoding validation','license_note':'Original dataset licensing remains unverified; generator uses only aggregate counts, not original donor records.'}
+    manifest={'dataset_name':'BloodLink Synthetic Test Fixtures','data_provenance':PROVENANCE,'snapshot_utc':stamp(SNAPSHOT),'random_seed':seed,'requested_donors':n,'generated_counts':{'donors':len(donor_rows),'locations_reference':len(locs),'donation_history':len(histories),'institutions':len(institutions),'blood_requests':len(requests),'donor_responses':len(responses),'blood_stocks':len(stock_rows)},'source_reference':'Generated entirely by this in-repository seeded generator and its manually authored approximate town-center table. No donor records, third-party datasets, or demographic aggregates are read.','matching_scope':'Exact same blood group for outreach simulations only; never clinical transfusion compatibility or medical eligibility','geography':'Curated approximate city centers; simulated donor coordinates lie within 2 km of reference town centers; no district polygon/geocoding validation','license_note':'All generated rows are fictional test fixtures created in-repository; no external donor dataset is included.'}
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
     return manifest
 
