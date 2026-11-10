@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { AppColors } from '../../theme/palette';
 // src/requests/screens/RequestsScreen.tsx
 import React from 'react';
 import {
@@ -12,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { CardEntrance } from '../../components/Motion';
 import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
 import {
   RequestsHeader,
@@ -22,28 +25,35 @@ import {
   MissionProgressCard,
   FastPassTokenCard,
   NotifyCoordinatorModal,
-  RequestDetailModal,
 } from '../components';
+import EmergencyRequestScreen from './EmergencyRequestScreen';
 import { useBloodRequests } from '../hooks/useBloodRequests';
 import { RequestTabType } from '../types/requests';
 
 interface RequestsScreenProps {
   initialTab?: RequestTabType;
+  initialRequestId?: string;
   onNavigateTab?: (tab: DonorTab) => void;
   onNavigateToProfile?: () => void;
 }
 
 export const RequestsScreen: React.FC<RequestsScreenProps> = ({
   initialTab = 'alerts',
+  initialRequestId,
   onNavigateTab,
   onNavigateToProfile,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const {
     activeTab,
     setActiveTab,
     data,
     loading,
     refreshing,
+    error,
+    responseError,
+    responding,
+    reload,
     refresh,
     selectedRequest,
     isDetailModalOpen,
@@ -55,7 +65,8 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
     handleOpenDirections,
     handleCallCoordinator,
     handleSendCoordinatorNotification,
-  } = useBloodRequests(initialTab);
+  } = useBloodRequests(initialTab, initialRequestId);
+  const alertsCount = data?.alerts.length ?? 0;
 
   const handleTabPress = (tab: DonorTab) => {
     if (tab !== 'Requests' && onNavigateTab) {
@@ -63,13 +74,20 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
     }
   };
 
+  if (isDetailModalOpen && selectedRequest) return <EmergencyRequestScreen
+    request={selectedRequest} responding={responding} error={responseError}
+    onBack={handleCloseDetails} onRespond={handleRespondToRequest}
+    onNavigateTab={(tab) => { if (tab === 'Requests') handleCloseDetails(); else handleTabPress(tab); }}
+    requestsCount={alertsCount}
+  />;
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? "light" : "dark"} />
 
       {/* Screen Header */}
       <RequestsHeader
-        initials={data?.donorInitials || 'KP'}
+        initials={data?.donorInitials || 'D'}
         onAvatarPress={onNavigateToProfile}
       />
 
@@ -77,14 +95,14 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
       <RequestsTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        alertsCount={data?.unreadAlertsCount ?? 3}
-        activeCount={data?.activeCount ?? 1}
+        alertsCount={alertsCount}
+        activeCount={data?.activeCount ?? 0}
       />
 
       {/* Main Content Area */}
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#BA1328" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
         <ScrollView
@@ -95,14 +113,16 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={refresh}
-              tintColor="#BA1328"
+              tintColor={colors.primary}
               colors={['#BA1328']}
             />
           }
         >
+          {error && <View style={styles.errorCard}><Text style={styles.errorText} accessibilityRole="alert">{error}</Text><TouchableOpacity onPress={reload} accessibilityRole="button" style={styles.retryButton}><Text style={styles.notifyLinkText}>Try again</Text></TouchableOpacity></View>}
           {activeTab === 'alerts' ? (
             /* ================= WINDOW 1: NEW ALERTS ================= */
-            <View style={styles.alertsContainer}>
+            <CardEntrance key="alerts" style={styles.alertsContainer}>
+              <View style={{ marginBottom: 20, gap: 5 }}><Text style={{ fontSize: 23, fontWeight: '500', letterSpacing: -0.7, color: colors.text }}>Matched to you</Text><Text style={{ fontSize: 13, lineHeight: 21, color: colors.textMuted }}>Nearby requests for your verified blood group.</Text></View>
               {data?.alerts.map((item) => (
                 <AlertRequestCard
                   key={item.id}
@@ -111,12 +131,14 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
                 />
               ))}
 
+              {data && alertsCount === 0 && <View style={styles.emptyMissionCard}><Ionicons name="information-circle-outline" size={32} color={colors.textMuted} /><Text style={styles.emptyMissionTitle}>{data.emptyState?.title || 'No matching requests right now'}</Text><Text style={styles.emptyMissionDesc}>{data.emptyState?.message || 'Only open, approved requests matching your current profile appear here. Pull down to refresh.'}</Text>{data.emptyState?.action==='profile' && onNavigateToProfile && <TouchableOpacity accessibilityRole="button" style={styles.browseButton} onPress={onNavigateToProfile}><Text style={styles.browseButtonText}>Review Profile</Text></TouchableOpacity>}{data.emptyState?.action==='active' && <TouchableOpacity accessibilityRole="button" style={styles.browseButton} onPress={()=>setActiveTab('active')}><Text style={styles.browseButtonText}>View active request</Text></TouchableOpacity>}</View>}
+
               {/* Bottom Reminder Note */}
               <DonationRecommendationCard />
-            </View>
+            </CardEntrance>
           ) : (
             /* ================= WINDOW 2: ACTIVE MISSION ================= */
-            <View style={styles.activeContainer}>
+            <CardEntrance key="active" style={styles.activeContainer}>
               {data?.activeMission ? (
                 <>
                   {/* Top Dispatch Mission Card */}
@@ -147,7 +169,7 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
               ) : (
                 <View style={styles.emptyMissionCard}>
                   <View style={styles.emptyIconCircle}>
-                    <Ionicons name="shield-checkmark-outline" size={38} color="#94A3B8" />
+                    <Ionicons name="shield-checkmark-outline" size={38} color={colors.textMuted} />
                   </View>
                   <Text style={styles.emptyMissionTitle}>No Active Mission</Text>
                   <Text style={styles.emptyMissionDesc}>
@@ -162,21 +184,13 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
                   </TouchableOpacity>
                 </View>
               )}
-            </View>
+            </CardEntrance>
           )}
         </ScrollView>
       )}
 
       {/* Bottom Navigation Bar */}
-      <DonorBottomNav activeTab="Requests" onSelect={handleTabPress} />
-
-      {/* Detail / Respond Modal */}
-      <RequestDetailModal
-        visible={isDetailModalOpen}
-        request={selectedRequest}
-        onClose={handleCloseDetails}
-        onRespond={handleRespondToRequest}
-      />
+      <DonorBottomNav activeTab="Requests" onSelect={handleTabPress} requestsCount={alertsCount} />
 
       {/* Notify Coordinator Modal */}
       <NotifyCoordinatorModal
@@ -191,14 +205,17 @@ export const RequestsScreen: React.FC<RequestsScreenProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
+  errorCard: { backgroundColor: c.primarySoft, borderRadius: 12, padding: 14, marginBottom: 14 },
+  errorText: { color: c.primary, fontSize: 13, lineHeight: 19 },
+  retryButton: { minHeight: 36, justifyContent: 'center' },
   scrollView: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -207,7 +224,7 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -226,23 +243,23 @@ const styles = StyleSheet.create({
   },
   footerLinkText: {
     fontSize: 13.5,
-    color: '#475569',
+    color: c.textSecondary,
     fontWeight: '500',
   },
   notifyLinkText: {
     fontSize: 13.5,
-    color: '#BA1328',
+    color: c.primary,
     fontWeight: '700',
     textDecorationLine: 'underline',
   },
   emptyMissionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -253,7 +270,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -261,25 +278,25 @@ const styles = StyleSheet.create({
   emptyMissionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
+    color: c.text,
     marginBottom: 8,
   },
   emptyMissionDesc: {
     fontSize: 14,
-    color: '#64748B',
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 21,
     marginBottom: 20,
     paddingHorizontal: 8,
   },
   browseButton: {
-    backgroundColor: '#BA1328',
+    backgroundColor: c.action,
     paddingVertical: 12,
     paddingHorizontal: 22,
     borderRadius: 10,
   },
   browseButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 14,
     fontWeight: '700',
   },

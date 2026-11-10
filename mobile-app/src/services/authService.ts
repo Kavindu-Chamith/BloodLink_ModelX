@@ -51,6 +51,17 @@ export interface RegisterData {
   documentUrl?: string;
 }
 
+const donorAccountMessage = 'This app is for donor accounts. Use the administration dashboard for an admin account, or your institution portal for a staff account.';
+
+async function donorLogin(response: LoginResponse): Promise<LoginResponse> {
+  if (response.user.role !== 'donor') {
+    // Do not keep a session that this client cannot use.
+    await logout(response.refreshToken).catch(() => {});
+    throw new ApiClientError(donorAccountMessage, 403);
+  }
+  return response;
+}
+
 // ─── Auth API Calls ─────────────────────────────────────────────────────────
 
 /**
@@ -74,7 +85,7 @@ export async function loginWithEmail(
     email,
     password,
   });
-  return response.data;
+  return donorLogin(response.data);
 }
 
 /**
@@ -88,7 +99,7 @@ export async function loginWithPhone(
     phone,
     password,
   });
-  return response.data;
+  return donorLogin(response.data);
 }
 
 /**
@@ -111,7 +122,10 @@ export async function refreshTokens(
  * Logout (invalidate refresh token)
  */
 export async function logout(refreshToken: string): Promise<void> {
-  await api.post("/auth/logout", { refreshToken });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try { await api.post("/auth/logout", { refreshToken }, { signal: controller.signal }); }
+  finally { clearTimeout(timer); }
 }
 
 /**
@@ -119,6 +133,7 @@ export async function logout(refreshToken: string): Promise<void> {
  */
 export async function getMe(): Promise<User> {
   const response = await api.authGet<{ user: User }>("/auth/me");
+  if (response.data.user.role !== 'donor') throw new ApiClientError(donorAccountMessage, 403);
   return response.data.user;
 }
 

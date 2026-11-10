@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -17,7 +19,7 @@ import { Header } from '../components/Header';
 import { MailIcon } from '../components/Icons';
 import { PasswordRecoverySteps } from '../components/PasswordRecoverySteps';
 import { SecurityBadge } from '../components/SecurityBadge';
-import { colors } from '../theme/colors';
+
 import { verifyPasswordResetOtp, requestPasswordReset } from '../services/authService';
 
 interface ResetPasswordStep2ScreenProps {
@@ -33,6 +35,7 @@ export const ResetPasswordStep2Screen: React.FC<ResetPasswordStep2ScreenProps> =
   onChangeEmail,
   email = '',
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [expirySeconds, setExpirySeconds] = useState(899); // 14:59
   const [resendSeconds, setResendSeconds] = useState(45);
@@ -40,7 +43,6 @@ export const ResetPasswordStep2Screen: React.FC<ResetPasswordStep2ScreenProps> =
   const [isResending, setIsResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const inputRefs = useRef<Array<TextInput | null>>([]);
-
 
   const handleResend = async () => {
     if (!email) return;
@@ -122,7 +124,7 @@ export const ResetPasswordStep2Screen: React.FC<ResetPasswordStep2ScreenProps> =
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
       <Header title="Enter OTP Code" onBack={onBack} />
 
       <KeyboardAvoidingView
@@ -152,11 +154,10 @@ export const ResetPasswordStep2Screen: React.FC<ResetPasswordStep2ScreenProps> =
 
           {/* Dev OTP Helper Banner */}
 
-
           {/* Error Message */}
           {errorMessage && (
-            <View style={{ backgroundColor: '#FFF1F2', borderRadius: 8, padding: 10, marginBottom: 12 }}>
-              <Text style={{ color: '#E11D48', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
+            <View style={{ backgroundColor: colors.primarySoft, borderRadius: 8, padding: 10, marginBottom: 12 }}>
+              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
                 {errorMessage}
               </Text>
             </View>
@@ -178,7 +179,7 @@ export const ResetPasswordStep2Screen: React.FC<ResetPasswordStep2ScreenProps> =
                       styles.codeBox,
                       digit ? styles.codeBoxFilled : null,
                       isActive ? styles.codeBoxActive : null,
-                      errorMessage ? { borderColor: '#E11D48' } : null,
+                      errorMessage ? { borderColor: colors.primary } : null,
                     ]}
                     keyboardType="number-pad"
                     maxLength={1}
@@ -242,10 +243,10 @@ export const ResetPasswordStep2Screen: React.FC<ResetPasswordStep2ScreenProps> =
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
@@ -263,13 +264,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FEECEF',
+    backgroundColor: c.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
   },
   description: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -277,11 +278,11 @@ const styles = StyleSheet.create({
   },
   emailHighlight: {
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
   },
   timerHighlight: {
     fontWeight: '700',
-    color: colors.primary,
+    color: c.primary,
   },
   codeContainer: {
     marginBottom: 16,
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
   codeLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -302,20 +303,20 @@ const styles = StyleSheet.create({
     width: 46,
     height: 52,
     borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     fontSize: 20,
     fontWeight: '700',
-    color: '#0F172A',
+    color: c.text,
     borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderColor: c.border,
   },
   codeBoxFilled: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#CBD5E1',
+    backgroundColor: c.card,
+    borderColor: c.border,
   },
   codeBoxActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#FFF5F5',
+    borderColor: c.primary,
+    backgroundColor: c.primarySoft,
   },
   resendRow: {
     flexDirection: 'row',
@@ -326,12 +327,12 @@ const styles = StyleSheet.create({
   },
   resendPrompt: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   resendText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.primary,
+    color: c.primary,
   },
   footer: {
     paddingHorizontal: 24,
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -357,10 +358,10 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   signInHighlight: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '700',
   },
 });

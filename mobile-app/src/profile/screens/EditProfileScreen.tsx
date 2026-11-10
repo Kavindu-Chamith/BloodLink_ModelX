@@ -1,9 +1,10 @@
+import { showAlert } from '../../utils/showAlert';
 
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
+
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -56,7 +57,7 @@ export default function EditProfileScreen({ profile, onSave, onClose }: Props) {
             await onSave({ fullName: fullName.trim(), phone: phone.trim(), district });
             onClose();
         } catch (e) {
-            Alert.alert('Could not save changes', e instanceof Error ? e.message : 'Please try again.');
+            showAlert('Could not save changes', e instanceof Error ? e.message : 'Please try again.');
         } finally {
             setSaving(false);
         }
@@ -186,7 +187,7 @@ const createStyles = (c: ColorPalette) =>
             borderWidth: 1,
             borderColor: c.border,
         },
-        chipSelected: { backgroundColor: c.primary, borderColor: c.primary },
+        chipSelected: { backgroundColor: c.action, borderColor: c.primary },
         chipText: { color: c.text, fontSize: 13, fontWeight: '600' },
         chipTextSelected: { color: c.onPrimary },
         readonly: {
@@ -206,7 +207,7 @@ const createStyles = (c: ColorPalette) =>
             marginTop: 28,
             height: 54,
             borderRadius: radius.md,
-            backgroundColor: c.primary,
+            backgroundColor: c.action,
             alignItems: 'center',
             justifyContent: 'center',
         },

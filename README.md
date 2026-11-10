@@ -1,183 +1,64 @@
-# BloodLink - Smart Blood Donation Coordination System
+# BloodLink
 
-[![React Native](https://img.shields.io/badge/React_Native-0.74+-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![PostGIS](https://img.shields.io/badge/PostGIS-Spatial_DB-008080?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgis.net/)
-[![Firebase FCM](https://img.shields.io/badge/Firebase_FCM-Push_Alerts-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+BloodLink connects blood-donation outreach across a donor mobile app, an institution dashboard, and a network-administration portal.
 
-**BloodLink** is a smart, centralized blood donation management and donor coordination system designed to bridge the communication gap between healthcare institutions (hospitals and blood banks) and eligible blood donors in Sri Lanka.
+## What is implemented
 
-> **Academic Context**: SE5104 Mini Project | Group 7 | Department of Software Engineering, Faculty of Computing, Sabaragamuwa University of Sri Lanka.
+- **Donor app:** profiles, consent and availability, request browsing and responses, history, and in-app notifications.
+- **Institution dashboard:** requests, stock records, donor responses, staff access, and health-alert workflows.
+- **Network administration:** institution and account management, request review, and network oversight.
+- **API and database:** Node.js/Express API, role-based access, PostgreSQL persistence, request lifecycle rules, audit records, and location-based outreach matching.
 
----
+The current matching flow is a rule-based outreach filter using a donor's recorded blood-group label, consent, availability, and location. It is not a transfusion-compatibility calculation, medical eligibility decision, or machine-learning model. Institution staff determine suitability.
 
-## Key Features
+## Data and competition status
 
-### 1. Donor Mobile Application (React Native + TypeScript)
-* **Donor Profiles & Registration**: Register with personal details and blood group verification.
-* **Document Verification**: Upload medical/official documents to verify blood group authenticity.
-* **Availability Toggle**: Donors can toggle their availability status (`Available` / `Unavailable`).
-* **Blood Request Feed**: View real-time blood requirements posted by nearby hospitals.
-* **Donation History & Eligibility Tracking**: Automatically tracks past donations and calculates the next eligible donation date (e.g. 3-month medical interval).
-* **Push Notifications**: Receive instant emergency push alerts when matching blood is urgently needed nearby.
+Checked-in application and import fixtures are fictional and marked `SYNTHETIC_TEST_DATA_NOT_REAL`. They support software workflows only and do not describe actual donors, blood-service demand, inventory, or population trends. No licensed real-data analysis or result is integrated in this build. The approximate town-centre coordinate provenance also needs documentation.
 
-### 2. Hospital & Blood Bank Web Dashboard (React + TypeScript)
-* **Blood Stock Inventory**: Monitor and manage stock levels per blood group with clear status indicators (`Normal`, `Low`, `Critical`).
-* **Request Creation**: Post targeted blood requests categorized by priority (`Normal`, `Urgent`, `Emergency`).
-* **Donor Response Tracking**: Track real-time donor responses (Accept/Decline) to active requests.
+The repository is **not yet ready for a competition submission that requires real-data insights and a real-data demonstration**. See the [data-source and reuse review](docs/MODELX_DATA_SOURCE_REVIEW.md) and [AI/authorship disclosure](COMPETITION_DISCLOSURE.md). Do not present synthetic fixtures as real-world results.
 
-### 3. Smart Donor Matching Engine (Node.js + PostGIS)
-* **Multi-Criteria Filtering**: Matches donors based on **Verified Blood Group**, **Eligibility Interval**, and **Availability**.
-* **Geospatial Proximity Radius**: Uses PostGIS spatial queries (`ST_DWithin`) to find donors within a target radius from the requesting institution.
-* **Targeted Dispatch**: Delivers push notifications via Firebase Cloud Messaging (FCM) *only* to eligible, nearby donors, avoiding notification fatigue.
+## Run locally (Windows)
 
-### 4. Administration, Verification & Security
-* **Institution Approval**: Verification workflow for participating hospitals, blood banks, and staff accounts.
-* **Document Review**: Admin interface to inspect and verify uploaded donor blood group proof.
-* **Role-Based Access Control (RBAC)**: Strict permission boundaries for Donors, Hospital Staff, and Administrators.
-* **Privacy & Security**: Built in compliance with Sri Lanka's Personal Data Protection Act (PDPA) No. 9 of 2022. Server-side spatial matching ensures raw donor location coordinates are never publicly exposed.
+Requirements: Node.js 24.14 or later, npm, and PostgreSQL tools available on `PATH`.
 
----
-
-## System Architecture
-
-```
-                                  +------------------------------+
-                                  |     BloodLink System         |
-                                  +--------------+---------------+
-                                                 |
-         +---------------------------------------+---------------------------------------+
-         |                                       |                                       |
-         v                                       v                                       v
-+---------------------------------+  +-----------------------------------+  +----------------------------------+
-|      Donor Mobile App           |  |    Hospital & Admin Dashboard     |  |       Backend REST API           |
-|    (React Native + Expo)        |  |        (React + TypeScript)       |  |   (Node.js + Express + TS)       |
-+---------------------------------+  +-----------------------------------+  +----------------+-----------------+
-                                                                                             |
-                                           +-------------------------------------------------+-------------------------------------------------+
-                                           |                                                 |                                                 |
-                                           v                                                 v                                                 v
-                               +-----------------------+                         +-----------------------+                         +-----------------------+
-                               | PostgreSQL + PostGIS  |                         | Firebase FCM Service  |                         | Google Maps Platform  |
-                               | (Geospatial Database) |                         |  (Push Notifications) |                         |  (Location Services)  |
-                               +-----------------------+                         +-----------------------+                         +-----------------------+
+```powershell
+npm.cmd ci --prefix backend
+npm.cmd ci --prefix web-dashboard
+npm.cmd ci --prefix mobile-app
+npm.cmd run setup
+npm.cmd start
 ```
 
----
+The local setup creates a private development database under ignored `.qa-private` storage. It does not include reusable account passwords in the repository. Set up or seed local accounts using the instructions in [local setup](docs/MODELX_SETUP.md). The apps are available at `http://localhost:5173` (web), `http://localhost:8081` (donor preview), and `http://localhost:4000/api/health` (API health). Stop with `npm.cmd stop`.
 
-## Project Modules & Ownership
+For manually managed PostgreSQL or mobile-device networking, follow the full [setup guide](docs/MODELX_SETUP.md). Never commit `.env` files, passwords, API keys, donor records, or uploaded documents. Share reviewer credentials through the competition's approved private channel, not this public repository.
 
-The project is structured into four core engineering modules:
+## Repository map
 
-| Module | Core Component | Scope & Responsibilities |
-| :--- | :--- | :--- |
-| **Module 1** | **Donor Mobile Application & Donor Coordination UI** | Mobile app development in React Native + TypeScript, donor registration, availability toggles, request viewing, donation history, mobile integration, and UI testing. |
-| **Module 2** | **Hospital/Blood-Bank Dashboard & Blood Request Workflow** | Web dashboard development in React + TypeScript, stock-status interface, request creation workflows, hospital management interfaces. |
-| **Module 3** | **Donor Matching & Notification Engine** | Backend service development in Node.js + Express, PostGIS geospatial matching algorithms, eligibility interval calculations, FCM push notifications. |
-| **Module 4** | **Administration, Verification & Security Module** | Administrative verification of institutions and staff, donor document review workflow, Role-Based Access Control (RBAC), audit logging, security compliance. |
-
----
-
-## Repository Structure
-
-```
-BloodLink/
-├── mobile-app/       // React Native + TypeScript donor application (Expo)
-│   ├── src/          // Screens, components, navigation, services
-│   ├── assets/       // Icons, images, fonts
-│   └── tests/        // Mobile unit and component tests
-├── web-dashboard/    // React + TypeScript institution/admin dashboard
-│   ├── src/          // Pages, components, state management, services
-│   ├── public/       // Static web assets
-│   └── tests/        // Web unit and integration tests
-├── backend/          // Node.js + Express + TypeScript REST API
-│   ├── src/
-│   │   ├── controllers/ // API route request handlers
-│   │   ├── services/    // Matching, notification & verification logic
-│   │   ├── models/      // Database models / ORM entities
-│   │   ├── middleware/  // JWT auth, RBAC, input validation
-│   │   └── routes/      // API endpoint routing definitions
-│   └── tests/        // API & integration unit tests
-├── database/         // PostgreSQL schema, PostGIS migrations, seed data
-│   ├── migrations/   // Database migration scripts
-│   └── seed/         // Seed data for local development
-├── docs/             // Complete project documentation & contributing guidelines
-│   ├── PROJECT_OVERVIEW.md // Exhaustive technical proposal summary & reference
-│   └── CONTRIBUTING.md   // Git branching workflow & contribution rules
-└── .github/          // PR templates, issue templates, CI/CD workflows
-```
-
----
-
-## Getting Started
-
-For this independent Windows copy, see [ModelX local setup](docs/MODELX_SETUP.md).
-After installing module dependencies, `npm.cmd run setup` initializes its private
-database and `npm.cmd start` launches the API, admin dashboard and mobile preview.
-
-### Prerequisites
-* **Node.js**: `v20.x` or higher *(Tested on v24.x)*
-* **npm**: `v10.x` or higher
-* **PostgreSQL** (with **PostGIS** extension enabled)
-* **Expo Go App** (installed on mobile device for testing `mobile-app`)
-
-### 1. Repository Setup & Branching
-Follow your team's branching policy in [CONTRIBUTING.md](docs/CONTRIBUTING.md):
-```bash
-# Clone the repository
-git clone https://github.com/Kavindu-Chamith/BloodLink_ModelX.git
-cd BloodLink_ModelX
-
-# Create a feature branch; use develop as the base once your team publishes it
-git switch -c feature/your-feature-name
-```
-
-### 2. Running the Donor Mobile App
-```bash
-cd mobile-app
-npm install
-npx expo start
-```
-*Scan the generated QR code using the **Expo Go** application on your mobile device.*
-
-### 3. Running the Backend REST API
-```bash
-cd backend
-npm install
-cp .env.example .env
-# Configure your PostgreSQL connection strings in .env
-npm run dev
-```
-
-### 4. Running the Web Dashboard
-
-The checked-in web app is the **super admin network portal**. It manages blood banks,
-branches, approvals and primary bank login accounts, separately from institution clinical
-operations. Apply backend migrations, start the API, and sign in with an active
-`admin` email and password. There is no demo login.
-See [dashboard setup](web-dashboard/README.md) and [finalized requirements](docs/SUPER_ADMIN_DASHBOARD.md).
-
-```bash
-cd web-dashboard
-npm install
-npm run dev
-```
-
----
+| Path | Purpose |
+|---|---|
+| `mobile-app/` | Donor application (React Native / Expo) |
+| `web-dashboard/` | Institution and network-administration portal |
+| `backend/` | API, services, migrations runner, and automated checks |
+| `database/` | Fresh-install schema and versioned migrations |
+| `Dataset/` | Reproducible, explicitly synthetic workflow fixtures and generator |
+| `docs/` | Setup, product workflows, data-source review, and contributor guidance |
 
 ## Documentation
 
-* **[Comprehensive Technical Project Overview](docs/PROJECT_OVERVIEW.md)** — Exhaustive documentation covering problem statement, gap analysis, functional/non-functional requirements, database ER diagram, security & PDPA compliance, and testing plan.
-* **[Contribution Guidelines](docs/CONTRIBUTING.md)** — Branching rules, PR guidelines, and commit standards.
+- [Local setup](docs/MODELX_SETUP.md)
+- [Request workflow](docs/REQUEST_FLOW.md)
+- [Institution dashboard](docs/INSTITUTION_DASHBOARD.md)
+- [Network-admin portal](docs/SUPER_ADMIN_DASHBOARD.md)
+- [Synthetic fixture provenance](Dataset/README.md)
+- [Data-source and reuse review](docs/MODELX_DATA_SOURCE_REVIEW.md)
+- [AI/authorship disclosure](COMPETITION_DISCLOSURE.md)
+- [Documentation index](docs/README.md)
 
----
+## Demo account access
 
-## Security & Privacy Statement
+Passwords are deliberately not stored in README files or source control. Local admin credentials are configured in the ignored `backend/.env`. Any donor, staff, or reviewer demo credentials must be created for the target environment and shared privately with authorized reviewers. Do not use production credentials as demo accounts.
 
-BloodLink processes personal information, including blood groups and location data, subject to **Sri Lanka's Personal Data Protection Act (PDPA) No. 9 of 2022**.
-* Donor location coordinates are used exclusively server-side for radius matching and are **never exposed to other users or public APIs**.
-* Verification documents are protected behind authenticated access endpoints.
-* No API keys, credentials, or private verification documents should ever be committed to git.
+## Safety and privacy
+
+BloodLink handles sensitive blood-group, location, and health-related information. The local synthetic fixtures contain no real donor records. This repository has not received an independent legal-compliance audit; deployment operators must assess applicable privacy, security, clinical and data-retention requirements. A recorded outreach match or donation interval reminder is not medical advice or a determination of eligibility.

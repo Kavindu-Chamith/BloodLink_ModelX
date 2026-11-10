@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import type { AppColors } from '../../theme/palette';
 // src/requests/components/ActiveMissionCard.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
@@ -15,11 +17,12 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = ({
   onDirectionsPress,
   onCoordinatorPress,
 }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   return (
     <View style={styles.card}>
       {/* Top Header Row */}
       <View style={styles.topRow}>
-        <Text style={styles.sectionSubtitle}>ACTIVE DISPATCH MISSION</Text>
+        <Text style={styles.sectionSubtitle}>Your accepted request</Text>
         <View style={styles.statusBadge}>
           <View style={styles.statusDot} />
           <Text style={styles.statusBadgeText}>{mission.status}</Text>
@@ -35,11 +38,11 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = ({
         {/* Left Box: Required Blood */}
         <View style={styles.requiredBox}>
           <View style={styles.requiredIconContainer}>
-            <Ionicons name="water" size={16} color="#BA1328" />
+            <Ionicons name="water" size={16} color={colors.primary} />
           </View>
           <View style={styles.requiredTextCol}>
             <Text style={styles.requiredLabel}>REQUIRED</Text>
-            <Text style={styles.requiredValue} numberOfLines={1}>
+            <Text style={styles.requiredValue}>
               {mission.bloodGroup} · {mission.unitsNeeded} {mission.unitsNeeded === 1 ? 'Unit' : 'Units'}
             </Text>
           </View>
@@ -61,7 +64,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Get directions to hospital"
         >
-          <Feather name="navigation" size={15} color="#FFFFFF" style={styles.btnIcon} />
+          <Feather name="navigation" size={15} color={colors.onPrimary} style={styles.btnIcon} />
           <Text style={styles.directionsButtonText}>Directions</Text>
         </TouchableOpacity>
 
@@ -72,7 +75,7 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Call hospital coordinator"
         >
-          <Ionicons name="call-outline" size={16} color="#1E293B" style={styles.btnIcon} />
+          <Ionicons name="call-outline" size={16} color={colors.text} style={styles.btnIcon} />
           <Text style={styles.coordinatorButtonText}>Coordinator</Text>
         </TouchableOpacity>
       </View>
@@ -80,19 +83,14 @@ export const ActiveMissionCard: React.FC<ActiveMissionCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    backgroundColor: c.card,
+    borderRadius: 10,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#EBF0F5',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: c.border,
   },
   topRow: {
     flexDirection: 'row',
@@ -102,14 +100,14 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#64748B',
+    fontWeight: '500',
+    color: c.textMuted,
     letterSpacing: 0.6,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: c.successSoft,
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 14,
@@ -118,25 +116,25 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#10B981',
+    backgroundColor: c.success,
     marginRight: 5,
   },
   statusBadgeText: {
-    color: '#059669',
+    color: c.success,
     fontSize: 12,
     fontWeight: '700',
   },
   hospitalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontSize: 17,
+    fontWeight: '600',
+    color: c.text,
     letterSpacing: -0.2,
     marginBottom: 2,
   },
   departmentText: {
-    fontSize: 13.5,
+    fontSize: 12,
     fontWeight: '500',
-    color: '#64748B',
+    color: c.textMuted,
     marginBottom: 14,
   },
   infoBoxesRow: {
@@ -145,20 +143,20 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   requiredBox: {
-    flex: 1.45,
+    flex: 3,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF1F2',
+    backgroundColor: c.primarySoft,
     borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 10,
-    gap: 8,
+    gap: 6,
   },
   requiredIconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFE4E6',
+    width: 20,
+    height: 24,
+    borderRadius: 10,
+    backgroundColor: c.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -167,19 +165,19 @@ const styles = StyleSheet.create({
   },
   requiredLabel: {
     fontSize: 9.5,
-    fontWeight: '800',
-    color: '#BA1328',
+    fontWeight: '600',
+    color: c.primary,
     letterSpacing: 0.5,
     marginBottom: 1,
   },
-  requiredValue: {
+  requiredValue: { lineHeight: 19,
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: c.text,
   },
   arrivalBox: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 10,
@@ -188,15 +186,15 @@ const styles = StyleSheet.create({
   },
   arrivalLabel: {
     fontSize: 9.5,
-    fontWeight: '800',
-    color: '#64748B',
+    fontWeight: '600',
+    color: c.textMuted,
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   arrivalValue: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontWeight: '600',
+    color: c.text,
   },
   buttonsRow: {
     flexDirection: 'row',
@@ -205,33 +203,28 @@ const styles = StyleSheet.create({
   directionsButton: {
     flex: 1,
     height: 46,
-    borderRadius: 14,
-    backgroundColor: '#BA1328',
+    borderRadius: 12,
+    backgroundColor: c.action,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#BA1328',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
   },
   directionsButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 14,
     fontWeight: '700',
   },
   coordinatorButton: {
     flex: 1,
     height: 46,
-    borderRadius: 14,
-    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    backgroundColor: c.surface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   coordinatorButtonText: {
-    color: '#1E293B',
+    color: c.text,
     fontSize: 14,
     fontWeight: '700',
   },

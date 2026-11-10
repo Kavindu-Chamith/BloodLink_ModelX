@@ -1,0 +1,78 @@
+{
+  "validation_status": "PASS",
+  "executed_code": true,
+  "validation_timestamp_utc": "2026-11-10T10:25:12+00:00",
+  "snapshot_utc": "2026-11-03T00:00:00Z",
+  "test_assertions_executed": 297580,
+  "test_assertions_passed": 297580,
+  "test_assertions_failed": 0,
+  "errors": [],
+  "generated_row_counts": {
+    "donors": 10000,
+    "locations_reference": 48,
+    "donation_history": 71097,
+    "institutions": 48,
+    "blood_requests": 333,
+    "donor_responses": 274,
+    "blood_stocks": 384
+  },
+  "distinct_districts": 25,
+  "distinct_provinces": 9,
+  "donors_per_district": {
+    "Ampara": 255,
+    "Anuradhapura": 236,
+    "Badulla": 239,
+    "Batticaloa": 240,
+    "Colombo": 1534,
+    "Galle": 523,
+    "Gampaha": 1563,
+    "Hambantota": 252,
+    "Jaffna": 372,
+    "Kalutara": 446,
+    "Kandy": 665,
+    "Kegalle": 263,
+    "Kilinochchi": 126,
+    "Kurunegala": 485,
+    "Mannar": 118,
+    "Matale": 235,
+    "Matara": 405,
+    "Monaragala": 243,
+    "Mullaitivu": 107,
+    "Nuwara Eliya": 279,
+    "Polonnaruwa": 278,
+    "Puttalam": 265,
+    "Ratnapura": 467,
+    "Trincomalee": 266,
+    "Vavuniya": 138
+  },
+  "donor_blood_groups": {
+    "A+": 1207,
+    "A-": 1250,
+    "AB+": 1315,
+    "AB-": 1246,
+    "B+": 1278,
+    "B-": 1250,
+    "O+": 1178,
+    "O-": 1276
+  },
+  "donor_availability": {
+    "No": 4843,
+    "Yes": 5157
+  },
+  "consent_states": {
+    "not_provided": 1257,
+    "granted": 7883,
+    "withdrawn": 860
+  },
+  "request_statuses": {
+    "expired": 258,
+    "closed": 47,
+    "active": 28
+  },
+  "response_statuses": {
+    "accepted": 106,
+    "declined": 63,
+    "no_response": 105
+  },
+  "scope_of_validation": "CSV schema, referential integrity, cross-file timestamps, fake contacts, donation history, city reference within 2 km, district/province coverage, state labels and simulated matching rules; not geospatial boundary accuracy, legal licensing or clinical eligibility."
+}

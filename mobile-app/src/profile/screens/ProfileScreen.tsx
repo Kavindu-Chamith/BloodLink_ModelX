@@ -1,11 +1,13 @@
+import { showAlert } from '../../utils/showAlert';
 
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import * as Location from 'expo-location';
 import {
     ActivityIndicator,
-    Alert,
-    Pressable,
+
+    Modal,
     RefreshControl,
     ScrollView,
     StyleSheet,
@@ -13,11 +15,13 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import IconBadge from '../../components/IconBadge';
+import { CardEntrance, IconPop, TactilePressable } from '../../components/Motion';
 import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
 import { ProfileHeaderCard, StatCard, VerificationSection } from '../components';
 import { ProfileState } from '../hooks/useProfile';
 import { ColorPalette, radius, useTheme } from '../theme';
-import { estimateLivesSaved, getEligibility } from '../utils/eligibility';
+import { getEligibility } from '../utils/eligibility';
 import { formatDate } from '../utils/format';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -35,12 +39,35 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
     const { colors, isDark, toggleTheme } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { profile, loading, refreshing, uploading, error } = state;
+    const [locationBusy, setLocationBusy] = useState(false);
+    const [locationMessage, setLocationMessage] = useState('');
+    const [signOutOpen, setSignOutOpen] = useState(false);
+    const [signingOut, setSigningOut] = useState(false);
+    const [signOutError, setSignOutError] = useState('');
+    const handleMatchingLocation = async (clear = false) => {
+        setLocationBusy(true); setLocationMessage('');
+        try {
+            if (clear) {
+                await state.saveMatchingLocation(null, null);
+                setLocationMessage('Your matching location has been removed.');
+            } else {
+                const permission = await Location.requestForegroundPermissionsAsync();
+                if (permission.status !== 'granted') throw new Error('Allow location access to find nearby donation requests.');
+                const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                // A roughly 100 m location is sufficient for request-radius matching.
+                await state.saveMatchingLocation(Math.round(position.coords.latitude * 1000) / 1000, Math.round(position.coords.longitude * 1000) / 1000);
+                setLocationMessage('Your matching location has been updated.');
+            }
+        } catch (failure) {
+            setLocationMessage(failure instanceof Error ? failure.message : 'Could not update your matching location.');
+        } finally { setLocationBusy(false); }
+    };
 
     const handleToggleAvailability = async (value: boolean) => {
         try {
             await state.toggleAvailability(value);
         } catch {
-            Alert.alert('Could not update availability', 'Please check your connection and try again.');
+            showAlert('Could not update availability', 'Please check your connection and try again.');
         }
     };
 
@@ -58,46 +85,44 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
             const mimeType = asset.mimeType ?? 'application/octet-stream';
 
             if (!ALLOWED_TYPES.includes(mimeType)) {
-                Alert.alert('Unsupported file', 'Please upload a PDF, JPG or PNG file.');
+                showAlert('Unsupported file', 'Please upload a PDF, JPG or PNG file.');
                 return;
             }
             if (size > MAX_FILE_BYTES) {
-                Alert.alert('File too large', 'The document must be 5 MB or smaller.');
+                showAlert('File too large', 'The document must be 5 MB or smaller.');
                 return;
             }
 
             await state.uploadDocument({ uri: asset.uri, name: asset.name, size, mimeType });
-            Alert.alert('Document submitted', 'An administrator will review it shortly.');
+            showAlert('Document submitted', 'An administrator will review it shortly.');
         } catch (e) {
-            Alert.alert('Upload failed', e instanceof Error ? e.message : 'Please try again.');
+            showAlert('Upload failed', e instanceof Error ? e.message : 'Please try again.');
         }
     };
 
-    const confirmSignOut = () => {
-        Alert.alert('Sign out', 'Do you want to sign out of BloodLink?', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-                text: 'Sign out', style: 'destructive',
-                onPress: () => {
-                    void onSignOut().catch(() => Alert.alert('Could not sign out', 'Please try again.'));
-                },
-            },
-        ]);
+    const confirmSignOut = async () => {
+        setSigningOut(true); setSignOutError('');
+        try { await onSignOut(); }
+        catch { setSignOutError('Could not sign out. Please try again.'); }
+        finally { setSigningOut(false); }
     };
 
     return (
         <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
             <View style={styles.titleRow}>
                 <Text style={styles.title}>Profile</Text>
-                <Pressable
+                <TactilePressable
                     onPress={toggleTheme}
                     style={styles.themeButton}
-                    accessibilityRole="button"
-                    accessibilityLabel="Toggle light and dark theme"
-                    accessibilityState={{ selected: isDark }}
+                    accessibilityRole="switch"
+                    accessibilityLabel="Dark mode"
+                    accessibilityHint="Changes appearance across all screens and remembers your choice."
+                    accessibilityState={{ checked: isDark }}
+                    aria-checked={isDark}
                 >
-                    <Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={20} color={colors.text} />
-                </Pressable>
+                    <IconPop value={isDark}><Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={20} color={colors.text} /></IconPop>
+                    <Text style={styles.themeLabel}>{isDark ? 'Dark mode' : 'Light mode'}</Text>
+                </TactilePressable>
             </View>
 
             {loading && !profile ? (
@@ -108,9 +133,9 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                 <View style={styles.center}>
                     <Text style={styles.errorTitle}>Could not load your profile</Text>
                     <Text style={styles.errorText}>{error}</Text>
-                    <Pressable style={styles.retry} onPress={state.reload} accessibilityRole="button">
+                    <TactilePressable style={styles.retry} onPress={state.reload} accessibilityRole="button">
                         <Text style={styles.retryText}>Try again</Text>
-                    </Pressable>
+                    </TactilePressable>
                 </View>
             ) : profile ? (
                 <ScrollView
@@ -126,6 +151,16 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                         onEdit={onEdit}
                     />
 
+                    <CardEntrance delay={60} style={{ paddingVertical: 18, borderBottomWidth: 1, borderColor: colors.border, gap: 10 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><IconBadge name="navigate-outline" small tone="info" /><Text style={{ color: colors.text, fontWeight: '500' }}>Nearby request matching</Text></View>
+                        <Text style={{ color: colors.textMuted }}>{profile.hasMatchingLocation ? 'A private matching location is saved.' : 'Add your location to find matching requests nearby.'} Your location is not shown to other users.</Text>
+                        <TactilePressable disabled={locationBusy} onPress={() => { void handleMatchingLocation(); }} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start' }}>
+                            <Ionicons name="locate-outline" size={17} color={colors.primary} /><Text style={{ color: colors.primary, fontWeight: '500' }}>{locationBusy ? 'Updating…' : 'Update matching location'}</Text>
+                        </TactilePressable>
+                        {profile.hasMatchingLocation && <TactilePressable disabled={locationBusy} onPress={() => { void handleMatchingLocation(true); }} accessibilityRole="button"><Text style={{ color: colors.textMuted }}>Remove matching location</Text></TactilePressable>}
+                        {!!locationMessage && <Text accessibilityLiveRegion="polite" style={{ color: colors.textMuted }}>{locationMessage}</Text>}
+                    </CardEntrance>
+
                     <View style={styles.grid}>
                         <StatCard
                             label="Donations"
@@ -135,17 +170,17 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
                             iconBackground={colors.primarySoft}
                         />
                         <StatCard
-                            label="Lives saved"
-                            value={`${estimateLivesSaved(profile.totalDonations)}+`}
-                            caption="Patients touched"
-                            icon={<Ionicons name="heart" size={18} color={colors.primary} />}
+                            label="Blood group"
+                            value={profile.bloodGroup}
+                            caption={profile.bloodGroupVerification === 'approved' ? 'Document verified' : 'Not yet verified'}
+                            icon={<Ionicons name="water-outline" size={18} color={colors.primary} />}
                             iconBackground={colors.primarySoft}
                         />
                     </View>
 
                     <View style={styles.grid}>
                         <LastDonationCard profile={profile} />
-                        <EligibilityCard lastDonationDate={profile.lastDonationDate} />
+                        <EligibilityCard lastDonationDate={profile.lastDonationDate} nextEligibleDate={profile.nextEligibleDate} />
                     </View>
 
                     <Text style={styles.disclaimer}>
@@ -154,16 +189,31 @@ export default function ProfileScreen({ state, onBack, onNavigateTab, onEdit, on
 
                     <VerificationSection profile={profile} uploading={uploading} onUpload={handleUpload} />
 
-                    <Pressable onPress={confirmSignOut} style={styles.signOut} accessibilityRole="button">
+                    <TactilePressable onPress={() => { setSignOutError(''); setSignOutOpen(true); }} style={styles.signOut} accessibilityRole="button">
                         <Ionicons name="log-out-outline" size={20} color={colors.text} />
                         <Text style={styles.signOutText}>Sign out</Text>
-                    </Pressable>
+                    </TactilePressable>
 
                     <Text style={styles.footer}>
-                        BloodLink v1.0 • Protected under the Personal Data Protection Act No. 9 of 2022
+                        BloodLink · Your donor record
                     </Text>
                 </ScrollView>
             ) : null}
+            <Modal visible={signOutOpen} transparent animationType="fade" onRequestClose={() => { if (!signingOut) setSignOutOpen(false); }}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+                    <View accessibilityViewIsModal style={{ width: '100%', maxWidth: 360, backgroundColor: colors.card, borderRadius: 20, padding: 24, gap: 16 }}>
+                        <Text accessibilityRole="header" style={{ color: colors.text, fontSize: 20, fontWeight: '700' }}>Sign out of BloodLink?</Text>
+                        <Text style={{ color: colors.textMuted }}>You will need to sign in again to access your account.</Text>
+                        {!!signOutError && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{signOutError}</Text>}
+                        <TactilePressable disabled={signingOut} onPress={() => { void confirmSignOut(); }} style={styles.retry} accessibilityRole="button" accessibilityLabel="Confirm sign out">
+                            <Text style={styles.retryText}>{signingOut ? 'Signing out…' : 'Sign out'}</Text>
+                        </TactilePressable>
+                        <TactilePressable disabled={signingOut} onPress={() => setSignOutOpen(false)} accessibilityRole="button" accessibilityLabel="Cancel sign out" style={{ padding: 10, alignItems: 'center' }}>
+                            <Text style={{ color: colors.text }}>Cancel</Text>
+                        </TactilePressable>
+                    </View>
+                </View>
+            </Modal>
             <DonorBottomNav
                 activeTab="Profile"
                 colors={colors}
@@ -191,9 +241,9 @@ function LastDonationCard({ profile }: { profile: NonNullable<ProfileState['prof
     );
 }
 
-function EligibilityCard({ lastDonationDate }: { lastDonationDate: string | null }) {
+function EligibilityCard({ lastDonationDate, nextEligibleDate }: { lastDonationDate: string | null; nextEligibleDate?: string | null }) {
     const { colors } = useTheme();
-    const result = getEligibility(lastDonationDate);
+    const result = getEligibility(lastDonationDate, new Date(), nextEligibleDate);
 
     const dot = (
         <View
@@ -209,12 +259,12 @@ function EligibilityCard({ lastDonationDate }: { lastDonationDate: string | null
     return (
         <StatCard
             compact
-            label="Eligibility"
-            value={result.eligible ? 'Eligible now' : `In ${result.daysRemaining} day${result.daysRemaining === 1 ? '' : 's'}`}
+            label="Donation interval"
+            value={result.eligible ? 'Interval passed' : `In ${result.daysRemaining} day${result.daysRemaining === 1 ? '' : 's'}`}
             valueColor={result.eligible ? colors.success : colors.warning}
             caption={
                 result.eligible
-                    ? 'Ready to save lives'
+                    ? 'Screening required at donation'
                     : result.nextEligibleDate
                         ? `Next: ${formatDate(result.nextEligibleDate)}`
                         : undefined
@@ -236,22 +286,14 @@ const createStyles = (c: ColorPalette) =>
             paddingBottom: 12,
         },
         title: { fontSize: 22, lineHeight: 30, fontWeight: '600', color: c.text },
-        themeButton: {
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            backgroundColor: c.card,
-            borderWidth: 1,
-            borderColor: c.border,
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        content: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },
+        themeButton: { minHeight: 44, paddingHorizontal: 10, flexDirection: 'row', gap: 7, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+        themeLabel: { fontSize: 12, fontWeight: '600', color: c.text },
+        content: { paddingHorizontal: 22, paddingBottom: 32, gap: 18 },
         grid: { flexDirection: 'row', gap: 14 },
         center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
         errorTitle: { fontSize: 18, fontWeight: '600', color: c.text, marginBottom: 6 },
         errorText: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginBottom: 16 },
-        retry: { backgroundColor: c.primary, borderRadius: radius.md, paddingHorizontal: 24, paddingVertical: 12 },
+        retry: { backgroundColor: c.action, borderRadius: radius.md, paddingHorizontal: 24, paddingVertical: 12 },
         retryText: { color: c.onPrimary, fontWeight: '700' },
         disclaimer: { fontSize: 12, lineHeight: 18, color: c.textMuted, textAlign: 'center', paddingHorizontal: 8 },
         signOut: {

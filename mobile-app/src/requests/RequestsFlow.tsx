@@ -6,9 +6,11 @@ import { StatusBar } from 'expo-status-bar';
 import { DonorTab } from '../components/DonorBottomNav';
 import { RequestsScreen } from './screens/RequestsScreen';
 import { RequestTabType } from './types/requests';
+import { useTheme } from '../theme/ThemeContext';
 
 interface RequestsFlowProps {
   initialTab?: RequestTabType;
+  initialRequestId?: string;
   onBack?: () => void;
   onNavigateTab?: (tab: DonorTab) => void;
   onNavigateToProfile?: () => void;
@@ -16,15 +18,18 @@ interface RequestsFlowProps {
 
 export default function RequestsFlow({
   initialTab = 'alerts',
+  initialRequestId,
   onBack,
   onNavigateTab,
   onNavigateToProfile,
 }: RequestsFlowProps) {
+  const { colors, isDark } = useTheme();
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      <StatusBar style="dark" />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <RequestsScreen
         initialTab={initialTab}
+        initialRequestId={initialRequestId}
         onNavigateTab={(tab) => {
           if (tab === 'Home' && onBack) {
             onBack();

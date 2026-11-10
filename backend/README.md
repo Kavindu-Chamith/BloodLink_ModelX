@@ -1,8 +1,26 @@
 # Backend API (Node.js + Express + TypeScript)
 
-Use Node.js 20.13+ and PostgreSQL 15+. Copy `.env.example` to `.env`, configure the database,
+Use Node.js 24.14+ and PostgreSQL 15+. Copy `.env.example` to `.env`, configure the database,
 and generate two independent JWT secrets with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
 JWT secrets must be different, at least 32 characters long, and must not use example placeholders.
+
+The API provides authentication, institution/network operations, donor outreach,
+stock and request workflows, and persisted in-app notifications. Initialize a new
+database with `npm run db:init`, or upgrade an existing development database with
+`npm run migrate`. `MIGRATION_DATABASE_URL` can supply the owner connection for CLI
+migrations while `DATABASE_URL` uses a limited runtime login.
+
+For a labeled local dataset, run `npm run seed:preview` in development. It creates
+DEMO institutions, stocks, requests and donor history without resetting the local
+test donor password. The records are synthetic and do not represent live service
+conditions. See [fixture provenance and limitations](../Dataset/README.md).
+
+The generated synthetic dataset and current-day demonstration are available locally.
+Outreach now requires
+recorded consent and an availability update within 30 days. Turning availability
+on grants that consent; turning it off withdraws it. New requests have independent
+volunteer targets and response windows. Expired requests cannot be matched,
+accepted or dispatched. Synthetic accounts/requests never enqueue real push jobs.
 
 ```sh
 npm ci
@@ -30,7 +48,7 @@ The registration API flow is:
    Keep the returned opaque `registrationToken` in memory.
 3. `POST /api/auth/register` with `email`, `password`, `fullName`, `phone`, `nic`,
    `bloodGroup`, and `registrationToken`. Optional `dob` uses `YYYY-MM-DD`.
-   Optional `documentUrl` references an actual HTTPS document or managed upload path.
+   After registration, upload medical evidence using the protected profile upload endpoint.
    The proof expires in 15 minutes, is tied to the email, and is consumed once.
    Omitting a document leaves the blood group unverified and creates no review request.
 
@@ -60,8 +78,8 @@ checks current database roles, account status, organization approval/type, token
 and session state. Clients must coalesce simultaneous refresh requests.
 
 Set `CORS_ORIGINS` to the permitted web origins and `TRUST_PROXY` to actual proxy
-IPs/CIDRs only. IP limiters use memory and apply to one process; multi-instance
-deployments need a shared rate-limit store or an ingress limiter. Database lockout,
+IPs/CIDRs only. Production IP limiters share atomic PostgreSQL counters. Development
+uses memory unless `RATE_LIMIT_STORE=postgres`. Database lockout,
 OTP limits, cooldowns, and proof consumption apply across processes.
 
 ```sh
@@ -70,6 +88,10 @@ npm test
 npm run build
 npm start
 ```
+
+For reusable Postman checks of all declared API routes, run `npm run test:postman`.
+It starts a disposable local database/API and executes the collection with the installed
+Postman CLI. See [Postman setup, results and app instructions](postman/README.md).
 
 Tests use `TEST_DATABASE_URL` (or a localhost `DATABASE_URL`) with CREATEDB permission.
 They create randomly named disposable databases and remove them in `finally`; they do
@@ -102,8 +124,7 @@ the existing password rules and institution/role match. It does not send invitat
 The existing approval, donor-review, user-status and audit endpoints remain available.
 Apply migration 003 before running the updated server.
 
-See [the admin requirements](../docs/SUPER_ADMIN_DASHBOARD.md),
-[the security review](../docs/BACKEND_SECURITY_REVIEW.md) and [migration notes](../database/README.md).
+See [the admin workflow](../docs/SUPER_ADMIN_DASHBOARD.md) and [migration notes](../database/README.md).
 
 ## Account-first blood bank onboarding
 
@@ -117,4 +138,4 @@ Apply migrations through 005 before running the updated portal. Existing bank li
 - Login/current-user responses include `user.mustChangePassword`. `POST /api/auth/change-password` requires authentication, `currentPassword`, a strong `password`, and `confirmPassword`. It clears the first-use requirement and revokes sessions. Email/OTP recovery does the same.
 - Public `/api/organizations/register` rejects blood-bank registration and `/api/staff/register` rejects blood-bank staff. Hospital behavior remains.
 
-The admin UI supports copying credentials for manual handover to the bank contact. It keeps newly created credentials in memory between the two steps and clears them after final handover or session exit. No credentials are returned from database reads. The bank dashboard and teammate management will be developed separately. Audit persistence remains enabled despite removing activity-log UI.
+The admin UI supports copying credentials for manual handover to the bank contact. It keeps newly created credentials in memory between the two steps and clears them after final handover or session exit. No credentials are returned from database reads. The same portal provides institution dashboards and teammate management, routing by the authenticated role. Super admins review requests before donor publication. See [the institution workflow](../docs/INSTITUTION_DASHBOARD.md). Audit persistence remains enabled despite removing activity-log UI.

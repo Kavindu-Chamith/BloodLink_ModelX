@@ -1,9 +1,9 @@
+import { showAlert } from '../../utils/showAlert';
 // src/notifications/screens/NotificationsScreen.tsx
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Linking,
     Pressable,
     RefreshControl,
@@ -19,30 +19,36 @@ import { FilterChips, NotificationCard } from '../components';
 import { NotificationsState } from '../hooks/useNotifications';
 import { AppNotification } from '../types/notifications';
 import { FILTERS } from '../utils/kindConfig';
+import DonorBottomNav, { DonorTab } from '../../components/DonorBottomNav';
+import DonorHeader from '../../components/DonorHeader';
+import { fetchPrivateHealthMessage } from '../services/notificationsService';
 
 interface Props {
     state: NotificationsState;
+    onNavigateTab: (tab: DonorTab) => void;
+    onNavigateToProfile: () => void;
     onBack?: () => void; // shows a back arrow when provided
     onViewRequest?: (requestId?: string) => void; // opens the Requests screen (owned by another module)
 }
 
-async function openUrl(url: string | undefined, unavailableMessage: string) {
+async function openUrl(url: string | undefined, unavailableMessage: string): Promise<string | null> {
     if (!url) {
-        Alert.alert('Not available yet', unavailableMessage);
-        return;
+        return unavailableMessage;
     }
     try {
         await Linking.openURL(url);
+        return null;
     } catch {
-        Alert.alert('Could not open the link', 'Please try again later.');
+        return 'Could not open the document. Please try again later.';
     }
 }
 
-export default function NotificationsScreen({ state, onBack, onViewRequest }: Props) {
+export default function NotificationsScreen({ state, onBack, onViewRequest, onNavigateTab, onNavigateToProfile }: Props) {
     const { colors } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
     const { items, unreadCount, loading, refreshing, error } = state;
     const [filter, setFilter] = useState<string>('all');
+    const [actionMessage, setActionMessage] = useState<string | null>(null);
 
     const chips = useMemo(
         () =>
@@ -63,14 +69,14 @@ export default function NotificationsScreen({ state, onBack, onViewRequest }: Pr
         try {
             await state.markAllRead();
         } catch {
-            Alert.alert('Could not update', 'Please check your connection and try again.');
+            showAlert('Could not update', 'Please check your connection and try again.');
         }
     };
 
     const handleViewRequest = (n: AppNotification) => {
         state.markRead(n.id);
         if (onViewRequest) onViewRequest(n.requestId);
-        else Alert.alert('Requests', 'The Requests screen is not connected here yet.');
+        else showAlert('Requests', 'The Requests screen is not connected here yet.');
     };
 
     const handleShare = async (n: AppNotification) => {
@@ -86,12 +92,8 @@ export default function NotificationsScreen({ state, onBack, onViewRequest }: Pr
 
     return (
         <SafeAreaView style={styles.safe} edges={['top']}>
+            <DonorHeader title="Updates" onBack={onBack} onProfile={onNavigateToProfile} colors={colors} />
             <View style={styles.topRow}>
-                {onBack && (
-                    <Pressable onPress={onBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
-                        <Ionicons name="arrow-back" size={22} color={colors.text} />
-                    </Pressable>
-                )}
                 <View style={styles.titleWrap}>
                     <Text style={styles.title}>Notifications</Text>
                     {unreadCount > 0 && (
@@ -112,6 +114,7 @@ export default function NotificationsScreen({ state, onBack, onViewRequest }: Pr
                 </Pressable>
             </View>
 
+            {actionMessage && <Pressable onPress={() => setActionMessage(null)} accessibilityRole="button" accessibilityLabel="Dismiss document message" style={styles.actionMessage}><Text style={styles.errorText} accessibilityRole="alert">{actionMessage}</Text></Pressable>}
             {loading && items.length === 0 ? (
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={colors.primary} />
@@ -147,25 +150,33 @@ export default function NotificationsScreen({ state, onBack, onViewRequest }: Pr
                                     notification={n}
                                     onPress={(item) => state.markRead(item.id)}
                                     onViewRequest={handleViewRequest}
-                                    onOpenLabPdf={(item) => {
+                                    onOpenLabPdf={async (item) => {
                                         state.markRead(item.id);
-                                        openUrl(item.labReport?.labPdfUrl, 'The lab report PDF will be available once the backend is connected.');
+                                        setActionMessage(await openUrl(item.labReport?.labPdfUrl, 'The lab report PDF is not available yet.'));
                                     }}
-                                    onOpenDoctorNote={(item) => {
+                                    onOpenDoctorNote={async (item) => {
                                         state.markRead(item.id);
-                                        openUrl(item.labReport?.doctorNoteUrl, 'The doctor note will be available once the backend is connected.');
+                                        setActionMessage(await openUrl(item.labReport?.doctorNoteUrl, 'The doctor note is not available yet.'));
                                     }}
-                                    onViewGuidelines={(item) => {
+                                    onViewGuidelines={async (item) => {
                                         state.markRead(item.id);
-                                        openUrl(item.guidelinesUrl, 'Donation guidelines will be available once the backend is connected.');
+                                        setActionMessage(await openUrl(item.guidelinesUrl, 'Donation guidelines have not been attached to this notification.'));
                                     }}
                                     onShareHonor={handleShare}
+                                    onViewPrivateMessage={async item => {
+                                        try {
+                                            const message = await fetchPrivateHealthMessage(item.id);
+                                            showAlert(message.subject, `${message.institution}\n\n${message.message}`);
+                                            await state.markRead(item.id);
+                                        } catch { setActionMessage('Could not open the private message. Please try again.'); }
+                                    }}
                                 />
                             ))
                         )}
                     </ScrollView>
                 </>
             )}
+            <DonorBottomNav activeTab="Home" onSelect={onNavigateTab} colors={colors} />
         </SafeAreaView>
     );
 }
@@ -173,12 +184,13 @@ export default function NotificationsScreen({ state, onBack, onViewRequest }: Pr
 const createStyles = (c: ColorPalette) =>
     StyleSheet.create({
         safe: { flex: 1, backgroundColor: c.background },
+        actionMessage: { backgroundColor: c.warningSoft, marginHorizontal: 20, marginBottom: 12, borderRadius: 12, padding: 12 },
         topRow: {
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: 20,
-            paddingTop: 8,
-            paddingBottom: 14,
+            paddingTop: 12,
+            paddingBottom: 12,
             gap: 10,
         },
         backButton: {
@@ -192,16 +204,16 @@ const createStyles = (c: ColorPalette) =>
             justifyContent: 'center',
         },
         titleWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-        title: { fontSize: 26, fontWeight: '800', color: c.text },
-        newBadge: { backgroundColor: c.primary, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4 },
-        newBadgeText: { color: c.onPrimary, fontWeight: '800', fontSize: 12 },
-        markAll: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-        markAllText: { color: c.primary, fontWeight: '700', fontSize: 14 },
-        content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 100, gap: 14 },
+        title: { fontSize: 17, fontWeight: '700', color: c.text },
+        newBadge: { backgroundColor: c.action, borderRadius: radius.pill, paddingHorizontal: 6, paddingVertical: 3 },
+        newBadgeText: { color: c.onPrimary, fontWeight: '700', fontSize: 10 },
+        markAll: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 4 },
+        markAllText: { color: c.primary, fontWeight: '600', fontSize: 12 },
+        content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24, gap: 12 },
         center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
         errorTitle: { fontSize: 18, fontWeight: '700', color: c.text, marginBottom: 6 },
         errorText: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginBottom: 16 },
-        retry: { backgroundColor: c.primary, borderRadius: radius.md, paddingHorizontal: 24, paddingVertical: 12 },
+        retry: { backgroundColor: c.action, borderRadius: radius.md, paddingHorizontal: 24, paddingVertical: 12 },
         retryText: { color: c.onPrimary, fontWeight: '700' },
         empty: {
             alignItems: 'center',

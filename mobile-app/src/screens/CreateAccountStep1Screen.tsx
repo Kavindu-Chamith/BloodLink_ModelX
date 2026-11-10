@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import {
   View,
@@ -15,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { StepIndicator } from '../components/StepIndicator';
 import { CalendarIcon, ShieldIcon } from '../components/Icons';
-import { colors } from '../theme/colors';
+
 import { normalizeSriLankanMobile, toLocalSriLankanMobile } from '../utils/phone';
 import { BirthDatePicker } from '../components/BirthDatePicker';
 import { birthDateToString, formatBirthDateInput, getBirthDateError, latestBirthDate, parseBirthDate } from '../utils/birthDate';
@@ -45,6 +47,7 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
   onSignIn,
   initialData,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const [fullName, setFullName] = useState(initialData?.fullName || '');
   const [email, setEmail] = useState(initialData?.email || '');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -84,7 +87,7 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
       <Header title="Create Account" onBack={onBack} />
 
       <KeyboardAvoidingView
@@ -114,7 +117,7 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
               <TextInput
                 style={styles.input}
                 placeholder="Enter your full name"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 value={fullName}
                 onChangeText={setFullName}
                 autoCapitalize="words"
@@ -126,7 +129,7 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
               <TextInput
                 style={[styles.input, emailError && styles.phoneRowError]}
                 placeholder="you@example.com"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={(value) => {
                   setEmail(value);
@@ -152,7 +155,7 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
                 <TextInput
                   style={styles.phoneInput}
                   placeholder="077 123 4567"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="phone-pad"
                   value={phone}
                   onChangeText={(value) => {
@@ -175,7 +178,7 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
                 <TextInput
                   style={styles.iconInputText}
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   value={dob}
                   onChangeText={(value) => {
                     setDob(formatBirthDateInput(value));
@@ -210,7 +213,7 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
               <TextInput
                 style={styles.input}
                 placeholder="National ID Number"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={colors.textMuted}
                 value={nic}
                 onChangeText={setNic}
                 autoCapitalize="characters"
@@ -220,7 +223,7 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
             {/* Privacy Informational Card */}
             <View style={styles.privacyCard}>
               <View style={styles.privacyIconWrap}>
-                <ShieldIcon size={18} color="#475569" />
+                <ShieldIcon size={18} color={colors.textSecondary} />
               </View>
               <Text style={styles.privacyText}>
                 Your personal information is kept private. Only operationally relevant details are shared with institutions.
@@ -267,10 +270,10 @@ export const CreateAccountStep1Screen: React.FC<CreateAccountStep1ScreenProps> =
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
@@ -283,13 +286,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
     marginBottom: 6,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     lineHeight: 18,
     marginBottom: 10,
   },
@@ -303,30 +306,30 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     fontSize: 14,
-    color: '#0F172A',
-    backgroundColor: '#FFFFFF',
+    color: c.text,
+    backgroundColor: c.card,
   },
   phoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   countryBadge: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -335,37 +338,37 @@ const styles = StyleSheet.create({
   countryBadgeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#475569',
+    color: c.textSecondary,
   },
   phoneInput: {
     flex: 1,
     minWidth: 0,
     fontSize: 14,
-    color: '#0F172A',
+    color: c.text,
   },
   phoneHint: {
     fontSize: 12,
     lineHeight: 18,
-    color: colors.textSecondary,
+    color: c.textSecondary,
   },
   phoneRowError: {
-    borderColor: colors.primary,
+    borderColor: c.primary,
   },
   phoneError: {
     fontSize: 12,
     lineHeight: 18,
-    color: colors.primary,
+    color: c.primary,
   },
   iconInputRow: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingLeft: 14,
     paddingRight: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     overflow: 'hidden',
   },
   iconInputText: {
@@ -373,7 +376,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     height: '100%',
     fontSize: 14,
-    color: '#0F172A',
+    color: c.text,
     paddingHorizontal: 0,
     paddingVertical: 0,
     backgroundColor: 'transparent',
@@ -386,7 +389,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   privacyCard: {
-    backgroundColor: '#F0F4FF',
+    backgroundColor: c.infoSoft,
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
@@ -399,7 +402,7 @@ const styles = StyleSheet.create({
   privacyText: {
     flex: 1,
     fontSize: 11.5,
-    color: '#475569',
+    color: c.textSecondary,
     lineHeight: 16,
   },
   footer: {
@@ -408,7 +411,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
@@ -416,7 +419,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -426,10 +429,10 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   signInHighlight: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '700',
   },
 });

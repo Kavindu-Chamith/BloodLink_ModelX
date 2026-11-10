@@ -1,7 +1,8 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { TactilePressable } from '../../components/Motion';
 import { ColorPalette, radius, useTheme } from '../theme';
 import { DonorProfile, VerificationStatus } from '../types/profile';
 import { formatFileSize, formatMonthYear, maskNic } from '../utils/format';
@@ -33,7 +34,7 @@ export default function VerificationSection({ profile, uploading, onUpload }: Pr
     return (
         <View style={styles.card}>
             <View style={styles.headerRow}>
-                <Text style={styles.sectionTitle}>Verification badges</Text>
+                <Text style={styles.sectionTitle}>Documents & verification</Text>
                 {needsAction && (
                     <View style={styles.actionPill}>
                         <Text style={styles.actionPillText}>Action required</Text>
@@ -115,7 +116,7 @@ export default function VerificationSection({ profile, uploading, onUpload }: Pr
                 </View>
             )}
 
-            <Pressable
+            <TactilePressable
                 onPress={onUpload}
                 disabled={uploadDisabled}
                 accessibilityRole="button"
@@ -136,7 +137,7 @@ export default function VerificationSection({ profile, uploading, onUpload }: Pr
                         </Text>
                     </>
                 )}
-            </Pressable>
+            </TactilePressable>
             {doc?.status === 'pending' && (
                 <Text style={styles.helper}>Your document is under review by an administrator.</Text>
             )}

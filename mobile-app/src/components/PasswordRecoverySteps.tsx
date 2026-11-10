@@ -1,13 +1,15 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { CheckIcon } from './Icons';
-import { colors } from '../theme/colors';
 
 interface PasswordRecoveryStepsProps {
   currentStep: 1 | 2 | 3;
 }
 
 export const PasswordRecoverySteps: React.FC<PasswordRecoveryStepsProps> = ({ currentStep }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   const steps = [
     {
       stepNum: 1,
@@ -70,7 +72,7 @@ export const PasswordRecoverySteps: React.FC<PasswordRecoveryStepsProps> = ({ cu
                   ]}
                 >
                   {isDone ? (
-                    <CheckIcon size={12} color="#FFFFFF" strokeWidth={2.6} />
+                    <CheckIcon size={12} color={colors.onPrimary} strokeWidth={2.6} />
                   ) : (
                     <Text
                       style={[
@@ -101,19 +103,19 @@ export const PasswordRecoverySteps: React.FC<PasswordRecoveryStepsProps> = ({ cu
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   card: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EDF2F7',
+    borderColor: c.border,
     marginVertical: 12,
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#64748B',
+    color: c.textMuted,
     letterSpacing: 0.5,
     marginBottom: 14,
   },
@@ -136,32 +138,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   circleDone: {
-    backgroundColor: '#10B981',
+    backgroundColor: c.successFill,
   },
   circleActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
   },
   circlePending: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.surface,
   },
   circleText: {
     fontSize: 11,
     fontWeight: '700',
   },
   circleTextActive: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
   },
   circleTextPending: {
-    color: '#64748B',
+    color: c.textMuted,
   },
   connectingLine: {
     width: 1.5,
     flex: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.surface,
     marginVertical: 3,
   },
   connectingLineDone: {
-    backgroundColor: '#10B981',
+    backgroundColor: c.success,
   },
   textColumn: {
     flex: 1,
@@ -170,18 +172,18 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#64748B',
+    color: c.textMuted,
     marginBottom: 2,
   },
   stepTitleActive: {
-    color: colors.primary,
+    color: c.primary,
   },
   stepTitleDone: {
-    color: '#1E293B',
+    color: c.text,
   },
   stepDesc: {
     fontSize: 12,
-    color: '#64748B',
+    color: c.textMuted,
     lineHeight: 16,
   },
 });

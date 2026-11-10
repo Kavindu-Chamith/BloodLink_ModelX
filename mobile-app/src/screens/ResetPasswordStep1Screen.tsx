@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import {
   View,
@@ -15,7 +17,6 @@ import { Header } from '../components/Header';
 import { ShieldIcon } from '../components/Icons';
 import { PasswordRecoverySteps } from '../components/PasswordRecoverySteps';
 import { SecurityBadge } from '../components/SecurityBadge';
-import { colors } from '../theme/colors';
 
 import { requestPasswordReset } from '../services/authService';
 
@@ -30,6 +31,7 @@ export const ResetPasswordStep1Screen: React.FC<ResetPasswordStep1ScreenProps> =
   onSendResetLink,
   onSignIn,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export const ResetPasswordStep1Screen: React.FC<ResetPasswordStep1ScreenProps> =
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.card} />
       <Header title="Reset Password" onBack={onBack} />
 
       <KeyboardAvoidingView
@@ -80,8 +82,8 @@ export const ResetPasswordStep1Screen: React.FC<ResetPasswordStep1ScreenProps> =
           </Text>
 
           {errorMessage && (
-            <View style={{ backgroundColor: '#FFF1F2', borderRadius: 8, padding: 10, marginBottom: 12 }}>
-              <Text style={{ color: '#E11D48', fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
+            <View style={{ backgroundColor: colors.primarySoft, borderRadius: 8, padding: 10, marginBottom: 12 }}>
+              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600', textAlign: 'center' }}>
                 {errorMessage}
               </Text>
             </View>
@@ -93,7 +95,7 @@ export const ResetPasswordStep1Screen: React.FC<ResetPasswordStep1ScreenProps> =
             <TextInput
               style={styles.input}
               placeholder="you@email.com"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -140,10 +142,10 @@ export const ResetPasswordStep1Screen: React.FC<ResetPasswordStep1ScreenProps> =
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
   },
   scroll: {
     flex: 1,
@@ -161,13 +163,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FEECEF',
+    backgroundColor: c.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
   },
   description: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -179,18 +181,18 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: c.text,
     marginBottom: 6,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     fontSize: 14,
-    color: '#0F172A',
-    backgroundColor: '#FFFFFF',
+    color: c.text,
+    backgroundColor: c.card,
   },
   footer: {
     paddingHorizontal: 24,
@@ -198,7 +200,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   primaryButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
@@ -206,7 +208,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -216,10 +218,10 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontSize: 13,
-    color: '#64748B',
+    color: c.textMuted,
   },
   signInHighlight: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '700',
   },
 });

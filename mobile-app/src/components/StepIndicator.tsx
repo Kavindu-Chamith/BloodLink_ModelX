@@ -1,6 +1,7 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -8,6 +9,7 @@ interface StepIndicatorProps {
 }
 
 export const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, totalSteps = 4 }) => {
+  const { styles } = useThemedStyles(createStyles);
   return (
     <View style={styles.container}>
       <Text style={styles.label}>
@@ -31,14 +33,14 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, total
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     marginVertical: 12,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: 8,
   },
   barContainer: {
@@ -52,9 +54,9 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   activeSegment: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
   },
   inactiveSegment: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: c.surface,
   },
 });

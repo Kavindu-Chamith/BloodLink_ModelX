@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '../components/Header';
 import { StepIndicator } from '../components/StepIndicator';
 import { CheckIcon } from '../components/Icons';
-import { colors } from '../theme/colors';
+
 import { sendRegistrationOtp, verifyRegistrationOtp } from '../services/authService';
 import { normalizeSriLankanMobile } from '../utils/phone';
 import {
@@ -48,6 +50,7 @@ export const CreateAccountStep3Screen: React.FC<CreateAccountStep3ScreenProps> =
   initialVerifiedAt,
   onCodeSent,
 }) => {
+  const { styles, colors, isDark } = useThemedStyles(createStyles);
   const cleanEmail = email.trim().toLowerCase();
   const hasContactDetails = !!cleanEmail && !!normalizeSriLankanMobile(phone);
   const [code, setCode] = useState('');
@@ -137,7 +140,7 @@ export const CreateAccountStep3Screen: React.FC<CreateAccountStep3ScreenProps> =
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <Header title="Create Account" onBack={onBack} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
@@ -217,35 +220,35 @@ export const CreateAccountStep3Screen: React.FC<CreateAccountStep3ScreenProps> =
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const createStyles = (c: AppColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   flex: { flex: 1 },
   content: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 20 },
-  title: { fontSize: 24, fontWeight: '800', color: colors.textPrimary, marginBottom: 6, letterSpacing: -0.3 },
-  subtitle: { fontSize: 13, color: '#64748B', lineHeight: 18, marginBottom: 10 },
+  title: { fontSize: 24, fontWeight: '800', color: c.textPrimary, marginBottom: 6, letterSpacing: -0.3 },
+  subtitle: { fontSize: 13, color: c.textMuted, lineHeight: 18, marginBottom: 10 },
   contactSummary: { marginTop: 16, marginBottom: 8 },
-  contactLabel: { fontSize: 12, color: '#64748B', marginBottom: 4 },
-  contactValue: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  linkText: { color: colors.primary, fontWeight: '700', fontSize: 13 },
-  errorBanner: { backgroundColor: '#FFF1F2', borderRadius: 8, padding: 10, marginTop: 8 },
-  errorText: { color: colors.primary, fontSize: 12, lineHeight: 18 },
+  contactLabel: { fontSize: 12, color: c.textMuted, marginBottom: 4 },
+  contactValue: { fontSize: 15, fontWeight: '600', color: c.textPrimary },
+  linkText: { color: c.primary, fontWeight: '700', fontSize: 13 },
+  errorBanner: { backgroundColor: c.primarySoft, borderRadius: 8, padding: 10, marginTop: 8 },
+  errorText: { color: c.primary, fontSize: 12, lineHeight: 18 },
   otpRow: { position: 'relative', flexDirection: 'row', gap: 6, marginTop: 16, marginBottom: 16 },
-  otpBox: { flex: 1, height: 54, borderRadius: 12, backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center' },
-  otpDigit: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
-  otpBoxFilled: { borderColor: '#94A3B8', backgroundColor: colors.background },
-  otpBoxActive: { borderColor: colors.primary, backgroundColor: colors.background },
-  otpBoxError: { borderColor: colors.primary },
+  otpBox: { flex: 1, height: 54, borderRadius: 12, backgroundColor: c.background, borderWidth: 1.5, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
+  otpDigit: { fontSize: 22, fontWeight: '700', color: c.textPrimary },
+  otpBoxFilled: { borderColor: c.border, backgroundColor: c.background },
+  otpBoxActive: { borderColor: c.primary, backgroundColor: c.background },
+  otpBoxError: { borderColor: c.primary },
   codeInput: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, opacity: 0.02, color: 'transparent', fontSize: 22 },
   resendRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 6 },
-  resendPrompt: { fontSize: 13, color: '#64748B' },
+  resendPrompt: { fontSize: 13, color: c.textMuted },
   resendButton: { minHeight: 44, justifyContent: 'center' },
-  muted: { color: '#94A3B8' },
-  verifiedCard: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 16, backgroundColor: colors.successLight, borderRadius: 12, marginVertical: 16 },
-  verifiedText: { color: '#047857', fontSize: 14, fontWeight: '600' },
+  muted: { color: c.textMuted },
+  verifiedCard: { flexDirection: 'row', gap: 10, alignItems: 'center', padding: 16, backgroundColor: c.successLight, borderRadius: 12, marginVertical: 16 },
+  verifiedText: { color: c.success, fontSize: 14, fontWeight: '600' },
   footer: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12 },
-  primaryButton: { backgroundColor: colors.primary, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  primaryButtonText: { color: colors.textWhite, fontSize: 16, fontWeight: '700' },
+  primaryButton: { backgroundColor: c.action, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  primaryButtonText: { color: c.textWhite, fontSize: 16, fontWeight: '700' },
   disabled: { opacity: 0.5 },
   signInLink: { alignItems: 'center', paddingVertical: 14 },
-  signInText: { fontSize: 13, color: '#64748B' },
+  signInText: { fontSize: 13, color: c.textMuted },
 });

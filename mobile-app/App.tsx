@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DonorTab } from './src/components/DonorBottomNav';
@@ -26,10 +26,19 @@ import { AuthProvider } from './src/context/AuthContext';
 import HistoryFlow from './src/history/HistoryFlow';
 import RequestsFlow from './src/requests/RequestsFlow';
 import NotificationsFlow from './src/notifications/NotificationsFlow';
+import BanksScreen from './src/banks/BanksScreen';
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+import { MotionProvider } from './src/components/Motion';
 
 export default function App() {
+  return <SafeAreaProvider><ThemeProvider><MotionProvider><AuthProvider><AppContent /></AuthProvider></MotionProvider></ThemeProvider></SafeAreaProvider>;
+}
+
+function AppContent() {
+  const { colors, isDark } = useTheme();
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Splash');
   const [homeTab, setHomeTab] = useState<DonorTab>('Home');
+  const [requestId, setRequestId] = useState<string | undefined>();
   const [isNewAccount, setIsNewAccount] = useState(true);
   const [resetEmail, setResetEmail] = useState('');
   const [resetToken, setResetToken] = useState<string | undefined>(undefined);
@@ -44,6 +53,16 @@ export default function App() {
     otp: '',
     documentName: '',
   });
+
+  const navigateDonorTab = (tab: DonorTab) => {
+    setHomeTab(tab);
+    if (tab === 'Requests') setRequestId(undefined);
+    setCurrentScreen(tab);
+  };
+  const openRequest = (id?: string) => {
+    setRequestId(id);
+    setCurrentScreen('Requests');
+  };
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -174,6 +193,9 @@ export default function App() {
           <HomeScreen
             initialTab={homeTab}
             onNavigateToRequests={() => setCurrentScreen('Requests')}
+            onNavigateToBanks={() => navigateDonorTab('Banks')}
+            onNavigateToNotifications={() => setCurrentScreen('Notifications')}
+            onOpenRequest={openRequest}
             onNavigateToHistory={() => setCurrentScreen('History')}
             onNavigateToProfile={() => setCurrentScreen('Profile')}
             onLogout={() => { setHomeTab('Home'); setCurrentScreen('Login'); }}
@@ -183,14 +205,9 @@ export default function App() {
       case 'Requests':
         return (
           <RequestsFlow
+            initialRequestId={requestId}
             onBack={() => { setHomeTab('Home'); setCurrentScreen('Home'); }}
-            onNavigateTab={(tab) => {
-              setHomeTab(tab);
-              if (tab === 'Home') setCurrentScreen('Home');
-              else if (tab === 'Profile') setCurrentScreen('Profile');
-              else if (tab === 'History') setCurrentScreen('History');
-              else if (tab === 'Requests') setCurrentScreen('Requests');
-            }}
+            onNavigateTab={navigateDonorTab}
             onNavigateToProfile={() => setCurrentScreen('Profile')}
           />
         );
@@ -237,22 +254,19 @@ export default function App() {
         return (
           <ProfileFlow
             onBack={() => { setHomeTab('Home'); setCurrentScreen('Home'); }}
-            onNavigateTab={(tab) => {
-              setHomeTab(tab);
-              if (tab === 'Home') setCurrentScreen('Home');
-              else if (tab === 'Requests') setCurrentScreen('Requests');
-              else if (tab === 'History') setCurrentScreen('History');
-              else if (tab === 'Profile') setCurrentScreen('Profile');
-            }}
+            onNavigateTab={navigateDonorTab}
             onSignOut={() => { setHomeTab('Home'); setCurrentScreen('Welcome'); }}
           />
         );
 
       case 'History':
-        return <HistoryFlow />;
+        return <HistoryFlow onNavigateTab={navigateDonorTab} onNavigateToProfile={() => navigateDonorTab('Profile')} />;
+
+      case 'Banks':
+        return <BanksScreen onNavigateTab={navigateDonorTab} onProfile={() => navigateDonorTab('Profile')} />;
 
       case 'Notifications':
-        return <NotificationsFlow onBack={() => setCurrentScreen('Home')} />;
+        return <NotificationsFlow onBack={() => navigateDonorTab('Home')} onViewRequest={openRequest} onNavigateTab={navigateDonorTab} onNavigateToProfile={() => navigateDonorTab('Profile')} />;
 
       default:
         return (
@@ -270,26 +284,25 @@ export default function App() {
     currentScreen !== 'Login';
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <View style={styles.container}>
-          <StatusBar style={isLightBackground ? 'dark' : 'light'} />
-          {renderScreen()}
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <StatusBar style={isDark || !isLightBackground ? 'light' : 'dark'} />
+          <View style={[styles.appFrame, Platform.OS === 'web' && styles.webFrame, { backgroundColor: colors.background }]}>{renderScreen()}</View>
 
           {/* Floating Screen Switcher for Testing and Review */}
-          {__DEV__ && process.env.EXPO_PUBLIC_SHOW_SCREEN_PICKER !== 'false' && <DevScreenPicker
+          {__DEV__ && process.env.EXPO_PUBLIC_SHOW_SCREEN_PICKER === 'true' && <DevScreenPicker
             currentScreen={currentScreen}
             onSelectScreen={(screen) => setCurrentScreen(screen)}
           />}
         </View>
-      </AuthProvider>
-    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
   },
+  appFrame: { flex: 1, width: '100%' },
+  webFrame: { maxWidth: 520 },
 });

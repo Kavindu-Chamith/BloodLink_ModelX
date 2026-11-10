@@ -65,13 +65,13 @@ function mockResponse(status, data) {
 test('fetchRequestsData calls /requests/me and returns real structured data', async () => {
   const dummyPayload = {
     donorInitials: 'KP',
-    donorName: 'Kavindu Perera',
+    donorName: 'Demo Donor',
     unreadAlertsCount: 2,
     activeCount: 1,
     alerts: [
       {
         id: '1',
-        hospitalName: 'Sabaragamuwa Provincial General Hospital',
+        hospitalName: 'Demo Ratnapura Hospital A',
         distance: '3.2 km away',
         timeAgo: '10m ago',
         bloodGroup: 'O- Negative',
@@ -79,22 +79,22 @@ test('fetchRequestsData calls /requests/me and returns real structured data', as
         isUrgent: true,
         type: 'urgent',
         requirementLabel: 'O- Negative · 2 Units needed',
-        address: 'Hospital Rd, Ratnapura 70000',
-        contactNumber: '+94 45 222 2261',
-        patientCase: 'Emergency Trauma ICU - Urgent transfusion needed.',
+        address: 'Demo service area, Ratnapura',
+        contactNumber: 'DEMO-CONTACT-001',
+        patientCase: 'Fictional urgent request for workflow demonstration.',
       },
     ],
     activeMission: {
       id: '2',
-      hospitalName: 'Teaching Hospital Ratnapura',
-      unitDepartment: 'Hematology Ward',
+      hospitalName: 'Demo Ratnapura Hospital B',
+      unitDepartment: 'Demo care unit',
       bloodGroup: 'O- Negative',
       unitsNeeded: 1,
       estimatedArrival: '~15 mins',
       status: 'En Route',
-      coordinatorName: 'Dr. Weerasinghe',
-      coordinatorPhone: '+94 45 222 3444',
-      fastPassToken: '#BL-0002',
+      coordinatorName: 'Demo Coordinator',
+      coordinatorPhone: 'DEMO-CONTACT-002',
+      fastPassToken: '#DEMO-0002',
       steps: [
         { id: 'step-1', title: 'Accepted Request', status: 'completed' },
         { id: 'step-2', title: 'En Route to Hospital', status: 'in_progress', badgeText: 'In Progress' },
@@ -118,7 +118,7 @@ test('fetchRequestsData calls /requests/me and returns real structured data', as
 
   const result = await requestsService.fetchRequestsData();
   assert.ok(requestedUrl.includes('/requests/me'), `Expected URL to include /requests/me, got ${requestedUrl}`);
-  assert.equal(result.donorName, 'Kavindu Perera');
+  assert.equal(result.donorName, 'Demo Donor');
   assert.equal(result.alerts.length, 1);
   assert.equal(result.activeMission.status, 'En Route');
   assert.equal(result.activeMission.fastPassToken, '#BL-0002');

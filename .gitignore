@@ -3,10 +3,10 @@ node_modules/
 .pnp
 .pnp.js
 
-# Environment variables - NEVER commit secrets
-.env
-.env.local
-.env.*.local
+# Environment variables - commit only checked-in example templates
+.env*
+!.env.example
+!.env.*.example
 
 # Build outputs
 dist/
@@ -44,3 +44,7 @@ uploads/
 # Local dependency audit cache
 .npm-cache/
 .qa-private/
+
+# Python dataset tooling caches
+__pycache__/
+*.pyc

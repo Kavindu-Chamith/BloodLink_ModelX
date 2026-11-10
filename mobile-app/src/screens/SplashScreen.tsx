@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -7,6 +9,7 @@ import {
   Animated,
   TouchableOpacity,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,39 +18,42 @@ interface SplashScreenProps {
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
+  const { styles } = useThemedStyles(createStyles);
   const progressAnim = useRef(new Animated.Value(0.15)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // Progress bar fill animation
-    Animated.timing(progressAnim, {
+    const progress = Animated.timing(progressAnim, {
       toValue: 0.85,
       duration: 1800,
       useNativeDriver: false,
-    }).start();
+    });
+    progress.start();
 
     // Subtle gentle pulse
-    Animated.loop(
+    const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.03,
           duration: 1000,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 1000,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
-    ).start();
+    );
+    pulse.start();
 
     // Auto advance after 2.5s if not manually clicked
     const timer = setTimeout(() => {
       if (onFinish) onFinish();
     }, 2500);
 
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); progress.stop(); pulse.stop(); };
   }, [onFinish, progressAnim, pulseAnim]);
 
   const progressWidth = progressAnim.interpolate({
@@ -93,7 +99,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#C5162E',
@@ -130,14 +136,14 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 34,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     letterSpacing: -0.5,
     marginBottom: 6,
   },
   tagline: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: c.onPrimary,
     letterSpacing: 2.2,
     opacity: 0.9,
     marginBottom: 32,

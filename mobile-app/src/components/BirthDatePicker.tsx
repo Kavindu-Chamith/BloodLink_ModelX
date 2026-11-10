@@ -1,7 +1,9 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { DatePickerSheet } from './DatePickerSheet';
-import { colors } from '../theme/colors';
+
 import { birthDateToString, birthMonthDays, dateInBirthMonth, moveBirthDateToMonth } from '../utils/birthDate';
 
 export interface BirthDatePickerProps {
@@ -16,6 +18,7 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** Uses existing React Native components, including in Expo Go. */
 export function BirthDatePicker({ value, maximumDate, onConfirm, onCancel }: BirthDatePickerProps) {
+  const { styles } = useThemedStyles(createStyles);
   const [selected, setSelected] = useState(value);
   const [view, setView] = useState<'days' | 'months' | 'years'>('days');
   const year = selected.getFullYear();
@@ -93,22 +96,22 @@ export function BirthDatePicker({ value, maximumDate, onConfirm, onCancel }: Bir
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   content: { paddingHorizontal: 12, paddingBottom: 12 },
   navigation: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   arrow: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  arrowText: { fontSize: 30, color: colors.primary },
+  arrowText: { fontSize: 30, color: c.primary },
   headingButton: { minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' },
-  heading: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  heading: { fontSize: 15, fontWeight: '700', color: c.textPrimary },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: `${100 / 7}%`, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  weekday: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
-  day: { fontSize: 15, color: colors.textPrimary },
+  weekday: { fontSize: 12, fontWeight: '600', color: c.textSecondary },
+  day: { fontSize: 15, color: c.textPrimary },
   option: { width: '33.333333%', height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  optionText: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
-  active: { backgroundColor: colors.primary },
-  activeText: { color: colors.textWhite },
+  optionText: { fontSize: 15, fontWeight: '600', color: c.textPrimary },
+  active: { backgroundColor: c.action },
+  activeText: { color: c.textWhite },
   disabled: { opacity: 0.3 },
   yearList: { height: 264 },
-  selectedDate: { textAlign: 'center', fontSize: 13, color: colors.textSecondary, marginTop: 12 },
+  selectedDate: { textAlign: 'center', fontSize: 13, color: c.textSecondary, marginTop: 12 },
 });

@@ -1,3 +1,7 @@
+import { useThemedStyles } from '../../theme/useThemedStyles';
+import { Ionicons } from '@expo/vector-icons';
+import { IconPop } from '../../components/Motion';
+import type { AppColors } from '../../theme/palette';
 // src/requests/components/RequestsTabs.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
@@ -13,15 +17,16 @@ interface RequestsTabsProps {
 export const RequestsTabs: React.FC<RequestsTabsProps> = ({
   activeTab,
   onTabChange,
-  alertsCount = 3,
-  activeCount = 1,
+  alertsCount = 0,
+  activeCount = 0,
 }) => {
+  const { styles, colors } = useThemedStyles(createStyles);
   const isAlertsActive = activeTab === 'alerts';
   const isActiveMissionActive = activeTab === 'active';
 
   return (
     <View style={styles.outerContainer}>
-      <View style={styles.pillContainer}>
+      <View style={styles.pillContainer} accessibilityRole="tablist" accessibilityLabel="Request status">
         {/* New Alerts Tab */}
         <TouchableOpacity
           style={[
@@ -32,8 +37,10 @@ export const RequestsTabs: React.FC<RequestsTabsProps> = ({
           activeOpacity={0.85}
           accessibilityRole="tab"
           accessibilityState={{ selected: isAlertsActive }}
+          aria-selected={isAlertsActive}
           accessibilityLabel={`New Alerts, ${alertsCount} available`}
         >
+          <IconPop active={isAlertsActive}><Ionicons name="notifications-outline" size={16} color={isAlertsActive ? colors.primary : colors.textMuted} /></IconPop>
           <Text
             style={[
               styles.tabText,
@@ -69,8 +76,10 @@ export const RequestsTabs: React.FC<RequestsTabsProps> = ({
           activeOpacity={0.85}
           accessibilityRole="tab"
           accessibilityState={{ selected: isActiveMissionActive }}
+          aria-selected={isActiveMissionActive}
           accessibilityLabel={`Active requests, ${activeCount} active`}
         >
+          <IconPop active={isActiveMissionActive}><Ionicons name="navigate-outline" size={16} color={isActiveMissionActive ? colors.primary : colors.textMuted} /></IconPop>
           <Text
             style={[
               styles.tabText,
@@ -100,74 +109,13 @@ export const RequestsTabs: React.FC<RequestsTabsProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  outerContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-  },
-  pillContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#EEF2F6',
-    borderRadius: 24,
-    padding: 4,
-    width: '100%',
-    maxWidth: 340,
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    gap: 6,
-  },
-  activeTabButton: {
-    backgroundColor: '#BA1328', // Deep crimson red matching screenshot
-    shadowColor: '#BA1328',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  inactiveTabButton: {
-    backgroundColor: 'transparent',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  activeTabText: {
-    color: '#FFFFFF',
-  },
-  inactiveTabText: {
-    color: '#475569',
-  },
-  countBadge: {
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activeCountBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  inactiveCountBadge: {
-    backgroundColor: '#CBD5E1',
-  },
-  countText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  activeCountText: {
-    color: '#FFFFFF',
-  },
-  inactiveCountText: {
-    color: '#334155',
-  },
+const createStyles = (c: AppColors) => StyleSheet.create({
+  outerContainer: { paddingHorizontal: 22, backgroundColor: c.card },
+  pillContainer: { flexDirection: 'row', borderBottomWidth: 1, borderColor: c.border },
+  tabButton: { flex: 1, minHeight: 50, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 7, borderBottomWidth: 2 },
+  activeTabButton: { borderBottomColor: c.primary }, inactiveTabButton: { borderBottomColor: 'transparent' },
+  tabText: { fontSize: 13, fontWeight: '500' }, activeTabText: { color: c.primary }, inactiveTabText: { color: c.textMuted },
+  countBadge: { minWidth: 18, paddingHorizontal: 5, height: 20, alignItems: 'center', justifyContent: 'center', borderRadius: 4 },
+  activeCountBadge: { backgroundColor: c.primarySoft }, inactiveCountBadge: { backgroundColor: c.surface },
+  countText: { fontSize: 10, fontWeight: '500' }, activeCountText: { color: c.primary }, inactiveCountText: { color: c.textMuted },
 });

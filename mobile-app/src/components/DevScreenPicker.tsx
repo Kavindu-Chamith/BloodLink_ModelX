@@ -1,3 +1,5 @@
+import { useThemedStyles } from '../theme/useThemedStyles';
+import type { AppColors } from '../theme/palette';
 import React, { useState } from 'react';
 import {
   View,
@@ -9,7 +11,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenName } from '../types/navigation';
-import { colors } from '../theme/colors';
 
 interface DevScreenPickerProps {
   currentScreen: ScreenName;
@@ -37,12 +38,14 @@ const SCREENS: { id: ScreenName; label: string; category: string }[] = [
   { id: 'Profile', label: '15. Donor Profile (Profile Management)', category: 'Donor Profile' },
   { id: 'History', label: '16. Donation History', category: 'Donor History' },
   { id: 'Notifications', label: '17. Notifications', category: 'Notifications' },
+  { id: 'Banks', label: '18. Blood Banks', category: 'Donor App Dashboard' },
 ];
 
 export const DevScreenPicker: React.FC<DevScreenPickerProps> = ({
   currentScreen,
   onSelectScreen,
 }) => {
+  const { styles } = useThemedStyles(createStyles);
   const [modalVisible, setModalVisible] = useState(false);
 
   const categories = Array.from(new Set(SCREENS.map((s) => s.category)));
@@ -131,7 +134,7 @@ export const DevScreenPicker: React.FC<DevScreenPickerProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (c: AppColors) => StyleSheet.create({
   floatingContainer: {
     position: 'absolute',
     bottom: 90,
@@ -141,7 +144,7 @@ const styles = StyleSheet.create({
   pillButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F172A',
+    backgroundColor: c.action,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -151,21 +154,21 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: colors.primary,
+    backgroundColor: c.action,
   },
   pillText: {
-    color: '#FFFFFF',
+    color: c.onPrimary,
     fontSize: 11,
     fontWeight: '700',
     maxWidth: 160,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: c.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: c.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '80%',
@@ -179,30 +182,30 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: c.border,
   },
   modalTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0F172A',
+    color: c.text,
   },
   modalSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: c.textMuted,
     marginTop: 2,
   },
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: c.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#475569',
+    color: c.textSecondary,
   },
   screenList: {
     paddingHorizontal: 20,
@@ -214,7 +217,7 @@ const styles = StyleSheet.create({
   categoryHeader: {
     fontSize: 11,
     fontWeight: '800',
-    color: colors.primary,
+    color: c.primary,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -227,24 +230,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     marginBottom: 4,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: c.background,
   },
   screenItemSelected: {
-    backgroundColor: colors.primaryMuted,
+    backgroundColor: c.primaryMuted,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: c.primary,
   },
   screenItemText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#334155',
+    color: c.textSecondary,
   },
   screenItemTextSelected: {
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '800',
   },
   activeCheck: {
-    color: colors.primary,
+    color: c.primary,
     fontSize: 10,
   },
 });
