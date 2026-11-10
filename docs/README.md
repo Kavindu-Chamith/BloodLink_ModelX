@@ -1,19 +1,20 @@
 # Documentation index
 
-## Product and workflows
-
-- [Project overview](PROJECT_OVERVIEW.md)
-- [Request flow](REQUEST_FLOW.md)
-- [Institution dashboard](INSTITUTION_DASHBOARD.md)
-- [Super admin dashboard](SUPER_ADMIN_DASHBOARD.md)
-
-## Development and verification
+## Run and contribute
 
 - [Local setup](MODELX_SETUP.md)
 - [Contribution guide](CONTRIBUTING.md)
-- [Current demo handoff](TODAY_DEMO.md)
-- [Backend implementation handoff](BACKEND_COMPLETION.md)
-- [Backend repair verification](BACKEND_REPAIR_REPORT.md)
-- [Backend security review](BACKEND_SECURITY_REVIEW.md)
-- [Security test report](BloodLink_Security_Test_Report.docx)
-- [Competition data-source review](MODELX_DATA_SOURCE_REVIEW.md)
+
+## Product workflows
+
+- [Request workflow](REQUEST_FLOW.md)
+- [Institution dashboard](INSTITUTION_DASHBOARD.md)
+- [Network-admin portal](SUPER_ADMIN_DASHBOARD.md)
+
+## Competition and data
+
+- [Data-source and reuse review](MODELX_DATA_SOURCE_REVIEW.md)
+- [Synthetic fixture provenance](../Dataset/README.md)
+- [AI/authorship disclosure](../COMPETITION_DISCLOSURE.md)
+
+The current application fixtures are synthetic. They do not satisfy a competition requirement for real-data analysis or real-data results. Do not describe them as operational blood-service data.

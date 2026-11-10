@@ -4,21 +4,19 @@ Use Node.js 24.14+ and PostgreSQL 15+. Copy `.env.example` to `.env`, configure 
 and generate two independent JWT secrets with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
 JWT secrets must be different, at least 32 characters long, and must not use example placeholders.
 
-The completed operational API, role boundaries, private document storage, matching,
-stock/donation workflow, notifications and deployment settings are documented in
-[the backend handoff](../docs/BACKEND_COMPLETION.md). Apply migration 009 before
-starting this version. `MIGRATION_DATABASE_URL` can supply the owner connection
-for CLI migrations while `DATABASE_URL` uses a limited runtime login.
+The API provides authentication, institution/network operations, donor outreach,
+stock and request workflows, and persisted in-app notifications. Initialize a new
+database with `npm run db:init`, or upgrade an existing development database with
+`npm run migrate`. `MIGRATION_DATABASE_URL` can supply the owner connection for CLI
+migrations while `DATABASE_URL` uses a limited runtime login.
 
 For a labeled local dataset, run `npm run seed:preview` in development. It creates
 DEMO institutions, stocks, requests and donor history without resetting the local
 test donor password. The records are synthetic and do not represent live service
-conditions. See [the demo handoff](../docs/TODAY_DEMO.md) for the local workflow,
-test limits and external providers that remain unconfigured.
+conditions. See [fixture provenance and limitations](../Dataset/README.md).
 
-The full synthetic dataset and current-day demonstration are integrated. See
-[the demo handoff](../docs/TODAY_DEMO.md) for local URLs, private credential locations,
-import commands, coverage behavior and validation results. Outreach now requires
+The generated synthetic dataset and current-day demonstration are available locally.
+Outreach now requires
 recorded consent and an availability update within 30 days. Turning availability
 on grants that consent; turning it off withdraws it. New requests have independent
 volunteer targets and response windows. Expired requests cannot be matched,
@@ -126,8 +124,7 @@ the existing password rules and institution/role match. It does not send invitat
 The existing approval, donor-review, user-status and audit endpoints remain available.
 Apply migration 003 before running the updated server.
 
-See [the admin requirements](../docs/SUPER_ADMIN_DASHBOARD.md),
-[the security review](../docs/BACKEND_SECURITY_REVIEW.md) and [migration notes](../database/README.md).
+See [the admin workflow](../docs/SUPER_ADMIN_DASHBOARD.md) and [migration notes](../database/README.md).
 
 ## Account-first blood bank onboarding
 
@@ -141,4 +138,4 @@ Apply migrations through 005 before running the updated portal. Existing bank li
 - Login/current-user responses include `user.mustChangePassword`. `POST /api/auth/change-password` requires authentication, `currentPassword`, a strong `password`, and `confirmPassword`. It clears the first-use requirement and revokes sessions. Email/OTP recovery does the same.
 - Public `/api/organizations/register` rejects blood-bank registration and `/api/staff/register` rejects blood-bank staff. Hospital behavior remains.
 
-The admin UI supports copying credentials for manual handover to the bank contact. It keeps newly created credentials in memory between the two steps and clears them after final handover or session exit. No credentials are returned from database reads. The same portal now provides institution dashboards and teammate management, routing by the authenticated role. Super admins review requests before donor publication. See [institution dashboard handoff](../docs/INSTITUTION_DASHBOARD.md). Audit persistence remains enabled despite removing activity-log UI.
+The admin UI supports copying credentials for manual handover to the bank contact. It keeps newly created credentials in memory between the two steps and clears them after final handover or session exit. No credentials are returned from database reads. The same portal provides institution dashboards and teammate management, routing by the authenticated role. Super admins review requests before donor publication. See [the institution workflow](../docs/INSTITUTION_DASHBOARD.md). Audit persistence remains enabled despite removing activity-log UI.
