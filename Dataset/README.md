@@ -1,11 +1,6 @@
 # BloodLink — Synthetic Test Fixtures
 
-**Every record is fictional and nonclinical.** `SYNTHETIC_TEST_DATA_NOT_REAL`. The base generator uses only a fixed random seed, authored simulation rules and its in-repository approximate town-center table. It does not read donor records, external datasets, or demographic aggregates. Supplemental files are generated from these same synthetic baseline CSVs. No original donor population is included.
-
-**Local integration completed on 3 November 2026:** the supplemental records are
-now imported and migration 009 is applied. These notes describe the generated
-fixture package; local database/API status and demo instructions are in
-[docs/TODAY_DEMO.md](../docs/TODAY_DEMO.md).
+**Every record is fictional and nonclinical.** `SYNTHETIC_TEST_DATA_NOT_REAL`. The base generator uses a fixed random seed, in-repository simulation rules, and an approximate town-centre reference table. It does not read donor records, external datasets, or demographic aggregates. Supplemental files are generated only from these synthetic CSVs; no original donor population is included. These files support local importer and workflow checks, not real-data analysis. The provenance of approximate coordinates still needs confirmation and documentation. See [the data-source review](../docs/MODELX_DATA_SOURCE_REVIEW.md) and [local setup](../docs/MODELX_SETUP.md).
 
 ## Inputs and reproducibility
 
@@ -94,4 +89,4 @@ Reports actual per-row file-level checks, failing checks, original-source anomal
 
 ## Scope of validation
 
-File-level validation checks counts, exact source ID coverage, uniqueness, simulated provenance, roles, distances, timestamps, original-file immutability, linkage, and reminders. It separately flags questionable original-source events instead of silently repairing them. **No DB, application/API, real geographic polygon, clinical or notification integration validation has occurred.** See `IMPORT_PATCH_PLAN.md` and `MISSING_DATA_REPORT.md`.
+File-level validation checks counts, exact source ID coverage, uniqueness, simulated provenance, roles, distances, timestamps, original-file immutability, linkage, and reminders. It separately flags questionable source events instead of silently repairing them. The report describes file checks only; it does not establish real-world geographic, clinical or service validity. Importer behavior is covered by the backend test suite.
