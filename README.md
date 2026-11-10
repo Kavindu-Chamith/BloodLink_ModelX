@@ -12,6 +12,8 @@
 
 > **Academic Context**: SE5104 Mini Project | Group 7 | Department of Software Engineering, Faculty of Computing, Sabaragamuwa University of Sri Lanka.
 
+> **Competition data note:** The checked-in dataset is fictional test data, not a real blood-service dataset. It supports local workflow demonstrations only; it does not establish current blood demand, stock levels, or population trends.
+
 ---
 
 ## Key Features
@@ -21,24 +23,24 @@
 * **Document Verification**: Upload medical/official documents to verify blood group authenticity.
 * **Availability Toggle**: Donors can toggle their availability status (`Available` / `Unavailable`).
 * **Blood Request Feed**: View real-time blood requirements posted by nearby hospitals.
-* **Donation History & Eligibility Tracking**: Automatically tracks past donations and calculates the next eligible donation date (e.g. 3-month medical interval).
+* **Donation History & Interval Reminder**: Shows a configurable donation-interval reminder. It is not medical clearance; blood-bank staff determine whether a person may donate.
 * **Push Notifications**: Receive instant emergency push alerts when matching blood is urgently needed nearby.
 
-### 2. Hospital & Blood Bank Web Dashboard (React + TypeScript)
-* **Blood Stock Inventory**: Monitor and manage stock levels per blood group with clear status indicators (`Normal`, `Low`, `Critical`).
-* **Request Creation**: Post targeted blood requests categorized by priority (`Normal`, `Urgent`, `Emergency`).
-* **Donor Response Tracking**: Track real-time donor responses (Accept/Decline) to active requests.
+### 2. Network and Institution Web Dashboards (React + TypeScript)
+* **Network Administration**: Review institutions, branches, accounts and blood-request approvals.
+* **Institution Operations**: Manage blood-stock records and submit requests categorized by priority (`Normal`, `Urgent`, `Emergency`).
+* **Donor Response Tracking**: View responses recorded for active requests.
 
 ### 3. Smart Donor Matching Engine (Node.js + PostGIS)
-* **Multi-Criteria Filtering**: Matches donors based on **Verified Blood Group**, **Eligibility Interval**, and **Availability**.
+* **Outreach Matching**: Finds opted-in donors by profile blood-group label, availability and distance. A match is not transfusion compatibility or confirmation of donor eligibility; staff make that determination.
 * **Geospatial Proximity Radius**: Uses PostGIS spatial queries (`ST_DWithin`) to find donors within a target radius from the requesting institution.
-* **Targeted Dispatch**: Delivers push notifications via Firebase Cloud Messaging (FCM) *only* to eligible, nearby donors, avoiding notification fatigue.
+* **Targeted Dispatch**: Sends outreach notifications to matching nearby volunteers, subject to consent and availability checks. Notifications do not confirm medical suitability.
 
 ### 4. Administration, Verification & Security
 * **Institution Approval**: Verification workflow for participating hospitals, blood banks, and staff accounts.
 * **Document Review**: Admin interface to inspect and verify uploaded donor blood group proof.
 * **Role-Based Access Control (RBAC)**: Strict permission boundaries for Donors, Hospital Staff, and Administrators.
-* **Privacy & Security**: Built in compliance with Sri Lanka's Personal Data Protection Act (PDPA) No. 9 of 2022. Server-side spatial matching ensures raw donor location coordinates are never publicly exposed.
+* **Privacy & Security**: Server-side spatial matching is designed to keep raw donor coordinates out of public matching responses. This repository has not been independently audited for legal compliance.
 
 ---
 
@@ -77,7 +79,7 @@ The project is structured into four core engineering modules:
 | **Module 1** | **Donor Mobile Application & Donor Coordination UI** | Mobile app development in React Native + TypeScript, donor registration, availability toggles, request viewing, donation history, mobile integration, and UI testing. |
 | **Module 2** | **Hospital/Blood-Bank Dashboard & Blood Request Workflow** | Web dashboard development in React + TypeScript, stock-status interface, request creation workflows, hospital management interfaces. |
 | **Module 3** | **Donor Matching & Notification Engine** | Backend service development in Node.js + Express, PostGIS geospatial matching algorithms, eligibility interval calculations, FCM push notifications. |
-| **Module 4** | **Administration, Verification & Security Module** | Administrative verification of institutions and staff, donor document review workflow, Role-Based Access Control (RBAC), audit logging, security compliance. |
+| **Module 4** | **Administration, Verification & Security Module** | Administrative verification of institutions and staff, donor document review workflow, Role-Based Access Control (RBAC), and audit logging. |
 
 ---
 
@@ -170,8 +172,10 @@ npm run dev
 
 ## Documentation
 
-* **[Comprehensive Technical Project Overview](docs/PROJECT_OVERVIEW.md)** — Exhaustive documentation covering problem statement, gap analysis, functional/non-functional requirements, database ER diagram, security & PDPA compliance, and testing plan.
+* **[Comprehensive Technical Project Overview](docs/PROJECT_OVERVIEW.md)** — Historical academic proposal and technical reference covering the problem statement, requirements, database design, security intentions and test plan; it is not an independent legal-compliance audit.
 * **[Contribution Guidelines](docs/CONTRIBUTING.md)** — Branching rules, PR guidelines, and commit standards.
+* **[ModelX 2 competition disclosure](COMPETITION_DISCLOSURE.md)** — Recorded AI assistance, synthetic fixture provenance, prior project history, and reviewer-access checks.
+* **[Competition data-source review](docs/MODELX_DATA_SOURCE_REVIEW.md)** — Rights and recency checks for candidate real-data sources.
 
 ---
 

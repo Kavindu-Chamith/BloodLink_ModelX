@@ -1,5 +1,7 @@
 # BloodLink - Comprehensive Project Technical Reference
 
+> **Document status:** This is a historical academic proposal/reference from the original BloodLink project, preserved in this repository. It is not the ModelX competition implementation report, proof that every proposed feature shipped, or an independent privacy/legal compliance assessment. Competition demo fixtures are synthetic; donation interval calculations are reminders, not medical clearance.
+
 > **Project Name**: BloodLink - Smart Blood Donation Coordination System<br>
 > **Academic Context**: SE5104 Mini Project | Department of Software Engineering, Faculty of Computing, Sabaragamuwa University of Sri Lanka<br>
 > **Document Purpose**: Complete technical reference compiled from the official Project Proposal for development, architecture lookup, and team reference.
@@ -174,9 +176,9 @@ Primary data entities defined in the system architecture:
 
 ---
 
-## 7. Security, Privacy & Ethics (PDPA Compliance)
+## 7. Security, Privacy & Ethics (Design Intent)
 
-The platform handles personal health and location data, subject to **Sri Lanka's Personal Data Protection Act (PDPA) No. 9 of 2022**:
+The platform may handle personal health and location data, so privacy safeguards and applicable law require review. The controls below describe design intentions; this document does not certify compliance with **Sri Lanka's Personal Data Protection Act (PDPA) No. 9 of 2022**:
 
 1. **Data Minimization & Purpose Limitation**:
    * Collect only operational data necessary for donor matching.
