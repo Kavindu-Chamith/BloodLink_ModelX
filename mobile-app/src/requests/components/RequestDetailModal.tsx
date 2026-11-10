@@ -95,19 +95,19 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             {/* Location & Contact Info */}
             <View style={styles.infoRow}>
               <Ionicons name="location-outline" size={18} color={colors.textMuted} style={styles.infoIcon} />
-              <Text style={styles.infoText}>{request.address || 'Central District Hospital, Sri Lanka'}</Text>
+              <Text style={styles.infoText}>{request.address || 'Demo service area'}</Text>
             </View>
 
             <View style={styles.infoRow}>
               <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.infoIcon} />
-              <Text style={styles.infoText}>{request.contactNumber || '+94 45 222 2261'}</Text>
+              <Text style={styles.infoText}>{request.contactNumber || 'Contact information unavailable'}</Text>
             </View>
 
             {/* Eligibility Note */}
             <View style={styles.eligibilityCard}>
               <Feather name="check-circle" size={16} color={colors.success} />
               <Text style={styles.eligibilityText}>
-                Your profile matches this request. You are eligible to donate.
+                Your profile matches this request. Confirm your eligibility with the institution.
               </Text>
             </View>
           </ScrollView>

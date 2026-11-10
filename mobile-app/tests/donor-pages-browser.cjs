@@ -10,22 +10,22 @@ const { existsSync } = require('node:fs');
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const clientOrigin = process.env.MOBILE_WEB_URL || (process.argv.includes('--review') ? 'http://localhost:8082' : 'http://127.0.0.1:8081');
 const requests = [
-  { id: '41', hospitalName: 'Sabaragamuwa General Hospital', distance: '3.2 km away', timeAgo: '10m ago', bloodGroup: 'O- Negative', unitsNeeded: 5, isUrgent: true, type: 'urgent', address: 'Hospital Road, Ratnapura', department: 'Trauma ICU', verifiedInstitution: true, acceptedDonors: 2, priority: 'Emergency', patientCase: 'Emergency trauma unit blood requirement.' },
-  { id: '42', hospitalName: 'Teaching Hospital Ratnapura', distance: '4.5 km away', timeAgo: '45m ago', bloodGroup: 'O- Negative', unitsNeeded: 1, type: 'standard' },
-  { id: '43', hospitalName: 'District Base Hospital', distance: '8.0 km away', timeAgo: '2h ago', bloodGroup: 'O- Negative', unitsNeeded: 1, type: 'scheduled', requirementLabel: 'O- Negative · Scheduled Drive' },
+  { id: '41', hospitalName: 'Demo General Hospital', distance: '3.2 km away', timeAgo: '10m ago', bloodGroup: 'O- Negative', unitsNeeded: 5, isUrgent: true, type: 'urgent', address: 'Demo service area', department: 'Demo care unit', verifiedInstitution: true, acceptedDonors: 2, priority: 'Emergency', patientCase: 'Synthetic emergency coordination exercise.' },
+  { id: '42', hospitalName: 'Demo Teaching Hospital', distance: '4.5 km away', timeAgo: '45m ago', bloodGroup: 'O- Negative', unitsNeeded: 1, type: 'standard' },
+  { id: '43', hospitalName: 'Demo District Hospital', distance: '8.0 km away', timeAgo: '2h ago', bloodGroup: 'O- Negative', unitsNeeded: 1, type: 'scheduled', requirementLabel: 'O- Negative · Scheduled Drive' },
 ];
 const stocks = [['O-', 4, 'Critical'], ['A-', 8, 'Low'], ['B+', 32, 'Normal'], ['O+', 24, 'Normal']].map(([bloodGroup, units, status]) => ({ bloodGroup, units, status, updatedAt: new Date().toISOString() }));
 const banks = [
-  { id: '1', name: 'Sabaragamuwa General Hospital', type: 'hospital', district: 'Ratnapura', phone: '+94452222261', address: 'Hospital Road, Ratnapura', latitude: 6.6828, longitude: 80.4034, distanceKm: 3.2, stocks },
-  { id: '2', name: 'Teaching Hospital Ratnapura', type: 'hospital', district: 'Ratnapura', phone: '+94452223344', address: 'Ratnapura', distanceKm: 5.7, stocks: [{ bloodGroup: 'AB-', units: 2, status: 'Low', updatedAt: new Date().toISOString() }] },
-  { id: '3', name: 'Ratnapura Blood Bank', type: 'bloodbank', district: 'Ratnapura', distanceKm: 8, stocks: [] },
-  { id: '4', name: 'National Blood Center Colombo', type: 'bloodbank', district: 'Colombo', distanceKm: 85, stocks },
+  { id: '1', name: 'Demo General Hospital', type: 'hospital', district: 'Ratnapura', phone: 'DEMO-CONTACT-001', address: 'Demo service area', latitude: 6.6828, longitude: 80.4034, distanceKm: 3.2, stocks },
+  { id: '2', name: 'Demo Teaching Hospital', type: 'hospital', district: 'Ratnapura', phone: 'DEMO-CONTACT-002', address: 'Demo service area', distanceKm: 5.7, stocks: [{ bloodGroup: 'AB-', units: 2, status: 'Low', updatedAt: new Date().toISOString() }] },
+  { id: '3', name: 'Demo Blood Bank', type: 'bloodbank', district: 'Ratnapura', distanceKm: 8, stocks: [] },
+  { id: '4', name: 'Demo Blood Center Colombo', type: 'bloodbank', district: 'Colombo', distanceKm: 85, stocks },
 ];
 
 function installFixtures(requests, banks) {
   const original = window.fetch.bind(window);
   window.qa = { requests, banks, mission: null, failRespond: false, calls: [] };
-  window.qa.profile = { id: '1', fullName: 'Kavindu Perera', phone: '+94771234567', district: 'Ratnapura', donorSince: '2022-12-01', bloodGroup: 'O-', isAvailable: true, hasMatchingLocation: false, totalDonations: 4, lastDonationDate: '2026-05-15', nextEligibleDate: '2026-08-13', lastDonationPlace: 'Test center', bloodGroupVerification: 'approved', nicNumber: '199812345678', nicVerified: false, document: null };
+  window.qa.profile = { id: '1', fullName: 'Demo Donor', phone: 'DEMO-CONTACT-REDACTED', district: 'Demo District', donorSince: '2022-12-01', bloodGroup: 'O-', isAvailable: true, hasMatchingLocation: false, totalDonations: 4, lastDonationDate: '2026-05-15', nextEligibleDate: '2026-08-13', lastDonationPlace: 'Demo center', bloodGroupVerification: 'approved', nicNumber: 'DEMO-ID-REDACTED', nicVerified: false, document: null };
   window.qa.notifications = [
     { id: '1', kind: 'critical_need', category: 'urgent', title: 'Critical O- Blood Alert Nearby', body: 'Synthetic browser test alert.', createdAt: new Date().toISOString(), isRead: false },
     { id: '2', kind: 'lab_result', category: 'doctor', title: 'Post-Donation Screening Report', createdAt: new Date().toISOString(), isRead: false, labReport: { hemoglobin: '14.2 g/dL', infectiousDiseases: 'Negative', volumeMl: 450, allClear: true, doctorMessage: 'Synthetic browser fixture only.' } },
@@ -44,24 +44,24 @@ function installFixtures(requests, banks) {
       window.qa.profile = { ...window.qa.profile, ...body };
       if ('latitude' in body) window.qa.profile.hasMatchingLocation = body.latitude !== null;
       data = window.qa.profile;
-    } else if (route === '/donors/me/donations') data = { donorName: 'Kavindu Perera', summary: { bloodGroup: 'O-', totalDonations: 4, totalVolumeMl: 1800 }, records: [0, 1, 2, 3].map((i) => ({ id: 'history-' + i, hospitalName: i % 2 ? 'Ratnapura Blood Bank' : 'Sabaragamuwa General Hospital', donatedAt: ['2026-05-15', '2026-01-12', '2025-09-08', '2025-05-02'][i], donationType: 'Whole blood', volumeMl: 450, status: 'verified' })) };
+    } else if (route === '/donors/me/donations') data = { donorName: 'Demo Donor', summary: { bloodGroup: 'O-', totalDonations: 4, totalVolumeMl: 1800 }, records: [0, 1, 2, 3].map((i) => ({ id: 'history-' + i, hospitalName: i % 2 ? 'Demo Blood Bank' : 'Demo General Hospital', donatedAt: ['2026-05-15', '2026-01-12', '2025-09-08', '2025-05-02'][i], donationType: 'Whole blood', volumeMl: 450, status: 'verified' })) };
     else if (route === '/donors/me/donation-record') data = { url: null };
     else if (route === '/notifications') data = window.qa.notifications;
     else if (route === '/notifications/read-all') { window.qa.notifications.forEach(item => { item.isRead = true; }); data = { success: true }; }
     else if (/^\/notifications\/\d+\/read$/.test(route)) { window.qa.notifications.find(item => item.id === route.split('/')[2]).isRead = true; data = { success: true }; }
-    else if (route === '/requests/me') data = { donorInitials: 'KP', donorName: 'Kavindu Perera', unreadAlertsCount: window.qa.badgeOverride ?? window.qa.requests.length, activeCount: window.qa.mission ? 1 : 0, alerts: window.qa.requests, activeMission: window.qa.mission,emptyState:window.qa.emptyState || null };
-    else if (route === '/donors/banks') data = { donorInitials: 'KP', banks: window.qa.banks };
+    else if (route === '/requests/me') data = { donorInitials: 'DD', donorName: 'Demo Donor', unreadAlertsCount: window.qa.badgeOverride ?? window.qa.requests.length, activeCount: window.qa.mission ? 1 : 0, alerts: window.qa.requests, activeMission: window.qa.mission,emptyState:window.qa.emptyState || null };
+    else if (route === '/donors/banks') data = { donorInitials: 'DD', banks: window.qa.banks };
     else if (/\/requests\/\d+\/respond/.test(route)) {
       if (window.qa.failRespond) { status = 503; data = { error: 'Connection interrupted. Please try again.' }; }
       else {
         const id = route.split('/')[2], request = window.qa.requests.find(r => r.id === id);
-        if (body.status === 'accepted') window.qa.mission = { id, hospitalName: request.hospitalName, unitDepartment: 'Emergency Trauma Unit', bloodGroup: request.bloodGroup, unitsNeeded: 1, estimatedArrival: '~15 mins', status: 'En Route', coordinatorName: 'Hospital Coordinator', coordinatorPhone: '+94452222261', fastPassToken: '#BL-8921', steps: [{ id: '1', title: 'Accepted Request', time: '14:10', status: 'completed' }, { id: '2', title: 'En Route to Hospital', status: 'in_progress', badgeText: 'In Progress' }, { id: '3', title: 'Arrive & Donate', status: 'upcoming', badgeText: 'Upcoming' }] };
+        if (body.status === 'accepted') window.qa.mission = { id, hospitalName: request.hospitalName, unitDepartment: 'Demo care unit', bloodGroup: request.bloodGroup, unitsNeeded: 1, estimatedArrival: '~15 mins', status: 'En Route', coordinatorName: 'Demo Coordinator', coordinatorPhone: 'DEMO-CONTACT-001', fastPassToken: '#DEMO-001', steps: [{ id: '1', title: 'Accepted Request', time: '14:10', status: 'completed' }, { id: '2', title: 'En Route to Hospital', status: 'in_progress', badgeText: 'In Progress' }, { id: '3', title: 'Arrive & Donate', status: 'upcoming', badgeText: 'Upcoming' }] };
         window.qa.requests = window.qa.requests.filter(r => r.id !== id);
         data = { success: true, message: 'Response recorded' };
       }
     } else if (route === '/donors/home') {
       if (window.qa.failDashboard) { status = 403; data = { error: 'Insufficient permissions' }; }
-      else data = { donor: { name: 'Kavindu Perera', initials: 'KP', isVerified: true, bloodGroup: 'O-', rhGroup: 'O Rh-', authorityVerified: true, lastDonationDate: '15 May 2026', nextEligibleStatus: 'Donation interval passed', qualificationInterval: '90-day donation interval', totalDonations: 4, monthlyGain: 1, urgentRequestsCount: window.qa.requests.filter(r => r.isUrgent).length, matchedRequestsCount: window.qa.requests.length, unreadNotificationsCount: window.qa.notifications.filter(n => !n.isRead).length }, emergencyMatch: null, requests: window.qa.requests.map(r => ({ id: r.id, hospitalName: r.hospitalName, bloodGroup: 'O-', priority: r.isUrgent ? 'Emergency' : 'Urgent', distance: r.distance, requiredUnits: r.unitsNeeded, status: 'available' })) };
+      else data = { donor: { name: 'Demo Donor', initials: 'DD', isVerified: true, bloodGroup: 'O-', rhGroup: 'O Rh-', authorityVerified: true, lastDonationDate: '15 May 2026', nextEligibleStatus: 'Donation interval passed', qualificationInterval: '90-day donation interval', totalDonations: 4, monthlyGain: 1, urgentRequestsCount: window.qa.requests.filter(r => r.isUrgent).length, matchedRequestsCount: window.qa.requests.length, unreadNotificationsCount: window.qa.notifications.filter(n => !n.isRead).length }, emergencyMatch: null, requests: window.qa.requests.map(r => ({ id: r.id, hospitalName: r.hospitalName, bloodGroup: 'O-', priority: r.isUrgent ? 'Emergency' : 'Urgent', distance: r.distance, requiredUnits: r.unitsNeeded, status: 'available' })) };
     }
     else if (route.includes('/notify')) data = { success: true, message: 'Sent' };
     return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
@@ -165,7 +165,7 @@ function installFixtures(requests, banks) {
     await fill('input[placeholder="you@email.com"]', 'fixture@example.com');
     await fill('input[placeholder="Password"]', 'FixtureOnly123!');
     await click('Sign in');
-    await wait(`document.body.innerText.includes('Kavindu Perera')`);
+    await wait(`document.body.innerText.includes('Demo Donor')`);
     await shot('home-light');
     await click('Profile'); await wait(`document.body.innerText.includes('Available to donate')`);
     await click('Sign out'); await wait(`document.body.innerText.includes('Sign out of BloodLink?')`);
@@ -179,16 +179,16 @@ function installFixtures(requests, banks) {
     console.log('PASS: Form focus styling, sign-out cancellation, session revocation request and return to welcome');
     await evaluate('window.qa.badgeOverride = 99');
     await screen('14. Blood Requests');
-    await wait(`document.body.innerText.includes('Sabaragamuwa General Hospital')`);
+    await wait(`document.body.innerText.includes('Demo General Hospital')`);
     assert.ok(await evaluate(`!!document.querySelector('[aria-label="New Alerts, 3 available"]')`),'Request badge counts rendered cards instead of unrelated unread messages');
     await evaluate(`window.qa.savedRequests=window.qa.requests;window.qa.requests=[];window.qa.emptyState={title:'Enable request alerts in Profile',message:'Turn on availability in Profile to consent to matched request alerts.',action:'profile'}`);
     await click('Home');await click('Requests');await wait(`document.body.innerText.includes('Enable request alerts in Profile')`);
     assert.ok(await evaluate(`!!document.querySelector('[aria-label="New Alerts, 0 available"]')`),'Empty request list has a zero badge even if legacy unread count is nonzero');
     await click('Review Profile');await wait(`document.body.innerText.includes('Available to donate')`);
     await evaluate('window.qa.requests=window.qa.savedRequests;window.qa.emptyState=null;delete window.qa.badgeOverride');
-    await click('Requests');await wait(`document.body.innerText.includes('Sabaragamuwa General Hospital')`);
+    await click('Requests');await wait(`document.body.innerText.includes('Demo General Hospital')`);
     await shot('requests-alerts'); await fits('Requests');
-    await click('View details and respond to Sabaragamuwa General Hospital');
+    await click('View details and respond to Demo General Hospital');
     await wait(`document.body.innerText.includes('Request details')`);
     await shot('emergency-request');
     for (const width of [320, 390, 768]) { await size(width); await fits('Emergency request'); }
@@ -199,8 +199,8 @@ function installFixtures(requests, banks) {
     await evaluate('window.qa.failRespond = false'); await click('Accept request');
     await wait(`document.body.innerText.includes('Your accepted request')`);
     await shot('requests-active');
-    await click('New Alerts'); await click('View details for Teaching Hospital Ratnapura'); await click('Decline request');
-    await wait(`!document.body.innerText.includes('Teaching Hospital Ratnapura')`);
+    await click('New Alerts'); await click('View details for Demo Teaching Hospital'); await click('Decline request');
+    await wait(`!document.body.innerText.includes('Demo Teaching Hospital')`);
     assert.equal(await evaluate(`window.qa.calls.filter(c => c.route.endsWith('/respond') && c.body.status === 'declined').length`), 1);
     console.log('PASS: Request details, failure recovery, acceptance, active mission, and decline');
     await click('Banks'); await wait(`document.body.innerText.includes('Find a centre') && document.body.innerText.includes('Reported stock at this centre')`);
@@ -210,7 +210,7 @@ function installFixtures(requests, banks) {
     await click('Reset filters'); await fill('[aria-label="Search blood banks"]', 'not a center');
     await wait(`document.body.innerText.includes('No centers found')`);
     await click('Clear filters'); await click('Colombo');
-    await wait(`document.body.innerText.includes('National Blood Center Colombo')`);
+    await wait(`document.body.innerText.includes('Demo Blood Center Colombo')`);
     for (const width of [320, 390, 768]) { await size(width); await fits('Blood banks'); }
     await size(390); await click('History');
     await wait(`document.body.innerText.includes('Your donation record')`);
@@ -260,7 +260,7 @@ function installFixtures(requests, banks) {
     for (const tab of ['Home', 'Banks', 'History', 'Requests']) {
       await click(tab);
       await wait(`document.querySelector('[data-testid="donor-bottom-nav"] [role="tab"][aria-selected="true"]')?.getAttribute('aria-label')?.startsWith(${JSON.stringify(tab)})`);
-      if (tab === 'Home') await wait(`document.body.innerText.includes('Kavindu Perera')`);
+      if (tab === 'Home') await wait(`document.body.innerText.includes('Demo Donor')`);
       if (tab === 'Banks') await wait(`document.body.innerText.includes('Reported stock at this centre')`);
       if (tab === 'History') await wait(`document.body.innerText.includes('Your donation record')`);
       if (tab === 'Requests') await wait(`document.body.innerText.includes('District Base Hospital')`);
@@ -317,7 +317,7 @@ function installFixtures(requests, banks) {
     assert.equal(await evaluate(`document.body.innerText.includes('Your donor record')`), false, 'Denied requests do not display fabricated donor eligibility');
     await evaluate('window.qa.failDashboard = false');
     await click('Try again');
-    await wait(`document.body.innerText.includes('Kavindu Perera')`);
+      await wait(`document.body.innerText.includes('Demo Donor')`);
     console.log('PASS: Dashboard permission errors show account guidance and recover through retry');
     const holdHomeTab = async () => {
       const point = await evaluate(`(() => { const rect = document.querySelector('[role="tab"][aria-label="Home"]').getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }; })()`);
@@ -342,7 +342,7 @@ function installFixtures(requests, banks) {
     await delay(100);
     await click('History'); await wait(`document.body.innerText.includes('Recorded volume')`);
     assert.equal(await evaluate(`getComputedStyle(document.querySelector('[data-testid="card-entrance"]')).opacity`), '1', 'Reduced-motion cards remain fully visible');
-    await click('Home'); await wait(`document.body.innerText.includes('Kavindu Perera')`);
+    await click('Home'); await wait(`document.body.innerText.includes('Demo Donor')`);
     assert.equal(await holdHomeTab(), 1, 'Live reduced-motion preference disables press scaling');
     assert.equal(await evaluate(`[...document.querySelectorAll('[data-testid="icon-pop"]')].every(el => { const matrix = new DOMMatrix(getComputedStyle(el).transform); return matrix.a === 1 && matrix.m42 === 0; })`), true, 'Reduced-motion icons retain their resting size and position');
     await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
